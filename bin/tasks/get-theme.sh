@@ -1,4 +1,4 @@
-echo "${YELLOW}Checking air updates...${TXTRESET}"
+echo "${YELLOW}Checking for updates...${TXTRESET}"
 cd $HOME
 git clone https://github.com/bernardhanna/matrix-starter
 cd $STARTER_THEME_PATH_TEMP
