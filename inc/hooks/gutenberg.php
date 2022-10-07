@@ -2,7 +2,7 @@
 /**
  * Gutenberg related settings
  *
- * @Author: Niku Hietanen
+ * @Author: Bernard Hanna
  * @Date: 2020-02-20 13:46:50
  * @Last Modified by:   Bernard Hanna
  * @Last Modified time: 2022-09-22 12:14:41

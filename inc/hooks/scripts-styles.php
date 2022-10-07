@@ -2,10 +2,10 @@
 /**
  * Enqueue and localize theme scripts and styles
  *
- * @Author: Niku Hietanen
+ * @Author: Bernard Hanna
  * @Date: 2020-02-20 13:46:50
  * @Last Modified by:   Bernard Hanna
- * @Last Modified time: 2022-06-09 12:03:40
+ * @Last Modified time: 2022-10-07 14:35:20
  *
  * @package matrix-starter
  */

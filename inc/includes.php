@@ -2,7 +2,7 @@
 /**
  * Include custom features etc.
  *
- * @Author: Niku Hietanen
+ * @Author: Bernard Hanna
  * @Date: 2020-02-18 15:07:17
  * @Last Modified by:   Bernard Hanna
  * @Last Modified time: 2021-12-10 11:48:15

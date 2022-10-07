@@ -2,7 +2,7 @@
 /**
  * Theme setup
  *
- * @Author: Niku Hietanen
+ * @Author: Bernard Hanna
  * @Date: 2020-02-20 13:46:50
  * @Last Modified by:   Bernard Hanna
  * @Last Modified time: 2021-05-04 11:13:01

@@ -2,10 +2,10 @@
 /**
  * General hooks.
  *
- * @Author: Niku Hietanen
+ * @Author: Bernard Hanna
  * @Date: 2020-02-20 13:46:50
- * @Last Modified by:   Elias Kautto
- * @Last Modified time: 2022-02-01 11:42:49
+ * @Last Modified by:   Bernard Hanna
+ * @Last Modified time: 2022-10-07 14:36:08
  *
  * @package matrix-starter
  */

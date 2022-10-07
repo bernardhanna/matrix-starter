@@ -2,7 +2,7 @@
 /**
  * The base for a post type object
  *
- * @Author: Niku Hietanen
+ * @Author: Bernard Hanna
  * @Date: 2020-02-20 13:45:26
  * @Last Modified by:   Bernard Hanna
  * @Last Modified time: 2021-05-04 11:12:42
