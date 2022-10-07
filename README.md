@@ -28,6 +28,8 @@ sudo ln -s /var/www/PROJECT_NAME/content/themes/matrix-starter/bin/matrixtheme.s
 
 9. Let the installer do its thing
 
+**Next steps only requried if you didn't start the project**
+
 10. Cd to your newly created theme ```cd /var/www/PROJECT_NAME/content/themes/NEW_THEME_NAME```
 
 11. Get the dependencides by running ```npm install``` inside the theme folder - You should have NPM installed of course
