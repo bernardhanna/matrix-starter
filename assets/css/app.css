@@ -1,0 +1,521 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@tailwind variants;
+
+html {
+  /*max-width: 1280px;*/
+  @apply font-primary;
+  width: 100%;
+  margin: auto;
+}
+
+body {
+  @apply font-primary;
+}
+
+/* Headroom initial state */
+#site-header {
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+/* Ensure transitions on transform */
+.headroom {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* When scrolling up (header is shown) */
+.headroom--pinned {
+  transform: translateY(0);
+}
+
+/* When scrolling down (header is hidden) */
+.headroom--unpinned {
+  transform: translateY(-100%);
+}
+
+@media only screen and (min-width: 1025px) {
+   .top-menu li a:before,.top-menu li a:after {
+        content: "";
+        position: absolute;
+        transition: transform 0.5s ease;
+    }
+}
+
+
+.hamburger.is-active .hamburger-inner, .hamburger.is-active .hamburger-inner:after, .hamburger.is-active .hamburger-inner:before {
+    background-color: #025A70;
+}
+
+.hamburger-inner, .hamburger-inner:after, .hamburger-inner:before {
+    background-color: #025A70;
+}
+
+.active-item {
+  @apply underline;
+}
+
+.nav_btn {
+  @apply flex items-center justify-center h-12 px-6 rounded bg-primary hover:bg-secondary w-fit;
+}
+
+.nav_btn.current-item .active-item {
+  text-decoration: none!imporant;
+}
+
+@media only screen and (max-width: 768px) {
+  .nav_btn {
+    @apply flex items-center justify-center w-full p-0 m-0;
+  }
+}
+
+.nav_btn a {
+  @apply text-[#01242D] hover:text-white text-sm font-semibold leading-5;
+}
+
+.hero_title{
+  @apply text-4xl font-normal tracking-tight;
+}
+
+.hero_title span {
+@apply font-bold text-primary-light;
+}
+
+.wp_editor h1, .entry-content h1 {
+  @apply text-4xl font-bold;
+}
+
+.wp_editor h2, .entry-content h2 {
+  @apply text-3xl font-semibold;
+}
+
+.wp_editor h3, .entry-content h3 {
+  @apply text-2xl font-medium;
+}
+
+.wp_editor h4, .entry-content h4 {
+  @apply text-xl font-medium;
+}
+
+.wp_editor h5, .entry-content h5 {
+  @apply text-lg font-medium;
+}
+
+.wp_editor h6, .entry-content h6 {
+  @apply text-base font-medium;
+}
+
+.entry-content h1, .entry-content h2, .entry-content h3, .entry-content h4, .entry-content h5, .entry-content h6 {
+  @apply py-4;
+}
+
+.entry-content p {
+  @apply pb-4 text-base font-normal leading-6 text-gray-800;
+}
+
+.entry-content ul {
+  @apply mb-4 list-disc list-inside;
+}
+
+.entry-content ol {
+  @apply mb-4 list-decimal list-inside;
+}
+
+.entry-content li {
+  @apply mb-2 text-base font-normal leading-6 text-gray-800;
+}
+
+.entry-content li > ul,
+.entry-content li > ol {
+  @apply mt-2 ml-4;
+}
+
+.entry-content strong,
+.entry-content b {
+  @apply font-semibold;
+}
+
+.entry-content em,
+.entry-content i {
+  @apply italic;
+}
+
+.entry-content span {
+  @apply text-base font-normal leading-6 text-gray-800;
+}
+
+.entry-content a {
+  @apply underline text-primary hover:text-secondary;
+}
+
+.entry-content blockquote {
+  @apply pl-4 my-4 italic border-l-4 border-gray-300;
+}
+
+.entry-content code {
+  @apply px-1 py-0.5 bg-gray-100 rounded text-sm;
+}
+
+.entry-content pre {
+  @apply p-4 mb-4 overflow-x-auto bg-gray-100 rounded;
+}
+
+.entry-content table {
+  @apply w-full mb-4 border-collapse;
+}
+
+.entry-content th,
+.entry-content td {
+  @apply p-2 text-left border border-gray-300;
+}
+
+.entry-content th {
+  @apply font-semibold bg-gray-50;
+}
+
+.entry-content li h1,
+.entry-content li h2,
+.entry-content li h3,
+.entry-content li h4,
+.entry-content li h5,
+.entry-content li h6 {
+  @apply inline-block pl-0;
+  /* This ensures the heading stays on the same line as the marker */
+}
+
+
+.slick-dots ul, .wp_editor ul {
+  @apply list-disc list-inside;
+}
+
+.slick-dots ol, .wp_editor ol {
+  @apply list-decimal list-inside;
+}
+
+.slick-dots li, .wp_editor li {
+  @apply mb-2;
+  list-style: none;
+}
+
+.slick-dots li button {
+  color: transparent!important;
+}
+
+.slick-prev, .slick-next {
+    box-shadow: none!important;
+    background: none!important;
+}
+
+.slick-prev:hover, .slick-next:hover {
+    box-shadow: none!important;
+    background: none!important;
+}
+
+
+/* Forms */
+/* CSS STYLES */
+/* Base Form Elements */
+input {
+  @apply px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+textarea {
+  @apply px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+select {
+  @apply px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+/* Form Layout Structure */
+.form-container {
+  @apply flex items-start w-full gap-10 text-sm leading-none max-md:max-w-full;
+}
+
+.form-inner {
+  @apply flex flex-col flex-1 shrink w-full basis-0 min-w-[240px] max-md:max-w-full;
+}
+
+.form-row {
+  @apply flex flex-wrap items-start w-full gap-4 max-md:max-w-full;
+}
+
+.form-row-spacing {
+  @apply mt-4;
+}
+
+/* Field Containers */
+.field-container {
+  @apply flex flex-col flex-1 shrink basis-0 min-h-[80px] min-w-[240px] max-md:max-w-full mb-0;
+}
+
+.field-container-spacer {
+  @apply flex shrink-0 h-20 min-w-[240px] w-[496px];
+}
+
+.field-container-textarea {
+  @apply flex flex-col mt-4 w-full min-h-[165px] max-md:max-w-full mb-6;
+}
+
+/* Labels */
+.field-label {
+  @apply self-stretch flex-1 w-full shrink text-slate-700 max-md:max-w-full;
+}
+
+.field-wrapper {
+  @apply relative flex flex-col flex-1 w-full mt-2 text-gray-500 max-md:max-w-full;
+}
+
+/* Form Controls */
+.form-input {
+  @apply flex-1 w-full px-4 py-3 mt-2 text-gray-500 border border-solid rounded border-[#025A7] max-md:max-w-full;
+  border: 1px solid var(--Primary-Turquoise-500, #025A70);
+}
+
+.form-textarea,
+.wpcf7-form-control-wrap textarea {
+  @apply flex-1 px-4 py-3 mt-2 text-gray-500 rounded border border-solid border-[#025A7] w-full min-h-[120px] max-md:max-w-full;
+  border: 1px solid var(--Primary-Turquoise-500, #025A70);
+}
+
+.form-textarea, .wpcf7-form-control-wrap textarea {
+   border: 1px solid var(--Primary-Turquoise-500, #025A70);
+}
+
+.form-submit, .wpcf7-submit {
+  @apply gap-2 self-stretch px-14 w-full  my-auto bg-orange-400 rounded h-[48px] max-xl:px-5 cursor-pointer py-0;
+}
+
+.form-submit:hover, .wpcf7-submit:hover {
+  @apply text-white cursor-pointer bg-secondary;
+}
+
+.form-submit[disabled], .wpcf7-submit[disabled] {
+  @apply bg-gray-400 opacity-50 cursor-not-allowed;
+}
+
+.form-submit[disabled]:hover, .wpcf7-submit[disabled]:hover {
+  @apply bg-gray-400 cursor-not-allowed;
+}
+
+/* Privacy Section */
+.privacy-section {
+  @apply relative w-full;
+}
+
+.privacy-container {
+  @apply relative flex flex-wrap items-center w-full gap-2 mt-8 mb-6 max-md:max-w-full;
+}
+
+.checkbox-wrapper {
+  @apply flex overflow-hidden flex-col justify-center items-center self-stretch my-auto w-8 rounded min-h-[32px];
+}
+
+.privacy-text {
+  @apply self-stretch my-auto text-xs leading-none text-slate-600;
+}
+
+.privacy-link {
+  @apply font-semibold text-slate-600;
+}
+
+.privacy-link:hover {
+  @apply no-underline;
+}
+
+.wpcf7-spinner {
+  display: none;
+}
+
+/* Submit Section */
+.submit-container {
+  @apply flex flex-wrap gap-8 items-center self-center pr-16 mt-8 max-w-full text-sm font-semibold leading-none text-teal-950 w-[496px] max-md:pr-5;
+}
+
+/* Contact Form 7 Specific Styles */
+.wpcf7-list-item {
+  margin: 0;
+  display: flex;
+}
+.wpcf7-form-control-wrap {
+  @apply block w-full;
+}
+
+.wpcf7-not-valid-tip {
+  @apply absolute left-0 text-xs text-red-500 -bottom-5;
+}
+
+.privacy-container .wpcf7-not-valid-tip {
+  @apply absolute left-0 mt-1 top-full;
+}
+
+.wpcf7 form .wpcf7-response-output {
+  @apply p-3 mt-4 text-sm border rounded;
+}
+
+.wpcf7 form.invalid .wpcf7-response-output {
+  @apply text-red-500 border-red-500;
+}
+
+.wpcf7 form.sent .wpcf7-response-output {
+  @apply text-green-500 border-green-500;
+}
+
+/* Remove CF7 automatic spacing */
+.wpcf7 br {
+  @apply hidden;
+}
+
+.wpcf7 p {
+  @apply p-0 m-0;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .field-container,
+  .form-input,
+  .form-textarea,
+  .wpcf7-form-control-wrap input,
+  .wpcf7-form-control-wrap textarea {
+    @apply max-w-full;
+  }
+
+  .field-container-spacer {
+    @apply hidden;
+  }
+}
+
+.form-checkbox {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  padding: 8px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border-radius: 4px;
+}
+
+
+/* WP Editor Styling */
+
+.wp_editor p {
+   @apply text-[16px] text-text-primary font-primary font-normal leading-[23px] mb-4;
+}
+
+/* Image Styling */
+.entry-content img {
+  @apply mb-6;
+}
+
+.alignleft,
+img.alignleft {
+  @apply inline float-left mr-6;
+}
+
+.alignright,
+img.alignright {
+  @apply inline float-right ml-6;
+}
+
+.aligncenter,
+img.aligncenter {
+  @apply block clear-both w-full h-auto mx-auto;
+}
+
+.alignnone,
+img.alignnone {
+  @apply block; /* Update based on desired behavior */
+}
+
+.wp-caption {
+  @apply pt-1 mb-6 text-center;
+}
+
+.wp-caption img {
+  @apply p-0 m-0 border-0;
+}
+
+.wp-caption p.wp-caption-text {
+  @apply m-0 text-xs leading-6;
+}
+
+.wp-smiley {
+ display: none;
+}
+
+blockquote.left {
+  @apply float-left w-1/3 ml-0 mr-5 text-right;
+}
+
+blockquote.right {
+  @apply float-right w-1/3 ml-5 mr-0 text-left;
+}
+
+
+/* Tailwind classes for Slick's structure */
+.slick-slider {
+  @apply relative block;
+}
+
+.slick-initialized .slick-slide {
+   @apply relative flex;
+}
+
+.slick-slider .slick-item {
+  display: none; /* Hide all slides by default */
+}
+
+.slick-slider.slick-initialized {
+  visibility: visible; /* Makes it visible after initialization */
+}
+
+.slick-slider.slick-initialized .slick-item {
+  @apply flex;
+}
+
+.slick-list {
+  overflow: visible !important; /* Allows elements outside the slider's bounds to be visible */
+}
+
+.slick-track {
+  @apply  relative flex gap-4; /* Adjust the gap between slides */
+}
+
+.slick-prev,
+.slick-next {
+  @apply absolute text-gray-500 transform -translate-y-1/2 bg-white rounded-full shadow-md top-1/2 hover:bg-gray-100;
+  z-index: 10;
+}
+
+.slick-prev {
+  @apply -left-4;
+}
+
+.slick-next {
+  @apply -right-4;
+}
+
+.slick-dots {
+  @apply flex justify-center mt-4 space-x-2;
+}
+
+.slick-dots li button {
+  @apply w-3 h-3 transition-all duration-300 ease-in-out bg-gray-300 rounded-full;
+}
+
+.slick-dots li.slick-active button {
+  @apply bg-secondary; /* Active state using Tailwind's secondary color */
+}
+
+.slick-dots li {
+  list-style: none;
+}
+
+.slick-active button {
+  @apply bg-primary; /* Active state using Tailwind's primary color */
+}
