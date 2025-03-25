@@ -100,8 +100,7 @@ Ensure you have the following installed on your system:
 
      ```bash
          npm run flexi:install
-      ```bash
-
+      ```
    navigate to Matrix Components menu in the dashboard /admin.php?page=matrix-ci-admin-page and start importing sections
 
 # Clone the repository
