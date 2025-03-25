@@ -131,7 +131,6 @@ cp -R ./matrix-starter /path-to-your-wordpress/wp-content/themes/
 
 # Install the  Matrix Component Importer plugin
 npm run flexi:install
-```
 
 ### Troubleshooting
 
