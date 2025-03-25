@@ -7,7 +7,8 @@
     "build": "webpack --mode production",
     "watch:css": "nodemon --watch assets/css/app.css --exec \"npx postcss assets/css/app.css -o dist/app.css\"",
     "watch:js": "nodemon --watch assets/js --exec \"webpack --config webpack.config.js\"",
-    "dev": "concurrently \"npm run watch:css\" \"webpack serve --config webpack.config.js\""
+    "dev": "concurrently \"npm run watch:css\" \"webpack serve --config webpack.config.js\"",
+    "flexi:install": "bash scripts/flexi-install.sh"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,7 @@
     "babel-loader": "^9.1.3",
     "concurrently": "^8.2.2",
     "css-loader": "^6.8.1",
+    "css-minimizer-webpack-plugin": "^7.0.2",
     "dotenv": "^16.4.5",
     "dotenv-webpack": "^8.1.0",
     "glob": "^11.0.0",

@@ -96,11 +96,14 @@ Ensure you have the following installed on your system:
 
      Log in to your WordPress admin dashboard, navigate to **Appearance > Themes**, and activate the **Matrix Starter** theme.
 
-### Summary of Commands
+9. **Install the Matrix Component Importer plugin**
 
-For quick reference, here are the essential commands:
+     ```bash
+         npm run flexi:install
+      ```bash
 
-```bash
+   navigate to Matrix Components menu in the dashboard /admin.php?page=matrix-ci-admin-page and start importing sections
+
 # Clone the repository
 git clone https://github.com/bernardhanna/matrix-starter.git
 
@@ -126,6 +129,9 @@ npm run build
 cp -R ./matrix-starter /path-to-your-wordpress/wp-content/themes/
 
 # Activate the theme via WordPress admin dashboard
+
+# Install the  Matrix Component Importer plugin
+npm run flexi:install
 ```
 
 ### Troubleshooting

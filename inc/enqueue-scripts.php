@@ -156,15 +156,7 @@ function matrix_starter_enqueue_scripts()
 
   }
 
-  // Enqueue main stylesheet with version control (enqueued last)
-  wp_enqueue_style(
-    'matrix-starter-style',
-    get_template_directory_uri() . '/dist/styles.css',
-    [],
-    $theme_version
-  );
-
-  // Enqueue dynamic Tailwind styles with version control (enqueued last)
+  // Enqueue dynamic  styles with version control (enqueued last)
   wp_enqueue_style(
     'matrix-starter-dynamic-style',
     get_template_directory_uri() . '/dist/app.css',

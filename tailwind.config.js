@@ -92,6 +92,15 @@ module.exports = {
         'custom-full': '100%',
         'btn': '0px',
       },
+      animation: {
+        'scroll300': 'scroll 300s linear infinite',
+      },
+      keyframes: {
+        scroll: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
+      },
     },
     screens: {
       xxs: '320px',
