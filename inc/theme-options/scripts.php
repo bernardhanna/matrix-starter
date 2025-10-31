@@ -17,7 +17,6 @@ $fields
       'hamburger_css'  => 'Hamburgers CSS',
       'headroom'       => 'Headroom.js',
       'leaflet'        => 'Leaflet (OpenStreetMap)',
-      // 💡 Optional global switch (not required for captcha to work)
       'cloudflare_turnstile' => 'Cloudflare Turnstile',
     ],
     'default_value' => [
