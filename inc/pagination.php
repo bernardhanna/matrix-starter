@@ -22,13 +22,13 @@ function my_custom_pagination()
   ]);
 ?>
   <nav aria-label="Pagination navigation">
-    <ul class="flex flex-wrap items-center justify-center gap-8 p-0 text-base font-medium leading-none list-none text-sky-900 whitespace-nowrap">
+    <ul class="flex flex-wrap gap-8 justify-center items-center p-0 text-base font-medium leading-none list-none text-sky-900 whitespace-nowrap">
 
       <!-- BACK link -->
       <li>
         <?php if (get_previous_posts_link()): ?>
           <a href="<?php echo esc_url(get_pagenum_link($current_page - 1)); ?>"
-            class="flex items-center my-auto text-slate-300"
+            class="flex items-center my-auto text-slate-900"
             aria-label="Go to previous page">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
               <path d="M20 24L12 16L20 8" stroke="#025A70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -49,12 +49,12 @@ function my_custom_pagination()
 
       <!-- Numbered pages + dots -->
       <li>
-        <ul class="flex items-center justify-center p-0 my-auto list-none gap-x-2">
+        <ul class="flex gap-x-2 justify-center items-center p-0 my-auto list-none">
           <?php foreach ($links_array as $link): ?>
             <?php
             // Check for "dots" link: <span class="dots">…</span>.
             if (strpos($link, 'dots') !== false) {
-              echo '<li><span class="self-stretch w-6 py-1 my-auto" aria-hidden="true">…</span></li>';
+              echo '<li><span class="self-stretch py-1 my-auto w-6" aria-hidden="true">…</span></li>';
               continue;
             }
 
@@ -82,7 +82,7 @@ function my_custom_pagination()
             // Otherwise, a normal page link (not current, not dots).
             $link = str_replace(
               '<a',
-              '<a class="flex justify-center items-center hover:bg-primary gap-4  my-auto w-12 min-h-[48px] rounded-[100px]"',
+              '<a class="flex justify-center items-center hover:bg-primary hover:text-white gap-4  my-auto w-12 min-h-[48px] rounded-[100px]"',
               $link
             );
             echo '<li>' . $link . '</li>';

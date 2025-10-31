@@ -2,7 +2,7 @@
 get_header();
 $enable_breadcrumbs = get_field('enable_breadcrumbs', 'option'); // Returns true/false
 ?>
-<main class="w-full min-h-screen overflow-hidden site-main">
+<main class="overflow-hidden w-full site-main">
     <?php load_hero_templates(); ?>
 
 
@@ -18,7 +18,7 @@ $enable_breadcrumbs = get_field('enable_breadcrumbs', 'option'); // Returns true
     if (have_posts()) :
         while (have_posts()) : the_post();
             if (trim(get_the_content()) != '') : ?>
-                <div class="max-w-[1095px] px-4 mx-auto">
+                <div class="max-w-[1095px] mx-auto <?php echo (function_exists('is_checkout') && is_checkout()) ? '' : ' max-md:px-5'; ?>">
                     <?php
                     get_template_part('template-parts/content/content', 'page');
                     ?>

@@ -103,34 +103,6 @@ Ensure you have the following installed on your system:
       ```
    navigate to Matrix Components menu in the dashboard /admin.php?page=matrix-ci-admin-page and start importing sections
 
-# Clone the repository
-git clone https://github.com/bernardhanna/matrix-starter.git
-
-# Navigate to the project directory
-cd matrix-starter
-
-# Install PHP dependencies
-composer install
-
-# Install JavaScript dependencies
-npm install
-
-# (Optional) Create and configure .env file
-cp .env.example .env
-
-# Run development server with watchers
-npm run dev
-
-# Build assets for production
-npm run build
-
-# Place the theme in WordPress
-cp -R ./matrix-starter /path-to-your-wordpress/wp-content/themes/
-
-# Activate the theme via WordPress admin dashboard
-
-# Install the  Matrix Component Importer plugin
-npm run flexi:install
 
 ### Troubleshooting
 

@@ -22,9 +22,8 @@ if (function_exists('acf_add_local_field_group')) {
     $hero_content = new FieldsBuilder('hero_content_blocks');
 
     $hero_content
-        ->setLocation('post_type', '==', 'page') // Apply to 'page' post type
-    // ->and('page_template', '!=', 'front-page.php') Example of not including
-    ->or('post_type', '==', 'post') // Apply to single posts as well
+        ->setLocation( 'post_type', '!=', 'acf-field-group' ) // show on every real post-type
+        ->and(        'post_type', '!=', 'attachment' )      // optional: hide on media edit screen
         ->addFlexibleContent('hero_content_blocks', [
             'label' => 'Hero Blocks',
             'button_label' => 'Add Block',

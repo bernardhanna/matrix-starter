@@ -11,13 +11,34 @@
     "log1x/modern-login": "^1.0",
     "stoutlogic/acf-builder": "^1.12"
   },
+  "require-dev": {
+    "pestphp/pest": "^2.0",
+    "brain/monkey": "^2.7",
+    "phpunit/phpunit": "^10.5",
+    "wp-phpunit/wp-phpunit": "^6.5",
+    "yoast/phpunit-polyfills": "2.x-dev",
+    "vlucas/phpdotenv": "^5.5"
+  },
   "autoload": {
     "psr-4": {
       "MatrixStarter\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test:php": "vendor/bin/pest"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "config": {
     "optimize-autoloader": true,
-    "preferred-install": "dist"
+    "preferred-install": "dist",
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
   }
 }

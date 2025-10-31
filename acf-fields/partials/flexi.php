@@ -22,10 +22,8 @@ if (function_exists('acf_add_local_field_group')) {
     $flexible_content = new FieldsBuilder('flexible_content_blocks');
 
     $flexible_content
-        ->setLocation('post_type', '==', 'page') // Apply to 'page' post type
-    ->or('page_template', '==', 'front-page.php') // Specifically apply to front page template
-    ->or('page_type', '==', 'front') // Apply to front page (when set as homepage in WP settings)
-    ->or('post_type', '==', 'post') // Apply to single posts as well
+        ->setLocation( 'post_type', '!=', 'acf-field-group' ) // show on every real post-type
+        ->and(        'post_type', '!=', 'attachment' )      // optional: hide on media edit screen
         ->addFlexibleContent('flexible_content_blocks', [
             'label' => 'Page Content Blocks',
             'button_label' => 'Add Block',

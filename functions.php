@@ -18,7 +18,6 @@ function matrix_starter_setup()
     add_theme_support('align-wide');
     add_theme_support('editor-styles');
     add_theme_support('responsive-embeds');
-    add_theme_support('woocommerce');
     add_image_size('hero-small', 768, 500, true);
     add_image_size('hero-medium', 1024, 600, true);
     add_image_size('hero-large', 1280, 800, true);
@@ -26,12 +25,22 @@ function matrix_starter_setup()
     add_image_size('hero-xxlarge', 1920, 1080, true);
     register_nav_menus(array(
         'primary' => esc_html__('Primary Menu', 'matrix-starter'),
-        'secondary' => esc_html__('Secondary Menu', 'matrix-starter'),
-        'footer' => esc_html__('Footer Menu', 'matrix-starter'),
+        'Footer One' => esc_html__('Footer One Menu', 'matrix-starter'),
+        'Footer Two' => esc_html__('Footer Two Menu', 'matrix-starter'),
+        'Footer Three' => esc_html__('Footer Three Menu', 'matrix-starter'),
         'copyright' => esc_html__('Copyright Menu', 'matrix-starter'),
     ));
 }
 add_action('after_setup_theme', 'matrix_starter_setup');
+
+// Temporary filter for footer menu
+add_filter('nav_menu_link_attributes', function ($atts, $item, $args) {
+    if ($args->theme_location === 'Footer One') {
+        $atts['class'] = trim(($atts['class'] ?? '') . ' block hover:underline focus:outline-none focus:ring-2 focus:ring-slate-900');
+    }
+    return $atts;
+}, 10, 3);
+
 // Include the Enqueue Fonts
 require_once get_template_directory() . '/inc/enqueue-fonts.php';
 // Include the Enqueue Scripts and Styles
@@ -101,6 +110,9 @@ require_once get_template_directory() . '/inc/login-customizations.php';
 
 // Include the pagination functions
 require_once get_template_directory() . '/inc/pagination.php';
+
+//Include WooCommerce
+require_once get_template_directory() . '/inc/woocommerce.php';
 
 // Customize excerpt more text
 function custom_excerpt_more($more)
@@ -190,3 +202,39 @@ function template_part_blog()
         }
     }
 }
+
+//TEMPLATE FORMS
+require get_template_directory() . '/inc/forms/class-theme-forms.php';
+new Theme_Forms();
+
+//TEMPLATE BUILDERS
+add_action('init', function () {
+    require_once get_template_directory() . '/inc/template-builder/default-builder.php';
+}, 20);
+
+add_action( 'wp_footer', function () {
+    if ( class_exists( 'Theme_Forms' ) ) {
+        echo '<!-- Theme_Forms loaded -->';
+    }
+} );
+
+wp_enqueue_script('jquery-ui-draggable');
+/**
+ * Fill the choices with every top-level item in the “primary” menu.
+ */
+add_filter('acf/load_field/name=menu_item', function ($field) {
+    $field['choices'] = [];
+
+    $locations = get_nav_menu_locations();
+    if (isset($locations['primary'])) {
+        $menu_obj   = wp_get_nav_menu_object($locations['primary']);
+        $menu_items = wp_get_nav_menu_items($menu_obj->term_id);
+        foreach ($menu_items as $mi) {
+            if ((int) $mi->menu_item_parent === 0) {
+                $field['choices'][$mi->ID] = $mi->title;
+            }
+        }
+    }
+    return $field;
+});
+

@@ -1,7 +1,7 @@
 <?php
 get_header();
 ?>
-<main class="w-full min-h-screen overflow-hidden site-main">
+<main class="overflow-hidden w-full min-h-screen site-main">
     <?php get_template_part('template-parts/single/hero'); ?>
 
     <?php
@@ -22,7 +22,7 @@ get_header();
     if (have_posts()) :
         while (have_posts()) : the_post();
             if (trim(get_the_content()) != '') : ?>
-                <div class="max-w-[1095px] px-4 mx-auto">
+                <div class="max-w-[1095px] max-xl:px-5  mx-auto">
                     <?php
                     get_template_part('template-parts/content/content', 'page');
                     ?>
@@ -35,6 +35,14 @@ get_header();
     ?>
 
     <?php load_flexible_content_templates(); ?>
+
+    <?php 
+    // Only show author and related posts on blog posts (post type 'post')
+    if (get_post_type() === 'post') : 
+    ?>
+        <?php get_template_part('template-parts/single/author'); ?>
+        <?php get_template_part('template-parts/single/related-posts'); ?>
+    <?php endif; ?>
 </main>
 
 <?php

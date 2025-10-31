@@ -1,6 +1,4 @@
 <?php
-// File: inc/acf/options/theme-options/scripts.php
-
 use StoutLogic\AcfBuilder\FieldsBuilder;
 
 $fields = new FieldsBuilder('scripts');
@@ -13,22 +11,24 @@ $fields
     'label'        => 'Enable Scripts and Styles',
     'instructions' => 'Select the scripts and styles you want to enable.',
     'choices'      => [
-    'font_awesome' => 'Font Awesome',
-    'flowbite'     => 'Flowbite',
-    'slick'     => 'Slick JS',
-    'hamburger_css' => 'Hamburgers CSS',
-    //'headhesive'   => 'Headhesive',
-    'headroom'      => 'Headroom.js',
+      'font_awesome'   => 'Font Awesome',
+      'flowbite'       => 'Flowbite',
+      'slick'          => 'Slick JS',
+      'hamburger_css'  => 'Hamburgers CSS',
+      'headroom'       => 'Headroom.js',
+      'leaflet'        => 'Leaflet (OpenStreetMap)',
+      // 💡 Optional global switch (not required for captcha to work)
+      'cloudflare_turnstile' => 'Cloudflare Turnstile',
     ],
-  'default_value' => [
-    //'headhesive', 
-    'slick',
-    'font_awesome',
-    'flowbite',
-    'hamburger_css',
-    'headroom' 
-  ], // Default to enabled
-    'layout'         => 'vertical',
+    'default_value' => [
+      'slick',
+      'font_awesome',
+      'hamburger_css',
+      'headroom',
+    ],
+    'layout'       => 'vertical',
   ])
   ->addAccordion('scripts_settings_end')->endpoint();
+
 return $fields;
+

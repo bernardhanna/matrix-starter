@@ -1,0 +1,176 @@
+# Page snapshot
+
+```yaml
+- banner:
+  - navigation:
+    - link:
+      - /url: http://localhost:10004/
+    - list:
+      - listitem:
+        - link "About Us":
+          - /url: http://localhost:10004/about-hanley-pepper/
+      - listitem:
+        - link "Expertise":
+          - /url: http://localhost:10004/expertise/
+          - text: Expertise
+          - img
+      - listitem:
+        - link "Work with us":
+          - /url: http://localhost:10004/work-with-us/
+      - listitem:
+        - link "Contact us":
+          - /url: http://localhost:10004/contact-us/
+- main:
+  - button "Previous":
+    - img
+  - tabpanel:
+    - heading "Project name Two" [level=2]
+    - text: Structural Design / Data centers / Structure
+  - button "Next":
+    - img
+  - tablist:
+    - tab "1 of 2"
+    - tab "2 of 2" [selected]
+  - heading "Engineering excellence realised" [level=2]
+  - paragraph: Since 1985 Hanley Pepper delivers Structural Engineering with a client focused service based on quality and aesthetic solutions. Our project referrals are testament to the service we provide.
+  - link "About us":
+    - /url: /about-us/
+  - heading "Our Services" [level=2]
+  - navigation "Services navigation":
+    - list:
+      - listitem:
+        - link "Structural design":
+          - /url: /expertise/structural-design/
+      - listitem:
+        - link "Civil Design":
+          - /url: /expertise/civil-design/
+      - listitem:
+        - link "Data centers":
+          - /url: http://localhost:10004/expertise/data-centers/
+      - listitem:
+        - link "Public Sector":
+          - /url: /expertise/public-sector/
+      - listitem:
+        - link "Corporate Office Developments":
+          - /url: http://localhost:10004/expertise/corporate-office-developments/
+      - listitem:
+        - link "Office Fitout":
+          - /url: http://localhost:10004/expertise/office-fitout/
+      - listitem:
+        - link "Residential":
+          - /url: http://localhost:10004/expertise/residential/
+      - listitem:
+        - link "Industrial":
+          - /url: http://localhost:10004/expertise/industrial/
+      - listitem:
+        - link "Conservation":
+          - /url: http://localhost:10004/expertise/conservation/
+      - listitem:
+        - link "Leisure and Recreation":
+          - /url: http://localhost:10004/expertise/leisure-and-recreation/
+      - listitem:
+        - link "New Service Name":
+          - /url: http://localhost:10004/expertise/new-service-name/
+      - listitem:
+        - link "Site Due Diligence and Project Feasibility":
+          - /url: http://localhost:10004/expertise/site-due-diligence-and-project-feasibility/
+  - paragraph
+  - paragraph:
+    - strong: "Structural Design:"
+    - text: Lorem ipsum dolor sit amet consectetur. Placerat tellus aliquam sed eget netus et enim ipsum. Varius leo.
+  - paragraph
+  - img "Stats image"
+  - heading "Our stats" [level=3]
+  - text: +0.0K projects completed on time and budget 0% energy savings 0% client satisfaction 0.0% safety incident rate
+  - heading "Why Hanley Pepper" [level=2]
+  - paragraph: Hanley Pepper have been serving the industry for 30 years and have successfully completed over 2000 national and international projects.
+  - tab "Imagination"
+  - tab "Creativity"
+  - tab "Experience"
+  - text: Expertise
+  - paragraph: Lorem ipsum dolor sit amet
+  - img
+  - tabpanel:
+    - img "Testimonial speaker portrait"
+    - blockquote: This building draws scientists to Lethbridge, and ensures we are attracting the best minds to conduct world-class research.”
+    - paragraph: Dr. John Doe
+    - paragraph: CEO @ Company name
+  - tablist:
+    - tab "1 of 3" [selected]
+    - tab "2 of 3"
+    - tab "3 of 3"
+  - button:
+    - img
+  - button:
+    - img
+  - img "Testimonial Image"
+  - text: Hanley Pepper attracts the kind of people who make no small plans, who thrive in collaboration, and have the determination to realize their ideas.
+  - link "Contact us":
+    - /url: /contact-us/
+- contentinfo:
+  - text: Accreditation
+  - img
+  - figure:
+    - img
+  - contentinfo "Site Footer":
+    - heading "Site Footer" [level=2]
+    - navigation "Hanley Pepper":
+      - text: Hanley Pepper
+      - list:
+        - listitem:
+          - link "Our history":
+            - /url: "#"
+        - listitem:
+          - link "Projects":
+            - /url: /projects/
+        - listitem:
+          - link "Our people":
+            - /url: "#"
+        - listitem:
+          - link "Our people":
+            - /url: "#"
+        - listitem:
+          - link "Corporate Responsibility":
+            - /url: "#"
+        - listitem:
+          - link "Insights":
+            - /url: http://localhost:10004/insights/
+    - navigation "Expertise"
+    - navigation "Work with us":
+      - text: Work with us
+      - list:
+        - listitem:
+          - link "Life at Hanley Pepper":
+            - /url: "#"
+        - listitem:
+          - link "Open positions":
+            - /url: http://localhost:10004/work-with-us/
+    - text: Contact us
+    - heading "Contact us" [level=4]
+    - link "Call Hanley Pepper":
+      - /url: tel:+35801283296
+      - img "Phone icon"
+    - link "+358 (01) 283 2967":
+      - /url: tel:+35801283296
+    - img "Location icon"
+    - paragraph: Owenstown House, Foster's Ave, Blackrock, Co. Dublin, A94 N6D8, Ireland
+    - link "Social media link":
+      - /url: "#"
+      - img "Social media icon"
+  - contentinfo:
+    - text: Copyright © 2024 Hanley Pepper | Designed and developed by Matrix Internet
+    - link "Visit Matrix Internet website (opens in a new tab)":
+      - /url: https://www.matrixinternet.ie
+      - text: Matrix Internet
+    - navigation "Secondary footer navigation":
+      - list:
+        - listitem:
+          - link "Privacy":
+            - /url: http://localhost:10004/privacy-policy/
+        - listitem:
+          - link "Cookies":
+            - /url: http://localhost:10004/cookies/
+        - listitem:
+          - link "Sitemap":
+            - /url: http://localhost:10004/sitemap/
+```

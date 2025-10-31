@@ -1,5 +1,5 @@
 <?php get_template_part('template-parts/footer/newsletter'); ?>
-<footer class="w-full bg-secondary">
+<footer class="overflow-hidden w-full bg-secondary">
     <?php get_template_part('template-parts/footer/footer'); ?>
 
     <?php get_template_part('template-parts/footer/copyright'); ?>

@@ -8,3 +8,6 @@ foreach (glob(get_template_directory() . '/inc/cpts/post-types/*.php') as $file)
 foreach (glob(get_template_directory() . '/inc/cpts/taxonomies/*.php') as $file) {
     require_once $file;
 }
+
+
+require __DIR__ . '/post-types/form-entries.php';
