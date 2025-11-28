@@ -1,26 +1,24 @@
 # Matrix Starter
 
-Matrix Starter is a modern and highly customizable WordPress theme that uses ACF Builder and Tailwind CSS to streamline development. Modular by it structure, It includes a robust set of tools and features to help you build custom WordPress themes quickly and efficiently.
+Matrix Starter is a modern and highly customizable WordPress theme that uses ACF Builder and Tailwind CSS to streamline development. Modular by its structure, it includes a robust set of tools and features to help you build custom WordPress themes quickly and efficiently.
 
 ## Clone and Install
 
-Follow these steps to clone the repository and set up the project on your local machine. Recommend using a Local by flywheel and cloning straight to your theme folder for testing and development.
+Follow these steps to clone the repository and set up the project on your local machine. We recommend using **Local by Flywheel** and cloning straight to your theme folder for testing and development.
 
 ### Prerequisites
 
 Ensure you have the following installed on your system:
 
-- **PHP** (version 7.4 or higher)
-- **Composer** (Dependency Manager for PHP)
-- **Node.js** (which includes npm)
-- **Git** (Version Control System)
-- **WordPress** (Installed locally or on a server)
+* **PHP** (version 7.4 or higher)
+* **Composer** (Dependency Manager for PHP)
+* **Node.js** (which includes npm)
+* **Git** (Version Control System)
+* **WordPress** (Installed locally or on a server)
 
 ### Installation Steps
 
 1. **Clone the Repository**
-
-   Open your terminal and run the following command to clone the repository:
 
    ```bash
    git clone https://github.com/bernardhanna/matrix-starter.git
@@ -34,7 +32,7 @@ Ensure you have the following installed on your system:
 
 3. **Install PHP Dependencies**
 
-   Ensure Composer is installed. If not, you can download it from [getcomposer.org](https://getcomposer.org/).
+   Make sure Composer is installed: [getcomposer.org](https://getcomposer.org/)
 
    ```bash
    composer install
@@ -42,7 +40,7 @@ Ensure you have the following installed on your system:
 
 4. **Install JavaScript Dependencies**
 
-   Ensure Node.js and npm are installed. If not, download them from [nodejs.org](https://nodejs.org/).
+   Ensure Node.js and npm are installed: [nodejs.org](https://nodejs.org/)
 
    ```bash
    npm install
@@ -50,33 +48,38 @@ Ensure you have the following installed on your system:
 
 5. **Create and Configure `.env` File**
 
-  create a `.env` file by copying the example provided:
+   Create a `.env` by copying the example:
 
    ```bash
    cp .env.example .env
    ```
 
-   Then, open the `.env` file and configure the necessary environment variables as per your setup.
+   Then open `.env` and add your WordPress path (the folder that contains `wp-config.php` / `wp-load.php`).
+   If your path contains spaces (e.g., Local by Flywheel), **wrap it in quotes**:
+
+   ```dotenv
+   # Path to your WordPress root
+   # Example (Local by Flywheel):
+   WP_PATH="/Users/yourname/Local Sites/your-site/app/public"
+   ```
+
+   > The installer **only reads** `.env`; it does not modify or delete it.
 
 6. **Run Development Server with Watchers**
-
-   Start the development server and watch for changes in your assets:
 
    ```bash
    npm run dev
    ```
 
-   This command runs multiple scripts concurrently:
-   
-   - Watches and processes CSS changes.
-   - Watches and processes JS changes.
-   - Starts the Webpack development server with hot reloading.
+   This will:
+
+   * Watch and process CSS changes
+   * Watch and process JS changes
+   * Start the Webpack dev server with hot reloading
 
 ### Additional Steps
 
 7. **Build the Assets for Production**
-
-   When you're ready to build the project assets for production, run:
 
    ```bash
    npm run build
@@ -84,81 +87,101 @@ Ensure you have the following installed on your system:
 
 8. **Set Up WordPress**
 
-   - **Place the Theme in WordPress:**
+   * **Place the Theme in WordPress:**
 
-     Copy the `matrix-starter` theme folder to your local WordPress installation's `wp-content/themes/` directory:
+     Copy the `matrix-starter` theme folder to your WordPress installation’s `wp-content/themes/` directory (skip if you already cloned directly into `wp-content/themes`):
 
      ```bash
      cp -R ./matrix-starter /path-to-your-wordpress/wp-content/themes/
      ```
 
-   - **Activate the Theme:**
+   * **(Optional) Activate the Theme via WP Admin:**
 
-     Log in to your WordPress admin dashboard, navigate to **Appearance > Themes**, and activate the **Matrix Starter** theme.
+     Log in to **Appearance → Themes** and activate **Matrix Starter**.
 
-9. **Install the Matrix Component Importer plugin**
+9. **Install & Activate Required Items (Theme + Plugins)**
 
-     ```bash
-         npm run flexi:install
-      ```
-   navigate to Matrix Components menu in the dashboard /admin.php?page=matrix-ci-admin-page and start importing sections
+   This command will:
 
+   * Clone **Matrix Component Importer**
+   * Clone **Matrix Sitemap Generator**
+   * Attempt to **activate both plugins**
+   * Attempt to **activate the theme** (best-effort; the script will not fail if activation isn’t possible)
+   
+ ```
+   cd /scripts
+  ```
+   ```bash
+   npm run flexi:install
+   ```
+
+   When complete, you can visit the Matrix Components importer UI:
+
+   ```
+   /wp-admin/admin.php?page=matrix-ci-admin-page
+   ```
 
 ### Troubleshooting
 
-- **Composer Not Found:**
+* **Local by Flywheel tips:**
 
-  Ensure Composer is installed and added to your system's PATH. Visit [getcomposer.org](https://getcomposer.org/) for installation instructions.
+  * Make sure the site is **running** in Local.
+  * For smoothest results, open **Local → Open Site Shell** and run:
 
-- **npm Errors:**
+    ```bash
+    npm run flexi:install
+    ```
+* **Activation skipped or failed:**
 
-  Ensure you have a compatible version of Node.js and npm. Check your versions with:
+  * Double-check `WP_PATH` in `.env` (and make sure it’s **quoted** if it includes spaces).
+  * You can manually activate via WP-CLI:
 
-  ```bash
-  node -v
-  npm -v
-  ```
+    ```bash
+    wp --path="$WP_PATH" plugin activate matrix-component-importer matrix-sitemap-generator --skip-plugins --skip-themes
+    wp --path="$WP_PATH" theme activate matrix-starter --skip-plugins --skip-themes
+    ```
+* **Composer Not Found:**
 
-- **Permission Issues:**
+  * Install and add to PATH: [getcomposer.org](https://getcomposer.org/)
+* **npm Errors:**
 
-  If you encounter permission issues during installation, consider using a Node version manager like [nvm](https://github.com/nvm-sh/nvm) or adjusting your system's permissions.
+  * Check versions:
 
-### Contributing
+    ```bash
+    node -v
+    npm -v
+    ```
+* **Permission Issues:**
 
-If you'd like to contribute to this project, please fork the repository and submit a pull request with your changes. For major changes, please open an issue first to discuss what you would like to change.
+  * Consider using [nvm](https://github.com/nvm-sh/nvm) or adjusting file permissions.
 
 ---
 
 ### Features
 
-- **ACF Builder:** Easily manage custom fields with PHP code.
-- **Tailwind CSS:** Utility-first CSS framework for rapid UI development.
-- **Alpine.js:** Lightweight JavaScript framework for interactive components.
-- **TypeScript:** Strongly typed programming language for better code quality.
-- **Webpack:** Module bundler for compiling assets.
-- **Extended CPTs:** quickly build post types and taxonomies without having to write the same code again and again. 
-- **log1x/navi:** A simple, flexible, and powerful way to manage navigation in WordPress.
-- **log1x/modern-acf-options:** A modern approach to managing ACF options pages.
-- **log1x/modern-login:** A modern approach to managing the WordPress login screen.
+* **ACF Builder** for custom fields in code
+* **Tailwind CSS** for utility-first styling
+* **Alpine.js** for lightweight interactivity
+* **TypeScript** for better code quality
+* **Webpack** for asset bundling
+* **Extended CPTs** to quickly create post types & taxonomies
+* **log1x/navi** for powerful navigation management
+* **log1x/modern-acf-options** for modern ACF options pages
+* **log1x/modern-login** for a modern WordPress login screen
 
 ### Getting Started
 
+(Your quick-start docs or examples can go here.)
 
 ### Contact
 
-Provide contact information or links for users to reach out with questions or feedback.
-
-## Contact
-
-Bernard Hanna - bernard@matrixinternet.ie
-
+Bernard Hanna — [bernard@matrixinternet.ie](mailto:bernard@matrixinternet.ie)
 Project Link: [https://github.com/bernardhanna/matrix-starter](https://github.com/bernardhanna/matrix-starter)
 
 ## Acknowledgements
 
-- [ACF Builder](https://www.advancedcustomfields.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Alpine.js](https://alpinejs.dev/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [WordPress](https://wordpress.org/)
-
+* [ACF Builder](https://www.advancedcustomfields.com/)
+* [Tailwind CSS](https://tailwindcss.com/)
+* [Alpine.js](https://alpinejs.dev/)
+* [TypeScript](https://www.typescriptlang.org/)
+* [WordPress](https://wordpress.org/)
