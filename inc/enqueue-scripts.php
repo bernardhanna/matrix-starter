@@ -94,23 +94,10 @@ wp_add_inline_script(
     wp_enqueue_script('turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', [], null, true);
   }
 
-  // Fonts
-  wp_enqueue_style(
-    'ubuntu',
-    'https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap',
-    [],
-    null
-  );
-  wp_enqueue_style(
-    'great-fonts',
-    'https://fonts.googleapis.com/css2?family=Great+Vibes:wght@400&display=swap',
-    [],
-    null
-  );
 
   // Register optional third-parties
   wp_register_style('font-awesome','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',[],null);
-  wp_register_style('hamburgers-css','https://cdnjs.cloudflare.com/ajax/libs/hamburgers/1.2.1/hamburgers.min.css',[],'1.2.1');
+
   wp_register_script('flowbite','https://unpkg.com/flowbite@1.6.5/dist/flowbite.min.js',['alpine'],'1.6.5',true);
   wp_register_style('slick-css','https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css',[],'1.8.1');
   wp_register_script('slick-js','https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js',['jquery'],'1.8.1',true);
@@ -119,6 +106,11 @@ wp_add_inline_script(
   // Leaflet
   wp_register_style('leaflet','https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',[],'1.9.4');
   wp_register_script('leaflet','https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',[],'1.9.4',true);
+
+  // Register jQuery Nice Select
+  wp_register_style('nice-select-css', 'https://cdn.jsdelivr.net/npm/jquery-nice-select@1.1.0/css/nice-select.css', [], '1.1.0');
+  wp_register_script('nice-select-js', 'https://cdn.jsdelivr.net/npm/jquery-nice-select@1.1.0/js/jquery.nice-select.min.js', ['jquery'], '1.1.0', true);
+
 
   // Conditionally enqueue based on Theme Options
   $enabled_scripts = function_exists('get_field') ? get_field('enabled_scripts', 'option') : [];
@@ -146,6 +138,15 @@ wp_add_inline_script(
     // Optional: force-load Turnstile globally (even if provider not selected)
     if (in_array('cloudflare_turnstile', $enabled_scripts, true) && !wp_script_is('turnstile','enqueued')) {
       wp_enqueue_script('turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', [], null, true);
+    }
+
+
+    // Conditionally NiceSelect enqueue from Theme Options
+    if (is_array($enabled_scripts)) {
+      if (in_array('nice_select', $enabled_scripts, true)) {
+        wp_enqueue_style('nice-select-css');
+        wp_enqueue_script('nice-select-js');
+      }
     }
   }
 

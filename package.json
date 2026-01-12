@@ -37,7 +37,6 @@
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
     "@lhci/cli": "^0.15.0",
-    "@playwright/test": "^1.51.0",
     "@types/mdx": "^2.0.13",
     "@types/node": "^22.2.0",
     "@types/react": "^18.3.3",
