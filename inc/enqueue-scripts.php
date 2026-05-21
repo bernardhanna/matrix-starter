@@ -15,6 +15,46 @@ function matrix_is_wc_flow_page(): bool {
 }
 
 /**
+ * ACF option values may be arrays (label/value), nested arrays, or objects.
+ * Normalize to a plain UTF-8 string for CAPTCHA keys and inline JSON.
+ */
+function matrix_acf_scalar_string( $raw ): string {
+  if ( is_string( $raw ) ) {
+    return trim( $raw );
+  }
+  if ( is_int( $raw ) || is_float( $raw ) ) {
+    return trim( (string) $raw );
+  }
+  if ( is_bool( $raw ) ) {
+    return $raw ? '1' : '';
+  }
+  if ( is_array( $raw ) ) {
+    if ( array_key_exists( 'value', $raw ) ) {
+      return matrix_acf_scalar_string( $raw['value'] );
+    }
+    if ( array_key_exists( 'key', $raw ) ) {
+      return matrix_acf_scalar_string( $raw['key'] );
+    }
+    if ( array_key_exists( 'sitekey', $raw ) ) {
+      return matrix_acf_scalar_string( $raw['sitekey'] );
+    }
+    $first = reset( $raw );
+    if ( false !== $first ) {
+      return matrix_acf_scalar_string( $first );
+    }
+    return '';
+  }
+  if ( is_object( $raw ) && method_exists( $raw, '__toString' ) ) {
+    try {
+      return trim( (string) $raw );
+    } catch ( \Throwable $e ) {
+      return '';
+    }
+  }
+  return '';
+}
+
+/**
  * Enqueue theme assets + optional libs
  */
 function matrix_starter_enqueue_scripts() {
@@ -37,8 +77,26 @@ function matrix_starter_enqueue_scripts() {
   // Alpine + Intersect
   wp_enqueue_script('alpine-intersect','https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js',[],null,true);
   wp_enqueue_script('alpine','https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',['alpine-intersect'],null,true);
-  wp_add_inline_script('alpine',"document.addEventListener('alpine:init',()=>{ if (window.Alpine && window.AlpineIntersect) Alpine.plugin(window.AlpineIntersect); });");
+  wp_add_inline_script('alpine', "document.addEventListener('alpine:init',()=>{ if(window.Alpine&&window.AlpineIntersect) Alpine.plugin(window.AlpineIntersect); });");
   wp_add_inline_style('matrix-starter', '[x-cloak]{display:none !important;}');
+  wp_add_inline_style('matrix-starter', '
+    .sr-person-card__imgwrap{height:320px;}
+    @media (max-width:575px){.sr-person-card__imgwrap{height:250px;}}
+    @media (max-width:320px){.sr-people-grid{grid-template-columns:1fr !important;}}
+    .sr-person-card__img{object-fit:cover;}
+  ');
+
+  // PACE stat counters (IntersectionObserver — no Alpine dependency)
+  $pace_counters_js = get_template_directory() . '/assets/js/pace-counters.js';
+  if (file_exists($pace_counters_js)) {
+    wp_enqueue_script(
+      'pace-counters',
+      $base . '/assets/js/pace-counters.js',
+      [],
+      (string) filemtime($pace_counters_js),
+      true
+    );
+  }
 
   // Theme forms helper
   $forms_js_path = get_template_directory() . '/inc/forms/js/forms.js';
@@ -52,38 +110,20 @@ function matrix_starter_enqueue_scripts() {
 
   // ---- CAPTCHA provider switch (Google reCAPTCHA v3 / Cloudflare Turnstile) ----
   $provider     = (function_exists('get_field') ? (get_field('captcha_provider', 'option') ?: 'none') : 'none');
-  $recaptchaKey = (function_exists('get_field') ? get_field('recaptcha_site_key', 'option') : '');
-  if (is_array($recaptchaKey)) {
-    $recaptchaKey = $recaptchaKey['value'] ?? reset($recaptchaKey) ?? '';
-  }
-  $recaptchaKey = (string) $recaptchaKey;
-  $turnstileKey = (function_exists('get_field') ? get_field('turnstile_site_key', 'option') : '');
-  if (is_array($turnstileKey)) {
-    $turnstileKey = $turnstileKey['value'] ?? reset($turnstileKey) ?? '';
-  }
-  $turnstileKey = trim((string) $turnstileKey);
+  $provider     = matrix_acf_scalar_string( $provider ) ?: 'none';
+  $recaptchaKey = matrix_acf_scalar_string( function_exists('get_field') ? get_field('recaptcha_site_key', 'option') : '' );
+  $turnstileKey = matrix_acf_scalar_string( function_exists('get_field') ? get_field('turnstile_site_key', 'option') : '' );
 
-  // ✅ Normalize provider value to lowercase for consistency
-  $provider = strtolower($provider);
+  // Normalize provider value to lowercase for consistency
+  $provider = strtolower( $provider );
 
-// Pass provider + keys to the forms helper (BEFORE it runs)
-// Force everything to be a PLAIN string on the JS side, even if someone passed an object/array.
+// Pass provider + keys to the forms helper (BEFORE it runs). wp_json_encode ensures valid JS literals.
 wp_add_inline_script(
   'theme-forms',
-  'window.themeFormsCaptchaProvider = String(' . wp_json_encode(strtolower($provider)) . ');
-   window.themeFormsRecaptchaV3      = String(' . wp_json_encode($recaptchaKey) . ');
-   window.themeFormsTurnstileSiteKey = String(' . wp_json_encode($turnstileKey) . ');',
+  'window.themeFormsCaptchaProvider = ' . wp_json_encode( $provider, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ';
+   window.themeFormsRecaptchaV3      = ' . wp_json_encode( $recaptchaKey, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ';
+   window.themeFormsTurnstileSiteKey = ' . wp_json_encode( $turnstileKey, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ';',
   'before'
-);
-
-// Optional one-time debug (remove after verifying)
-wp_add_inline_script(
-  'theme-forms',
-  'console.log("[forms] provider:", window.themeFormsCaptchaProvider,
-               "| reCAP:", window.themeFormsRecaptchaV3,
-               "| turnstile:", window.themeFormsTurnstileSiteKey,
-               "| types:", typeof window.themeFormsCaptchaProvider, typeof window.themeFormsRecaptchaV3, typeof window.themeFormsTurnstileSiteKey);',
-  'after'
 );
   // Load provider-specific API
   if ($provider === 'recaptcha_v3' && $recaptchaKey) {
@@ -94,7 +134,6 @@ wp_add_inline_script(
     wp_enqueue_script('turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', [], null, true);
   }
 
-
   // Register optional third-parties
   wp_register_style('font-awesome','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',[],null);
 
@@ -102,15 +141,12 @@ wp_add_inline_script(
   wp_register_style('slick-css','https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css',[],'1.8.1');
   wp_register_script('slick-js','https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js',['jquery'],'1.8.1',true);
   wp_register_script('headroom','https://cdnjs.cloudflare.com/ajax/libs/headroom/0.12.0/headroom.min.js',[],'0.12.0',true);
+  wp_register_style('nice-select-css','https://cdn.jsdelivr.net/npm/jquery-nice-select@1.1.0/css/nice-select.css',[],'1.1.0');
+  wp_register_script('nice-select-js','https://cdn.jsdelivr.net/npm/jquery-nice-select@1.1.0/js/jquery.nice-select.min.js',['jquery'],'1.1.0',true);
 
   // Leaflet
   wp_register_style('leaflet','https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',[],'1.9.4');
   wp_register_script('leaflet','https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',[],'1.9.4',true);
-
-  // Register jQuery Nice Select
-  wp_register_style('nice-select-css', 'https://cdn.jsdelivr.net/npm/jquery-nice-select@1.1.0/css/nice-select.css', [], '1.1.0');
-  wp_register_script('nice-select-js', 'https://cdn.jsdelivr.net/npm/jquery-nice-select@1.1.0/js/jquery.nice-select.min.js', ['jquery'], '1.1.0', true);
-
 
   // Conditionally enqueue based on Theme Options
   $enabled_scripts = function_exists('get_field') ? get_field('enabled_scripts', 'option') : [];
@@ -139,16 +175,37 @@ wp_add_inline_script(
     if (in_array('cloudflare_turnstile', $enabled_scripts, true) && !wp_script_is('turnstile','enqueued')) {
       wp_enqueue_script('turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', [], null, true);
     }
+  }
 
-
-    // Conditionally NiceSelect enqueue from Theme Options
-    if (is_array($enabled_scripts)) {
-      if (in_array('nice_select', $enabled_scripts, true)) {
-        wp_enqueue_style('nice-select-css');
-        wp_enqueue_script('nice-select-js');
-      }
+  // Contact/get-involved form custom select UI.
+  // Load only on likely form pages to avoid unnecessary JS/CSS on every page.
+  $should_load_nice_select = false;
+  if (is_singular()) {
+    $post_id = get_queried_object_id();
+    if ($post_id) {
+      $content = (string) get_post_field('post_content', $post_id);
+      $content_lower = strtolower($content);
+      $should_load_nice_select =
+        has_block('acf/contact-form-001', $post_id)
+        || has_block('acf/get-involved-form-001', $post_id)
+        || has_block('acf/contact_form_001', $post_id)
+        || has_block('acf/get_involved_form_001', $post_id)
+        || str_contains($content_lower, 'contact_form_001')
+        || str_contains($content_lower, 'get_involved_form_001')
+        || str_contains($content_lower, 'data-contact-structured');
     }
   }
+  if (!$should_load_nice_select) {
+    $request_uri = strtolower((string) ($_SERVER['REQUEST_URI'] ?? ''));
+    $should_load_nice_select =
+      str_contains($request_uri, '/get-involved')
+      || str_contains($request_uri, '/contact');
+  }
+  if ($should_load_nice_select) {
+    wp_enqueue_style('nice-select-css');
+    wp_enqueue_script('nice-select-js');
+  }
+
 
   // Woo fragments
   if (class_exists('WooCommerce')) {

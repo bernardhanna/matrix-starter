@@ -6,51 +6,58 @@ use StoutLogic\AcfBuilder\FieldsBuilder;
 $blogFields = new FieldsBuilder('blog_fields');
 
 $blogFields
-  ->addGroup('blog_settings', [
-    'label' => 'Blog Settings',
+  ->addGroup('pace_blog_settings', [
+    'label' => 'PACE — News index',
+    'instructions' => 'Blog home and category archives (Figma 3:1233 / 3:1412).',
   ])
-
-    // — Background Image Upload —
-    ->addImage('hero_background_image', [
-      'label'         => 'Hero Background Image',
-      'instructions'  => 'Upload a hero background; if blank, we fall back to green.',
-      'return_format' => 'array',
-      'preview_size'  => 'medium',
+    ->addText('hero_kicker', [
+      'label' => 'Hero kicker',
+      'default_value' => "WHAT'S NEW",
     ])
-
-    // — Hero Heading Tag & Text —
-    ->addSelect('hero_heading_tag', [
-      'label'        => 'Hero Heading Tag',
-      'choices'      => [
-        'h1'   => '<h1>',
-        'h2'   => '<h2>',
-        'h3'   => '<h3>',
-        'h4'   => '<h4>',
-        'h5'   => '<h5>',
-        'h6'   => '<h6>',
-        'span' => '<span>',
-        'p'    => '<p>',
+    ->addText('hero_title', [
+      'label' => 'Hero title (blog home)',
+      'default_value' => 'News, events & media',
+    ])
+    ->addTextarea('hero_intro', [
+      'label' => 'Hero intro (blog home)',
+      'rows' => 3,
+      'default_value' => 'Latest milestones, updates, and announcements from across the consortium.',
+    ])
+    ->addColorPicker('hero_background', [
+      'label' => 'Hero background',
+      'default_value' => '#003b65',
+    ])
+    ->addSelect('decoration_style', [
+      'label' => 'Hero decoration',
+      'choices' => [
+        'yellow_stacked' => 'Yellow stacked (Figma 3:1306)',
+        'default_grey'   => 'Default grey',
+        'blue_stacked'   => 'Blue stacked',
+        'yellow_wave'    => 'Yellow wave',
       ],
-      'default_value'=> 'h1',
-      'ui'           => 1,
+      'default_value' => 'yellow_stacked',
+      'ui' => 1,
     ])
-    ->addText('hero_heading_text', [
-      'label'        => 'Hero Heading Text',
-      'default_value'=> "What's new at Tyrecare",
+    ->addNumber('posts_per_page', [
+      'label' => 'Posts per page (grid)',
+      'instructions' => 'Featured post is separate on the blog home.',
+      'default_value' => 5,
+      'min' => 1,
+      'max' => 24,
     ])
-
-    // — Hero Sub-heading —
-    ->addText('hero_subheading_text', [
-      'label'        => 'Hero Sub-heading Text',
-      'default_value'=> 'Latest and greatest.',
+    ->addText('read_more_label', [
+      'label' => 'Read more label',
+      'default_value' => 'Read more →',
     ])
-
-    // — Filter Section Title —
-    ->addText('filter_section_title', [
-      'label'        => 'Filter Section Title',
-      'default_value'=> 'Filter by',
+    ->addText('featured_label', [
+      'label' => 'Featured badge',
+      'default_value' => 'FEATURED',
     ])
-
+    ->addText('category_slugs', [
+      'label' => 'Category tab slugs',
+      'instructions' => 'Comma-separated slugs for tab navigation (order preserved).',
+      'default_value' => 'news,success-stories,press-releases,events',
+    ])
   ->endGroup();
 
 return $blogFields;

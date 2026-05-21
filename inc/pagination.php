@@ -28,10 +28,10 @@ function my_custom_pagination()
       <li>
         <?php if (get_previous_posts_link()): ?>
           <a href="<?php echo esc_url(get_pagenum_link($current_page - 1)); ?>"
-            class="flex items-center my-auto text-slate-900"
+            class="flex items-center my-auto text-[#0A1119]"
             aria-label="Go to previous page">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <path d="M20 24L12 16L20 8" stroke="#025A70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M20 24L12 16L20 8" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
             <span class="self-stretch my-auto">Back</span>
           </a>
@@ -40,7 +40,7 @@ function my_custom_pagination()
           <span class="flex items-center self-stretch my-auto opacity-50 cursor-not-allowed text-slate-300"
             aria-disabled="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <path d="M20 24L12 16L20 8" stroke="#025A70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M20 24L12 16L20 8" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
             <span class="self-stretch my-auto">Back</span>
           </span>
@@ -64,14 +64,14 @@ function my_custom_pagination()
               if (strpos($link, '<span') !== false) {
                 $link = str_replace(
                   '<span',
-                  '<span class="flex justify-center items-center my-auto w-12 h-12 border border-sky-900 border-solid min-h-[48px] rounded-[100px] text-teal-950"',
+                  '<span class="flex justify-center items-center my-auto w-12 h-12 border border-black border-solid min-h-[48px] rounded-[100px] text-black"',
                   $link
                 );
               } else {
                 // Fallback if WP ever uses <a class="current"> (less common).
                 $link = str_replace(
                   '<a',
-                  '<a class="flex justify-center items-center my-auto w-12 h-12 border hover:bg-primary border-sky-900 border-solid min-h-[48px] rounded-[100px] text-teal-950"',
+                  '<a class="flex justify-center items-center my-auto w-12 h-12 border hover:bg-blue border-black border-solid min-h-[48px] rounded-[100px] text-black"',
                   $link
                 );
               }
@@ -82,7 +82,7 @@ function my_custom_pagination()
             // Otherwise, a normal page link (not current, not dots).
             $link = str_replace(
               '<a',
-              '<a class="flex justify-center items-center hover:bg-primary hover:text-white gap-4  my-auto w-12 min-h-[48px] rounded-[100px]"',
+              '<a class="flex justify-center items-center hover:bg-blue hover:text-white gap-4  my-auto w-12 min-h-[48px] rounded-[100px]"',
               $link
             );
             echo '<li>' . $link . '</li>';
@@ -99,7 +99,7 @@ function my_custom_pagination()
             aria-label="Go to next page">
             <span class="self-stretch my-auto">Next</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <path d="M12 24L20 16L12 8" stroke="#025A70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M12 24L20 16L12 8" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </a>
         <?php else: ?>
@@ -108,7 +108,7 @@ function my_custom_pagination()
             aria-disabled="true">
             <span class="self-stretch my-auto">Next</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <path d="M12 24L20 16L12 8" stroke="#025A70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M12 24L20 16L12 8" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </span>
         <?php endif; ?>

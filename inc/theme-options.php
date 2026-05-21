@@ -12,7 +12,10 @@ add_action('acf/init', function () {
         'update_button' => 'Update Options',
     ]);
 
-    $dir   = __DIR__ . '/theme-options/';
+    $dir = __DIR__ . '/theme-options/';
+
+    require_once $dir . 'admin-dashboard-controls.php';
+
     $files = glob($dir . '*.php');
 
     $options = new FieldsBuilder('theme_options_tabs', [
@@ -23,6 +26,10 @@ add_action('acf/init', function () {
     $options->setLocation('options_page', '==', 'theme-options');
 
     foreach ($files as $path) {
+        if (basename($path) === 'admin-dashboard-controls.php') {
+            continue;
+        }
+
         $fields = require $path;
 
         if ($fields instanceof \StoutLogic\AcfBuilder\FieldsBuilder) {

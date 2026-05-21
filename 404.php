@@ -1,70 +1,121 @@
 <?php
-get_header(); ?>
+/**
+ * 404 — PACE layout (navy subhero + helpful links).
+ *
+ * @package Matrix_Starter
+ */
 
-<?php
-// Fetch the entire 404 settings group first
-$not_found_settings = get_field('not_found_settings', 'option');
+get_header();
 
-// Fallbacks, in case no data is set in ACF:
-$title = $not_found_settings['hero_title'] ?? 'Sorry, We Can’t Find That Page.';
-$text = $not_found_settings['hero_text'] ?? 'Here are some helpful links to get you back on track:';
-$links = $not_found_settings['links'] ?? []; // The repeater array
-$bg_color = $not_found_settings['background_color'] ?? '#f8f9fa';
-$text_color = $not_found_settings['text_color'] ?? '#333';
-$padding_top = $not_found_settings['padding_top'] ?? 'py-10';
-$padding_bottom = $not_found_settings['padding_bottom'] ?? 'pb-10';
+$settings     = matrix_pace_not_found_settings();
+$links        = matrix_pace_not_found_helpful_links();
+$primary      = $links[0] ?? [
+    'url'    => home_url('/'),
+    'title'  => __('Return home', 'matrix-starter'),
+    'target' => '_self',
+];
+$extra_links  = array_slice($links, 1);
+$body_html    = trim((string) $settings['text']);
+$media_markup = matrix_pace_not_found_media_markup();
 ?>
 
-<main class="flex overflow-hidden justify-center items-center w-full min-h-screen site-main"
-  style="background-color: <?php echo esc_attr($bg_color); ?>; color: <?php echo esc_attr($text_color); ?>;">
+<main id="main-content" class="site-main font-montserrat">
+    <?php
+    get_template_part(
+        'template-parts/hero/subhero',
+        null,
+        matrix_pace_not_found_subhero_args()
+    );
+    ?>
 
-      <div
-        class="flex flex-col items-center pt-5 pb-5 mx-auto w-full xl:flex-row max-lg:px-5"
-      >
-   
-          <figure
-            class="overflow-hidden my-auto rounded-none bg-blend-normal w-[896px] max-md:max-w-full"
-          >
-            <div
-              class="flex relative flex-col w-full min-h-[700px] max-md:max-w-full max-sm:min-h-[246px] rounded-tr-3xl rounded-br-3xl"
-            >
-              <img
-                src="wp-content/uploads/2025/07/cryo-room-16th-June-2023-2.png"
-                alt="404 error background image"
-                class="object-cover absolute inset-0 rounded-tr-3xl rounded-br-3xl size-full"
-                aria-hidden="true"
-              />
+    <section
+        class="pace-not-found bg-[#f1f5f8]"
+        aria-labelledby="pace-not-found-heading"
+        data-disable-nav-offset="true"
+    >
+        <div class="mx-auto w-full max-w-[1280px] px-5 py-12 md:px-10 md:py-16 lg:py-20">
+            <div class="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14">
+                <div class="w-full">
+                    <?php echo $media_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in helper ?>
+                </div>
+
+                <article class="flex flex-col gap-6">
+                    <div>
+                        <h2
+                            id="pace-not-found-heading"
+                            class="font-montserrat text-[24px] font-bold leading-[28.8px] text-[#003b65] md:text-[28px] md:leading-[33.6px]"
+                        >
+                            <?php esc_html_e('Let us help you find your way', 'matrix-starter'); ?>
+                        </h2>
+                        <?php if ($body_html !== '') : ?>
+                            <div class="pace-prose mt-4 font-comfortaa text-[16px] leading-[25.6px] text-[#5c6b78]">
+                                <?php echo wp_kses_post($body_html); ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <?php if ($extra_links !== []) : ?>
+                        <nav aria-label="<?php esc_attr_e('Helpful links', 'matrix-starter'); ?>">
+                            <p class="mb-3 font-montserrat text-[14px] font-semibold uppercase tracking-[0.12em] text-[#0a60a0]">
+                                <?php esc_html_e('Helpful links', 'matrix-starter'); ?>
+                            </p>
+                            <ul class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                                <?php foreach ($extra_links as $link) : ?>
+                                    <li>
+                                        <a
+                                            href="<?php echo esc_url($link['url']); ?>"
+                                            target="<?php echo esc_attr($link['target']); ?>"
+                                            <?php echo $link['target'] === '_blank' ? 'rel="noopener noreferrer"' : ''; ?>
+                                            class="<?php echo esc_attr(matrix_pace_btn_classes('secondary-dark')); ?>"
+                                        >
+                                            <?php echo esc_html($link['title']); ?>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </nav>
+                    <?php endif; ?>
+
+                    <div class="pt-2">
+                        <a
+                            href="<?php echo esc_url($primary['url']); ?>"
+                            target="<?php echo esc_attr($primary['target']); ?>"
+                            <?php echo $primary['target'] === '_blank' ? 'rel="noopener noreferrer"' : ''; ?>
+                            class="<?php echo esc_attr(matrix_pace_btn_classes('primary', ['full_mobile' => true])); ?> w-full md:w-fit"
+                        >
+                            <?php echo esc_html($primary['title']); ?>
+                        </a>
+                    </div>
+
+                    <form
+                        method="get"
+                        action="<?php echo esc_url(home_url('/')); ?>"
+                        class="pace-search-form search-form flex w-full max-w-none flex-col gap-3 border-t border-[#e1e7ec] pt-8 lg:max-w-[480px] lg:flex-row lg:items-stretch lg:gap-3"
+                        role="search"
+                        aria-label="<?php esc_attr_e('Search the site', 'matrix-starter'); ?>"
+                    >
+                        <label for="pace-404-search" class="sr-only">
+                            <?php esc_html_e('Search keyword', 'matrix-starter'); ?>
+                        </label>
+                        <input
+                            id="pace-404-search"
+                            type="search"
+                            name="s"
+                            placeholder="<?php esc_attr_e('Search the site…', 'matrix-starter'); ?>"
+                            class="pace-search-form__input box-border block h-[52px] min-h-[52px] w-full rounded-full border border-[#e1e7ec] bg-white px-5 font-comfortaa text-[16px] leading-6 text-[#003b65] placeholder:text-[#5c6b78] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0a60a0] focus-visible:ring-offset-2 lg:min-w-0 lg:flex-1"
+                        />
+                        <button
+                            type="submit"
+                            class="<?php echo esc_attr(matrix_pace_btn_classes('primary')); ?> no-form-btn-style w-full min-h-[52px] shrink-0 lg:w-auto lg:min-w-[120px]"
+                        >
+                            <?php esc_html_e('Search', 'matrix-starter'); ?>
+                        </button>
+                    </form>
+                </article>
             </div>
-          </figure>
-          <article
-            class="flex flex-col flex-1 px-24 my-auto basis-0 max-md:max-w-full max-sm:px-6"
-          >
-            <h1
-              class="text-6xl font-bold tracking-tighter text-primary leading-[72px] max-md:max-w-full max-md:text-4xl max-md:leading-[53px]"
-            >
-             <?php echo esc_html($title); ?>
-            </h1>
-            <div
-              class="mt-4 text-xl leading-snug text-slate-700 max-md:max-w-full"
-            >
-             <?php echo wp_kses_post($text); ?>
-            </div>
-            <div
-              class="pt-8 mt-4 text-sm font-semibold leading-nonemax-sm:pt-4"
-            >
-              <a
-                href="/"
-                class="flex gap-2 justify-center items-center px-7 py-4 text-white whitespace-nowrap rounded btn border-primary bg-primary min-h-14 max-md:px-5 w-fit hover:bg-tertiary hover:text-primary hover:border-primary"
-                role="button"
-              >
-               Return Home
-              </a>
-            </div>
-          </article>
-      </div>
+        </div>
+    </section>
 </main>
-
 
 <?php
 get_footer();
-?>

@@ -54,6 +54,15 @@ module.exports = {
     static: { directory: path.join(__dirname), watch: true },
     compress: true,
     port: process.env.DEV_SERVER_PORT || 3000,
+    client: {
+      // Hide noisy browser runtime overlay for cross-origin "Script error."
+      // while preserving build/compile errors in terminal output.
+      overlay: {
+        errors: true,
+        warnings: false,
+        runtimeErrors: false,
+      },
+    },
     proxy: {
       '/': {
         target: process.env.WP_HOME || 'http://localhost:10054',
@@ -62,7 +71,9 @@ module.exports = {
       },
     },
     hot: false,
-    devMiddleware: { writeToDisk: true },
+    // Never write dev-server bundles into dist/; they include WDS client code.
+    // Production assets must come only from `npm run build`.
+    devMiddleware: { writeToDisk: false },
     watchFiles: ['assets/**/*.{js,css}'],
   },
 };

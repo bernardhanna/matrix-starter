@@ -13,11 +13,18 @@ $not_found
   ->addTab('Content', ['placement' => 'top'])
   ->addText('hero_title', [
     'label' => 'Hero Title',
-    'default_value' => 'Sorry, We Can’t Find That Page.',
+    'default_value' => 'Page not found',
   ])
   ->addWysiwyg('hero_text', [
     'label' => 'Hero Text',
-    'default_value' => 'Here are some helpful links to get you back on track:',
+    'default_value' => 'The page you are looking for may have been moved, renamed, or no longer exists.',
+  ])
+  ->addImage('hero_image', [
+    'label' => 'Hero Image',
+    'instructions' => 'Image shown on the left side of the 404 layout.',
+    'return_format' => 'array',
+    'preview_size' => 'medium',
+    'library' => 'all',
   ])
   ->addRepeater('links', [
     'label' => 'Helpful Links',
@@ -35,8 +42,16 @@ $not_found
   ])
   ->endRepeater()
   ->addTab('Design')
-  ->addColorPicker('background_color', ['label' => 'Background Color', 'default_value' => '#f8f9fa'])
-  ->addColorPicker('text_color', ['label' => 'Text Color', 'default_value' => '#333'])
+  ->addColorPicker('background_color', [
+    'label' => 'Background Color',
+    'default_value' => '#f1f5f8',
+    'instructions' => 'Legacy field — the PACE template uses the standard listing background (#f1f5f8).',
+  ])
+  ->addColorPicker('text_color', [
+    'label' => 'Text Color',
+    'default_value' => '#003b65',
+    'instructions' => 'Legacy field — typography colours are set by the PACE template.',
+  ])
   ->addTab('Options', ['placement' => 'left'])
   ->addTrueFalse('enable_custom_404', [
     'label' => 'Enable Custom 404 Page',

@@ -5,13 +5,11 @@
 $queried_object = get_queried_object();
 $category_slug = is_category() ? $queried_object->slug : 'all';
 
-// 1) grab entire group from Options (or wherever it's attached)
-$settings = get_field('blog_settings', 'option') ?: [];
+// Legacy blog partial — hero/filter settings removed from theme options.
+$settings = [];
 
 // 2) Background image logic
-$hero_bg = ! empty($settings['hero_background_image']['url'])
-? $settings['hero_background_image']
-: null;
+$hero_bg = null;
 
 if ($hero_bg) {
 $bg_url = esc_url($hero_bg['url']);
@@ -58,7 +56,7 @@ $filter_title = $settings['filter_section_title'] ?? 'Filter by';
                       </div>
          <ol class="flex gap-2 items-center pt-0.5 min-w-60">
                           <li class="flex gap-2 items-center">
-                              <a href="<?php echo esc_url(home_url()); ?>" class="text-sm font-semibold leading-none text-white whitespace-nowrap hover:text-yellow-100 focus:text-yellow-100 focus:outline-2 focus:outline-white focus:outline-offset-2" aria-label="Home">
+                              <a href="<?php echo esc_url(home_url()); ?>" class="text-sm font-semibold leading-none text-white whitespace-nowrap hover:text-white focus:text-white focus:outline-2 focus:outline-white focus:outline-offset-2" aria-label="Home">
                                   Home
                               </a>
                               <?php if (!is_front_page()) : // Only show arrow if not on home page ?>
@@ -83,7 +81,7 @@ $filter_title = $settings['filter_section_title'] ?? 'Filter by';
                               if ($resources_page_id) {
                                   ?>
                                   <li class="flex gap-2 items-center">
-                                      <a href="<?php echo esc_url(get_permalink($resources_page_id)); ?>" class="text-sm font-semibold leading-none text-white whitespace-nowrap hover:text-yellow-100 focus:text-yellow-100 focus:outline-2 focus:outline-white focus:outline-offset-2" aria-label="Resources">
+                                      <a href="<?php echo esc_url(get_permalink($resources_page_id)); ?>" class="text-sm font-semibold leading-none text-white whitespace-nowrap hover:text-white focus:text-white focus:outline-2 focus:outline-white focus:outline-offset-2" aria-label="Resources">
                                           Resources
                                       </a>
                                       <?php if (!is_home() && !is_post_type_archive('projects') && !is_page($resources_page_id->ID)) : // Only show arrow if there's more to come after Resources ?>
@@ -103,7 +101,7 @@ $filter_title = $settings['filter_section_title'] ?? 'Filter by';
                                   if (!empty($categories)) {
                                       $category = $categories[0]; // Get the first category
                                       echo '<li class="flex gap-2 items-center">';
-                                      echo '<a href="' . esc_url(get_category_link($category->term_id)) . '" class="text-sm font-semibold leading-none text-white whitespace-nowrap hover:text-yellow-100 focus:text-yellow-100 focus:outline-2 focus:outline-white focus:outline-offset-2" aria-label="' . esc_attr($category->name) . '">';
+                                      echo '<a href="' . esc_url(get_category_link($category->term_id)) . '" class="text-sm font-semibold leading-none text-white whitespace-nowrap hover:text-white focus:text-white focus:outline-2 focus:outline-white focus:outline-offset-2" aria-label="' . esc_attr($category->name) . '">';
                                       echo esc_html($category->name);
                                       echo '</a>';
                                       echo '<div class="flex gap-2 items-center pt-0.5 w-4" aria-hidden="true">';
@@ -164,7 +162,7 @@ $filter_title = $settings['filter_section_title'] ?? 'Filter by';
                       ?>
 
                       <?php if ($sub_text): ?>
-                        <p class="mt-2 text-xl leading-snug text-yellow-100 max-md:max-w-full">
+                        <p class="mt-2 text-xl leading-snug text-white max-md:max-w-full">
                           <?php echo esc_html($sub_text); ?>
                         </p>
                       <?php endif; ?>
@@ -204,14 +202,13 @@ $filter_title = $settings['filter_section_title'] ?? 'Filter by';
                     $slug    = esc_attr( $cat->slug );
                     $name    = esc_html( $cat->name );
                     $checked = ( $slug === $current_slug ) ? 'true' : 'false';
-                    $tab     = ( $slug === $current_slug ) ? '0' : '-1';
                   ?>
                     <button
                       role="radio"
                       class="gap-2 px-6 py-2 whitespace-nowrap rounded-lg filter-btn bg-secondary hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-3black btn"
                       data-filter="<?php echo $slug; ?>"
                       aria-checked="<?php echo $checked; ?>"
-                      tabindex="<?php echo $tab; ?>"
+                      tabindex="<?php echo $checked === 'true' ? '0' : '-1'; ?>"
                     >
                       <?php echo $name; ?>
                     </button>
@@ -255,21 +252,61 @@ $filter_title = $settings['filter_section_title'] ?? 'Filter by';
       document.addEventListener('DOMContentLoaded', function() {
           // Filter button functionality
           const filterButtons = document.querySelectorAll('[data-filter]');
+          const filterButtonList = Array.from(filterButtons);
+
+          function setActiveButton(nextButton) {
+              filterButtons.forEach(btn => {
+                  const isActive = btn === nextButton;
+                  btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+                  btn.setAttribute('tabindex', isActive ? '0' : '-1');
+              });
+          }
 
           filterButtons.forEach(button => {
               button.addEventListener('click', function() {
-                  // Remove active state from all buttons
-                  filterButtons.forEach(btn => {
-                      btn.setAttribute('aria-pressed', 'false');
-                  });
-
-                  // Add active state to clicked button
-                  this.setAttribute('aria-pressed', 'true');
+                  setActiveButton(this);
 
                   // Trigger filter event (can be extended for actual filtering)
                   const filterValue = this.getAttribute('data-filter');
                   const filterEvent = new CustomEvent('newsFilter', {
                       detail: { filter: filterValue }
+                  });
+                  document.dispatchEvent(filterEvent);
+              });
+
+              button.addEventListener('keydown', function(e) {
+                  const key = e.key;
+                  if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End', 'Enter', ' '].includes(key)) {
+                      return;
+                  }
+
+                  if (key === 'Enter' || key === ' ') {
+                      e.preventDefault();
+                      this.click();
+                      return;
+                  }
+
+                  e.preventDefault();
+                  const currentIndex = filterButtonList.indexOf(this);
+                  let nextIndex = currentIndex;
+
+                  if (key === 'ArrowRight' || key === 'ArrowDown') {
+                      nextIndex = (currentIndex + 1) % filterButtonList.length;
+                  } else if (key === 'ArrowLeft' || key === 'ArrowUp') {
+                      nextIndex = (currentIndex - 1 + filterButtonList.length) % filterButtonList.length;
+                  } else if (key === 'Home') {
+                      nextIndex = 0;
+                  } else if (key === 'End') {
+                      nextIndex = filterButtonList.length - 1;
+                  }
+
+                  const nextButton = filterButtonList[nextIndex];
+                  if (!nextButton) return;
+                  setActiveButton(nextButton);
+                  nextButton.focus();
+
+                  const filterEvent = new CustomEvent('newsFilter', {
+                      detail: { filter: nextButton.getAttribute('data-filter') }
                   });
                   document.dispatchEvent(filterEvent);
               });
@@ -299,7 +336,7 @@ $filter_title = $settings['filter_section_title'] ?? 'Filter by';
 </div>
 
 <section class="flex overflow-hidden relative">
-<div class="flex flex-col items-center pt-5 pb-5 mx-auto w-full max-w-container max-lg:px-5">
+<div class="flex flex-col items-center pt-5 pb-5 mx-auto w-full max-w-container max-xl:px-5">
   <div class="flex flex-col gap-8 pt-12 pb-14 w-full bg-white max-md:p-8 max-sm:p-4">
 
     <!-- Heading: Total posts + Clear Filters Button -->
@@ -310,13 +347,13 @@ $filter_title = $settings['filter_section_title'] ?? 'Filter by';
       <button
           type="button"
           id="clear-filters"
-          class="flex gap-2 items-center px-4 py-2 bg-gray-200 rounded cursor-pointer h-[42px] w-fit whitespace-nowrap hover:bg-hover hover:text-hover hidden btn"
+          class="flex gap-2 items-center px-4 py-2 bg-[#F9FAFB] rounded cursor-pointer h-[42px] w-fit whitespace-nowrap hover:bg-hover hover:text-hover hidden btn"
           aria-label="Clear filters"
         >
         <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M12 4.04102L4 12.041M4 4.04102L12 12.041" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
         </svg>
-        <span class="text-sm font-semibold leading-5 text-slate-700">Clear filters</span>
+        <span class="text-sm font-semibold leading-5 text- [#40BFF5]">Clear filters</span>
       </button>
     </div>
 
@@ -370,7 +407,7 @@ $filter_title = $settings['filter_section_title'] ?? 'Filter by';
                     />
                   <?php else : ?>
                     <div
-                      class="bg-gray-200 w-[425px] min-w-60 max-md:max-w-full flex items-center justify-center text-gray-500"
+                      class="bg-[#F9FAFB] w-[425px] min-w-60 max-md:max-w-full flex items-center justify-center text-gray-500"
                       style="aspect-ratio: 0.79;"
                       aria-label="No image available for <?php the_title_attribute(); ?>"
                     >
@@ -542,13 +579,11 @@ function cardVisible(card) {
 
   return matchesCategory && matchesSearch;
 }
-
 // apply to all cards, then toggle clear button
 function applyFilter() {
   cards.forEach(card => {
     card.style.display = cardVisible(card) ? '' : 'none';
   });
-
   // Show clearFilters if we're not default
   const needsClear = (activeFilter !== 'all') || (searchTerm !== '');
   if (needsClear) {
@@ -561,11 +596,52 @@ function applyFilter() {
 // CATEGORY BUTTONS
 buttons.forEach(btn => {
   btn.addEventListener('click', () => {
-    // reset aria-pressed
-    buttons.forEach(b => b.setAttribute('aria-pressed','false'));
-    btn.setAttribute('aria-pressed','true');
+    buttons.forEach(b => {
+      const isActive = b === btn;
+      b.setAttribute('aria-checked', isActive ? 'true' : 'false');
+      b.setAttribute('tabindex', isActive ? '0' : '-1');
+    });
 
     activeFilter = btn.getAttribute('data-filter');
+    applyFilter();
+  });
+
+  btn.addEventListener('keydown', (e) => {
+    const key = e.key;
+    if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End', 'Enter', ' '].includes(key)) {
+      return;
+    }
+
+    if (key === 'Enter' || key === ' ') {
+      e.preventDefault();
+      btn.click();
+      return;
+    }
+
+    e.preventDefault();
+    const list = Array.from(buttons);
+    const currentIndex = list.indexOf(btn);
+    let nextIndex = currentIndex;
+
+    if (key === 'ArrowRight' || key === 'ArrowDown') {
+      nextIndex = (currentIndex + 1) % list.length;
+    } else if (key === 'ArrowLeft' || key === 'ArrowUp') {
+      nextIndex = (currentIndex - 1 + list.length) % list.length;
+    } else if (key === 'Home') {
+      nextIndex = 0;
+    } else if (key === 'End') {
+      nextIndex = list.length - 1;
+    }
+
+    const nextBtn = list[nextIndex];
+    if (!nextBtn) return;
+    buttons.forEach((b) => {
+      const isActive = b === nextBtn;
+      b.setAttribute('aria-checked', isActive ? 'true' : 'false');
+      b.setAttribute('tabindex', isActive ? '0' : '-1');
+    });
+    nextBtn.focus();
+    activeFilter = nextBtn.getAttribute('data-filter');
     applyFilter();
   });
 });
@@ -583,7 +659,8 @@ clearFilters.addEventListener('click', () => {
   // Reset category buttons
   activeFilter = 'all';
   buttons.forEach(b => {
-    b.setAttribute('aria-pressed', b.getAttribute('data-filter') === 'all' ? 'true' : 'false');
+    b.setAttribute('aria-checked', b.getAttribute('data-filter') === 'all' ? 'true' : 'false');
+    b.setAttribute('tabindex', b.getAttribute('data-filter') === 'all' ? '0' : '-1');
   });
 
   // Reset search

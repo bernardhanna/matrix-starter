@@ -62,3 +62,115 @@ function load_hero_templates($post_id = null)
     error_log("No ACF Hero Blocks found for Post ID: " . $post_id);
   }
 }
+
+/**
+ * Normalize ACF true/false sub field with a default when unset (e.g. legacy rows).
+ */
+function matrix_hero_acf_bool($value, $default = false)
+{
+  if ($value === null || $value === '') {
+    return $default;
+  }
+  return (int) $value === 1;
+}
+
+/**
+ * Extract a YouTube video ID from common URL formats.
+ */
+function matrix_hero_parse_youtube_id($url)
+{
+  $url = trim((string) $url);
+  if ($url === '') {
+    return '';
+  }
+  if (preg_match('~(?:youtube\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([a-zA-Z0-9_-]{11})~', $url, $m)) {
+    return $m[1];
+  }
+  return '';
+}
+
+/**
+ * Extract a Vimeo video ID from common URL formats.
+ */
+function matrix_hero_parse_vimeo_id($url)
+{
+  $url = trim((string) $url);
+  if ($url === '') {
+    return '';
+  }
+  if (preg_match('~vimeo\.com/(?:video/)?(\d+)~', $url, $m)) {
+    return $m[1];
+  }
+  return '';
+}
+
+/**
+ * Build a YouTube embed URL with query flags.
+ */
+function matrix_hero_youtube_embed_url($video_id, array $opts = [])
+{
+  $video_id = (string) $video_id;
+  if ($video_id === '') {
+    return '';
+  }
+  $defaults = [
+    'autoplay' => false,
+    'mute' => false,
+    'loop' => false,
+    'controls' => true,
+    'playsinline' => true,
+  ];
+  $opts = array_merge($defaults, $opts);
+  $params = [];
+  if (!empty($opts['autoplay'])) {
+    $params['autoplay'] = '1';
+  }
+  if (!empty($opts['mute'])) {
+    $params['mute'] = '1';
+  }
+  if (!empty($opts['loop'])) {
+    $params['loop'] = '1';
+    $params['playlist'] = $video_id;
+  }
+  $params['controls'] = !empty($opts['controls']) ? '1' : '0';
+  if (!empty($opts['playsinline'])) {
+    $params['playsinline'] = '1';
+  }
+  $query = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+  return 'https://www.youtube.com/embed/' . rawurlencode($video_id) . ($query !== '' ? '?' . $query : '');
+}
+
+/**
+ * Build a Vimeo player URL with query flags.
+ */
+function matrix_hero_vimeo_embed_url($video_id, array $opts = [])
+{
+  $video_id = (string) $video_id;
+  if ($video_id === '') {
+    return '';
+  }
+  $defaults = [
+    'autoplay' => false,
+    'mute' => false,
+    'loop' => false,
+    'controls' => true,
+    'playsinline' => true,
+  ];
+  $opts = array_merge($defaults, $opts);
+  $params = [];
+  if (!empty($opts['autoplay'])) {
+    $params['autoplay'] = '1';
+  }
+  if (!empty($opts['mute'])) {
+    $params['muted'] = '1';
+  }
+  if (!empty($opts['loop'])) {
+    $params['loop'] = '1';
+  }
+  $params['controls'] = !empty($opts['controls']) ? '1' : '0';
+  if (!empty($opts['playsinline'])) {
+    $params['playsinline'] = '1';
+  }
+  $query = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+  return 'https://player.vimeo.com/video/' . rawurlencode($video_id) . ($query !== '' ? '?' . $query : '');
+}

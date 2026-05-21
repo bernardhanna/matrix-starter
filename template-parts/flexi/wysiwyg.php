@@ -14,15 +14,15 @@ if (have_rows('padding_settings')) {
 }
 ?>
 
-<section class="flex overflow-hidden relative wp_editor">
-  <div class="w-full mx-auto max-w-[1095px] flex flex-col md:flex-row-reverse items-center justify-between max-lg:px-5  max-xxl:px-5 pb-20">
-   
-      <div class="relative">
-        <?php if ($text_content): ?>
-          <?= wp_kses_post($text_content); ?>
+<section class="flex overflow-hidden relative bg-white font-montserrat">
+  <div class="<?php echo esc_attr(matrix_pace_content_container_classes()); ?>">
+    <div class="pace-prose wp_editor">
+      <div class="entry-content">
+        <?php if ($text_content) : ?>
+          <?php echo wp_kses_post($text_content); ?>
         <?php endif; ?>
       </div>
-
+    </div>
   </div>
 </section>
 

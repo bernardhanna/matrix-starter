@@ -1,55 +1,96 @@
 const plugin = require('tailwindcss/plugin');
 
+/**
+ * Semantic theme tokens for easier white-labeling.
+ * Keep these mapped to current brand values so existing UI remains unchanged.
+ */
+const THEME_TOKENS = {
+  brand: {
+    primary: '#008BCC',
+    primaryHover: '#00628F',
+    primarySoft: '#EBF9FF',
+    secondary: '#009DE6',
+    accent: '#1C959B',
+    accentSoft: '#CBF3F6',
+    accentStrong: '#75E0E6',
+  },
+  text: {
+    heading: '#001929',
+    body: '#00263E',
+    muted: '#475467',
+    inverse: '#FFFFFF',
+  },
+  surface: {
+    page: '#F2F4F7',
+    panel: '#FFFFFF',
+    warm: '#FEFAE7',
+  },
+  state: {
+    danger: '#F68DA7',
+    interactiveHover: '#F6F6F6',
+    interactiveText: '#041227',
+    focusRing: '#1C959B',
+  },
+  shape: {
+    fieldRadius: '4px',
+    cardRadius: '16px',
+    pillRadius: '100px',
+  },
+  size: {
+    touchTarget: '44px',
+    formField: '52px',
+  },
+  font: {
+    primary: 'Public Sans',
+    montserrat: 'Montserrat',
+    comfortaa: 'Comfortaa',
+  },
+};
+
 module.exports = {
   mode: 'jit',
   content: [
     './woocommerce/**/*.php',
     './**/*.php',
     './assets/js/**/*.js',
+    '../plugins/matrix-donations/**/*.php',
+    '../plugins/matrix-donations/assets/js/**/*.js',
   ],
   theme: {
     extend: {
       fontFamily: {
-        primary: ['Lato', 'sans-serif'],
-        secondary: ['Poppins', 'sans-serif'],
+        primary: [`var(--font-primary, '${THEME_TOKENS.font.primary}')`, 'sans-serif'],
+        secondary: ['Playfair', 'serif'],
+        montserrat: [`var(--font-montserrat, '${THEME_TOKENS.font.montserrat}')`, 'sans-serif'],
+        comfortaa: [`var(--font-comfortaa, '${THEME_TOKENS.font.comfortaa}')`, 'sans-serif'],
       },
       colors: {
+        slate: {
+          DEFAULT: '#001929',
+          900: '#001929',
+        },
+        sky: {
+          DEFAULT: '#00263E',
+          800: '#00628F',
+          950: '#00263E',
+        },
+        red: { 
+          DEFAULT: '#F68DA7',
+        },
         primary: {
-          DEFAULT: '#ED1C24',
-          light: '#9AA770',
-          dark: '#788941',
-          200: '#BBC4A0',
-          100: '#DDE2CF',
-          50: '#EEF0E7',
+          DEFAULT: '#009DE6',
+          light: '#EBF9FF',
         },
         secondary: {
-          DEFAULT: '#fff',
-          light: '#E9A777',
-          dark: '#DE7C34',
-          200: '#F0C5A5',
-          100: '#F8E2D2',
-          50: '#FBF0E8',
+          DEFAULT: '#FCF4C5',
         },
         tertiary: {
-          DEFAULT: '#5F7176',
+          DEFAULT: '#00263E',
         },
         background: {
-          DEFAULT: '#ffffff',
-          light: '#EFF5EC',
+          DEFAULT: '#F2F4F7',
+          light: '#EBF9FF',
           dark: '#000000',
-        },
-        neutral: {
-          DEFAULT: '#101828',
-          800: '#1D2939',
-          700: '#344054',
-          600: '#475467',
-          500: '#667085',
-          400: '#98A2B3',
-          300: '#D0D5DD',
-          200: '#EAECF0',
-          100: '#F2F4F7',
-          50: '#F9FAFB',
-          25: '#FCFCFD',
         },
         highlight: {
           primary: '#101828',
@@ -64,6 +105,36 @@ module.exports = {
         hover: {
           bg: '#F6F6F6', // Using primary-light as hover background
           text: '#000', // Using accent-greenDark as hover text
+        },
+        /**
+         * Semantic aliases for future site duplication/re-skinning.
+         * These are additive only; existing color keys stay intact.
+         */
+        brand: {
+          primary: `var(--color-brand-primary, ${THEME_TOKENS.brand.primary})`,
+          'primary-hover': `var(--color-brand-primary-hover, ${THEME_TOKENS.brand.primaryHover})`,
+          'primary-soft': `var(--color-brand-primary-soft, ${THEME_TOKENS.brand.primarySoft})`,
+          secondary: `var(--color-brand-secondary, ${THEME_TOKENS.brand.secondary})`,
+          accent: `var(--color-brand-accent, ${THEME_TOKENS.brand.accent})`,
+          'accent-soft': `var(--color-brand-accent-soft, ${THEME_TOKENS.brand.accentSoft})`,
+          'accent-strong': `var(--color-brand-accent-strong, ${THEME_TOKENS.brand.accentStrong})`,
+        },
+        content: {
+          heading: `var(--color-content-heading, ${THEME_TOKENS.text.heading})`,
+          body: `var(--color-content-body, ${THEME_TOKENS.text.body})`,
+          muted: `var(--color-content-muted, ${THEME_TOKENS.text.muted})`,
+          inverse: `var(--color-content-inverse, ${THEME_TOKENS.text.inverse})`,
+        },
+        surface: {
+          page: `var(--color-surface-page, ${THEME_TOKENS.surface.page})`,
+          panel: `var(--color-surface-panel, ${THEME_TOKENS.surface.panel})`,
+          warm: `var(--color-surface-warm, ${THEME_TOKENS.surface.warm})`,
+        },
+        state: {
+          danger: `var(--color-state-danger, ${THEME_TOKENS.state.danger})`,
+          'interactive-hover': `var(--color-state-interactive-hover, ${THEME_TOKENS.state.interactiveHover})`,
+          'interactive-text': `var(--color-state-interactive-text, ${THEME_TOKENS.state.interactiveText})`,
+          focus: `var(--color-state-focus, ${THEME_TOKENS.state.focusRing})`,
         },
       },
       backgroundColor: {
@@ -83,13 +154,13 @@ module.exports = {
         'container': '1280px',
       },
       maxWidth: {
-        'container': '1139px',
+        'container': '70rem',
         'xxs': '320px',
         'xs': '480px',
         'mob': '575px',
         'sm': '640px',
         'md': '768px',
-         tab: '998px',
+        'tab': '1024px',
         'lg': '1200px',
         'xl': '1280px',
         'xxl': '1440px',
@@ -103,6 +174,20 @@ module.exports = {
         'custom-xl': '40px',
         'custom-full': '100%',
         'btn': '0px',
+        'field': `var(--radius-field, ${THEME_TOKENS.shape.fieldRadius})`,
+        'card': `var(--radius-card, ${THEME_TOKENS.shape.cardRadius})`,
+        'pill': `var(--radius-pill, ${THEME_TOKENS.shape.pillRadius})`,
+      },
+      minHeight: {
+        touch: `var(--size-touch-target, ${THEME_TOKENS.size.touchTarget})`,
+        field: `var(--size-form-field, ${THEME_TOKENS.size.formField})`,
+      },
+      minWidth: {
+        touch: `var(--size-touch-target, ${THEME_TOKENS.size.touchTarget})`,
+      },
+      boxShadow: {
+        'focus-brand': `0 0 0 3px var(--color-state-focus, ${THEME_TOKENS.state.focusRing})`,
+        'focus-brand-strong': `0 0 0 4px var(--color-state-focus, ${THEME_TOKENS.state.focusRing})`,
       },
       animation: {
         'scroll300': 'scroll 300s linear infinite',
@@ -121,8 +206,7 @@ module.exports = {
       sm: '640px',
       md: '768px',
       tab: '993px', 
-      ipad: '1084px',
-      lg: '1100px',
+      lg: '1084px',
       xl: '1280px',
       xxl: '1440px',
       ultrawide: '1920px',
@@ -156,6 +240,23 @@ module.exports = {
       empty: true,
       before: true,
       after: true,
+    }),
+    plugin(function ({ addUtilities, addVariant }) {
+      addVariant('hocus', ['&:hover', '&:focus-visible']);
+
+      addUtilities({
+        '.a11y-focus': {
+          outline: 'none',
+        },
+        '.a11y-focus:focus-visible': {
+          boxShadow: `0 0 0 3px var(--color-state-focus, ${THEME_TOKENS.state.focusRing})`,
+          outline: 'none',
+        },
+        '.tap-target': {
+          minWidth: `var(--size-touch-target, ${THEME_TOKENS.size.touchTarget})`,
+          minHeight: `var(--size-touch-target, ${THEME_TOKENS.size.touchTarget})`,
+        },
+      });
     }),
   ],
   safelist: [

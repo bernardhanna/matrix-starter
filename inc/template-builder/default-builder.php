@@ -229,27 +229,60 @@ add_filter('acf/update_value/type=flexible_content', function ($value, $post_id,
  * HERO DEFAULTS
  * --------------------
  * - Posts: banner_image
- * - Pages: hero_001
- * - Sectors/practice_areas: hero_001
+ * - Pages: subhero
+ * - Sectors/practice_areas: subhero
  */
+// Respect empty hero if user removed it
+add_filter('acf/update_value/name=hero_content_blocks', function ($value, $post_id, $field) {
+    // Keep your existing sanitizer
+    $value = matrix_sanitize_flexible_value($value);
+
+    if (empty($value)) {
+        update_post_meta((int)$post_id, '_matrix_hero_intentionally_empty', 1);
+    } else {
+        delete_post_meta((int)$post_id, '_matrix_hero_intentionally_empty');
+    }
+
+    return $value;
+}, -9999, 3);
+
+// Only apply default if not intentionally empty (and only once)
 add_filter('acf/load_value/name=hero_content_blocks', function ($value, $post_id, $field) {
     if (!empty($value)) {
-        return $value;
+        return $value; // has data, do nothing
+    }
+
+    // If user intentionally cleared it, respect that
+    if (get_post_meta((int)$post_id, '_matrix_hero_intentionally_empty', true)) {
+        return $value; // keep empty
+    }
+
+    // Apply default only once
+    $already_applied = get_post_meta((int)$post_id, '_matrix_hero_default_applied', true);
+    if ($already_applied) {
+        return $value; // don't re-apply
     }
 
     $type = matrix_resolve_post_type_for_acf($post_id);
-
-    if ($type === 'post') {
-        return [ ['acf_fc_layout' => 'banner_image'] ];
+    if ($type === 'page') {
+        update_post_meta((int)$post_id, '_matrix_hero_default_applied', 1);
+        return [
+            [
+                'acf_fc_layout'    => 'subhero',
+                'heading_tag'      => 'h1',
+                'background_color' => '#003b65',
+                'decoration_style' => 'default_grey',
+            ],
+        ];
     }
 
-   /* if ($type === 'page' || $type === 'sectors' || $type === 'practice_areas') {
-        return [ ['acf_fc_layout' => 'hero_001'] ];
-    } */
+    if ($type === 'post') {
+        update_post_meta((int)$post_id, '_matrix_hero_default_applied', 1);
+        return [ ['acf_fc_layout' => 'hero'] ];
+    }
 
     return $value;
 }, 10, 3);
-
 /**
  * --------------------
  * FLEX DEFAULTS
@@ -268,46 +301,5 @@ add_filter('acf/load_value/name=flexible_content_blocks', function ($value, $pos
         return [ ['acf_fc_layout' => 'single_post_content'] ];
     }
 
-   /* if ($type === 'sectors' || $type === 'practice_areas') {
-        return matrix_sector_like_default_stack();
-    }
-
-    if ($type === 'team') {
-        return [ ['acf_fc_layout' => 'team_carousel'], ['acf_fc_layout' => 'related_content'] ];
-    } */
-
     return $value;
 }, 10, 3);
-
-/** -------------------- Woo Single Product builder defaults -------------------- */
-/**
- * IMPORTANT: Layout names must match your ACF Builder layout names exactly.
- * From your snippet: FieldsBuilder('woo_single_main', ...).
- * So use 'woo_single_main' (NOT 'acf_woo_single_main').
- * Same for related: 'woo_single_related' if that layout exists.
- */
-function matrix_woo_single_default_rows() {
-    return [
-        [ 'acf_fc_layout' => 'woo_single_main' ],     // ✅ correct layout name
-        [ 'acf_fc_layout' => 'woo_single_related' ],  // ✅ correct layout name (ensure you have this layout file)
-    ];
-}
-
-function matrix_seed_woo_single_product_blocks($value, $post_id, $field) {
-    // Respect existing rows
-    if (is_array($value) && !empty($value)) {
-        return $value;
-    }
-
-    // Only for Woo products
-    if (matrix_resolve_post_type_for_acf($post_id) !== 'product') {
-        return $value;
-    }
-
-    return matrix_woo_single_default_rows();
-}
-
-/** Hook by FIELD NAME used in your Builder group */
-add_filter('acf/load_value/name=woo_single_product_blocks', 'matrix_seed_woo_single_product_blocks', 10, 3);
-/** If you ever renamed the field, this catches the common alt-name */
-add_filter('acf/load_value/name=single_product_blocks',     'matrix_seed_woo_single_product_blocks', 10, 3);

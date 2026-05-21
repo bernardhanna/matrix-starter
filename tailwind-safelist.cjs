@@ -6,6 +6,13 @@ module.exports = [
   'transition-transform', 'duration-300', 'ease-in-out',
   'translate-y-0', '-translate-y-full',
 
+  // Button component (design system primary CTA)
+  'btn-primary',
+
+  // PACE / brand fonts
+  'font-montserrat',
+  'font-comfortaa',
+
   // Visibility/opacity/layout toggles
   'hidden', 'block', 'flex', 'grid',
   'opacity-0', 'opacity-100',
@@ -18,11 +25,7 @@ module.exports = [
   'max-w-none', 'max-w-full', 'max-w-[50%]', 'w-1/2', 'w-full',
   'max-w-[1158px]',
 
-  // Optional patterns (keep if you use lots of arbitrary values)
-  { pattern: /max-w-\[\d+%\]/ },
-  { pattern: /max-w-\[\d+px\]/ },
-  { pattern: /w-\[\d+px\]/ },
-  { pattern: /h-\[\d+px\]/ },
+  // Optional patterns (regex must match Tailwind’s generated class names)
   { pattern: /-?translate-(x|y)-(0|full|\d+)/ },
   { pattern: /opacity-(0|25|50|75|100)/ },
 

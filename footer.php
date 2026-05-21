@@ -1,16 +1,13 @@
 <?php get_template_part('template-parts/footer/newsletter'); ?>
-<footer class="overflow-hidden w-full bg-secondary">
-    <?php get_template_part('template-parts/footer/footer'); ?>
-
-    <?php get_template_part('template-parts/footer/copyright'); ?>
-
-    <?php
-    $enable_back_to_top = get_field('back_to_top_settings_enable_back_to_top', 'option');
-
-    if ($enable_back_to_top !== false) : ?>
-        <?php get_template_part('template-parts/footer/back-to-top'); ?>
-    <?php endif; ?>
-</footer>
+<?php get_template_part('template-parts/footer/footer'); ?>
+<?php
+$show_back_to_top = function_exists('get_field')
+  ? (bool) get_field('back_to_top_settings_enable_back_to_top', 'option')
+  : true;
+if ($show_back_to_top) {
+  get_template_part('template-parts/footer/back-to-top');
+}
+?>
 
 <?php wp_footer(); ?>
 

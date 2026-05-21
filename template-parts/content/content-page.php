@@ -1,11 +1,15 @@
 <?php
-$content     = get_the_content();
-$is_checkout = function_exists('is_checkout') && is_checkout();
-
-$extra_class = (!empty(trim($content)) && !$is_checkout) ? ' py-12' : '';
+/**
+ * Default page body (block editor).
+ *
+ * @package Matrix_Starter
+ */
 ?>
-<article class="relative wp_editor" id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
-    <div class="entry-content<?php echo esc_attr($extra_class); ?>">
+<article
+    <?php post_class(matrix_pace_content_article_classes()); ?>
+    id="post-<?php the_ID(); ?>"
+>
+    <div class="entry-content">
         <?php the_content(); ?>
     </div>
 </article>

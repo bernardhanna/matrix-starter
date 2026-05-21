@@ -34,5 +34,20 @@ yarn-error.log*
 
 # Test coverage
 coverage/
+tests/pw-artifacts/e2e-results/
+test-results/
+playwright-report/
+
+# Examples (reference templates, not shipped with theme)
+examples/
+
+# Superpowers: ignore generated files; keep example templates
+docs/superpowers/*
+!docs/superpowers/plans/
+!docs/superpowers/specs/
+docs/superpowers/plans/*
+!docs/superpowers/plans/example.md
+docs/superpowers/specs/*
+!docs/superpowers/specs/example.md
 
 # Optional (depending on preference)
