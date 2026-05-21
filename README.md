@@ -101,25 +101,23 @@ Ensure you have the following installed on your system:
 
 9. **Install & Activate Required Items (Theme + Plugins)**
 
-   This command will:
+   Run from the **theme root** (see [scripts/README.md](scripts/README.md) for full details):
 
-   * Clone **Matrix Component Importer**
-   * Clone **Matrix Sitemap Generator**
-   * Attempt to **activate both plugins**
-   * Attempt to **activate the theme** (best-effort; the script will not fail if activation isn’t possible)
-   
- ```
-   cd /scripts
-  ```
    ```bash
    npm run flexi:install
    ```
 
-   When complete, you can visit the Matrix Components importer UI:
+   This bootstrap script will:
 
-   ```
-   /wp-admin/admin.php?page=matrix-ci-admin-page
-   ```
+   * Clone **Matrix Component Importer**, **Matrix Sitemap Generator**, and **[Matrix Content Gathering](https://github.com/bernardhanna/matrix-content-gathering)** (client content form + flexi CSV import/export)
+   * Install common plugins from WordPress.org (Classic Editor, Duplicate Page, Password Protected, Prevent Browser Caching, Rank Math SEO, WP Mail SMTP)
+   * Attempt to **activate** the theme and all plugins (best-effort if the DB is reachable)
+
+   After install:
+
+   * Component importer: `/wp-admin/admin.php?page=matrix-ci-admin-page`
+   * Content gathering: **Tools → Content Gathering**
+   * Still required separately: **ACF Pro**, then `npm run build`
 
 ### Troubleshooting
 
@@ -137,7 +135,7 @@ Ensure you have the following installed on your system:
   * You can manually activate via WP-CLI:
 
     ```bash
-    wp --path="$WP_PATH" plugin activate matrix-component-importer matrix-sitemap-generator --skip-plugins --skip-themes
+    wp --path="$WP_PATH" plugin activate matrix-component-importer matrix-sitemap-generator matrix-content-gathering/matrix-content-export.php --skip-plugins --skip-themes
     wp --path="$WP_PATH" theme activate matrix-starter --skip-plugins --skip-themes
     ```
 * **Composer Not Found:**
@@ -285,6 +283,7 @@ See **[docs/accessibility-basics.md](docs/accessibility-basics.md)** for WCAG 2.
 
 ### Documentation
 
+- **[Wiki (GitHub sync source)](docs/wiki/)** — project setup, flexi-install, daily flow, tests ([publish to GitHub Wiki](https://github.com/bernardhanna/matrix-starter/wiki/))
 - **[Coding guidelines](docs/coding-guidelines.md)** — layout (Grid over Flex), section structure, buttons, classes to avoid, naming
 - **[Accessibility basics](docs/accessibility-basics.md)** — WCAG 2.1 AA, theme focus classes, testing checklist
 - **[Desktop menu basics](docs/desktop-menu-basics.md)** — Navi, `#site-nav` section shell, logo, dropdown/mobile partials, ACF options

@@ -77,7 +77,7 @@ if (!in_array($heading_tag, ['h1', 'h2'], true)) {
                         <a
                             href="<?php echo esc_url($primary_cta['url']); ?>"
                             target="<?php echo esc_attr($primary_cta['target'] ?? '_self'); ?>"
-                            class="<?php echo esc_attr(matrix_pace_btn_classes('primary', ['full_mobile' => true])); ?> hero-cta gap-2.5"
+                            class="<?php echo esc_attr(matrix_btn_classes('primary', ['full_mobile' => true])); ?> hero-cta gap-2.5"
                         >
                             <?php echo esc_html($primary_cta['title'] ?: 'Explore the Resources Hub'); ?>
                             <?php if ($show_arrow) : ?>
@@ -89,7 +89,7 @@ if (!in_array($heading_tag, ['h1', 'h2'], true)) {
                         <a
                             href="<?php echo esc_url($secondary_cta['url']); ?>"
                             target="<?php echo esc_attr($secondary_cta['target'] ?? '_self'); ?>"
-                            class="<?php echo esc_attr(matrix_pace_btn_classes('secondary', ['full_mobile' => true])); ?> hero-cta"
+                            class="<?php echo esc_attr(matrix_btn_classes('secondary', ['full_mobile' => true])); ?> hero-cta"
                         >
                             <?php echo esc_html($secondary_cta['title'] ?: 'Read our latest news'); ?>
                         </a>

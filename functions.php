@@ -189,11 +189,6 @@ function matrix_global_site_search_query($query) {
 }
 add_action('pre_get_posts', 'matrix_global_site_search_query', 20);
 
-if (!function_exists('matrix_allowed_search_pdf_url')) {
-    function matrix_allowed_search_pdf_url(): string {
-        return 'https://sanctuaryrunners.s1.matrix-test.com/wp-content/uploads/2026/03/Code-of-Conduct-February-2026.pdf';
-    }
-}
 
 if (!function_exists('matrix_normalize_search_title')) {
     function matrix_normalize_search_title(string $raw_title): string {
