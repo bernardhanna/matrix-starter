@@ -1,98 +1,73 @@
 <?php
 /**
- * Singular template — PACE subhero + pace-prose body.
+ * Singular template — ACF hero when set, otherwise a simple title header.
  *
  * @package Matrix_Starter
  */
 
 get_header();
 ?>
-<main id="main-content" class="site-main w-full overflow-hidden bg-white font-montserrat">
+<main id="main-content" class="site-main w-full overflow-hidden bg-white">
 <?php if (have_posts()) : ?>
     <?php while (have_posts()) : the_post(); ?>
         <?php
-        $post_id   = get_the_ID();
+        $post_id   = (int) get_the_ID();
         $post_type = get_post_type($post_id);
 
-        if ($post_type === 'post') {
-            $subhero_args = matrix_pace_post_single_subhero_args($post_id);
-        } elseif ($post_type === 'resource') {
-            $subhero_args = matrix_pace_resource_single_subhero_args($post_id);
-        } else {
-            $post_type_obj = get_post_type_object($post_type);
-            $archive_label = ($post_type_obj && !empty($post_type_obj->labels->name))
-                ? (string) $post_type_obj->labels->name
-                : 'Archive';
-            $archive_url = get_post_type_archive_link($post_type) ?: home_url('/');
-            $excerpt     = trim((string) get_the_excerpt($post_id));
+        $has_hero = function_exists('have_rows') && have_rows('hero_content_blocks', $post_id);
 
-            $subhero_args = matrix_pace_singular_subhero_args([
-                'kicker'      => strtoupper($archive_label),
-                'title'       => (string) get_the_title($post_id),
-                'description' => $excerpt !== '' ? '<p>' . esc_html($excerpt) . '</p>' : '',
-                'breadcrumbs' => [
-                    [
-                        'title'      => __('Home', 'matrix-starter'),
-                        'url'        => home_url('/'),
-                        'is_current' => false,
-                    ],
-                    [
-                        'title'      => $archive_label,
-                        'url'        => (string) $archive_url,
-                        'is_current' => false,
-                    ],
-                    [
-                        'title'      => (string) get_the_title($post_id),
-                        'url'        => '',
-                        'is_current' => true,
-                    ],
-                ],
+        if ($has_hero && function_exists('load_hero_templates')) {
+            load_hero_templates($post_id);
+        } else {
+            get_template_part('template-parts/single/header', null, [
+                'post_id' => $post_id,
             ]);
         }
 
-        get_template_part('template-parts/hero/subhero', null, $subhero_args);
-
-        $share_urls = matrix_pace_post_share_urls($post_id);
+        $share_urls = function_exists('matrix_post_share_urls')
+            ? matrix_post_share_urls($post_id)
+            : [];
         ?>
 
-        <div class="<?php echo esc_attr(matrix_pace_content_container_classes()); ?>">
-            <div class="mx-auto w-full max-w-[720px]">
-                <?php
-                get_template_part('template-parts/single/share', null, [
-                    'urls'     => $share_urls,
-                    'position' => 'top',
-                ]);
-                ?>
+        <div class="<?php echo esc_attr(matrix_content_container_classes()); ?>">
+            <div class="<?php echo esc_attr(matrix_content_single_inner_classes()); ?>">
+                <?php if ($share_urls !== []) : ?>
+                    <?php
+                    get_template_part('template-parts/single/share', null, [
+                        'urls'     => $share_urls,
+                        'position' => 'top',
+                    ]);
+                    ?>
+                <?php endif; ?>
 
-                <article class="<?php echo esc_attr(matrix_pace_content_article_classes()); ?>">
-                    <div class="entry-content">
-                        <?php the_content(); ?>
-                    </div>
+                <article <?php post_class(matrix_content_article_classes()); ?> id="post-<?php echo esc_attr((string) $post_id); ?>">
+                    <?php the_content(); ?>
                 </article>
 
-                <?php
-                get_template_part('template-parts/single/share', null, [
-                    'urls'     => $share_urls,
-                    'position' => 'bottom',
-                ]);
-                ?>
+                <?php if ($share_urls !== []) : ?>
+                    <?php
+                    get_template_part('template-parts/single/share', null, [
+                        'urls'     => $share_urls,
+                        'position' => 'bottom',
+                    ]);
+                    ?>
+                <?php endif; ?>
             </div>
         </div>
 
         <?php if ($post_type === 'post') : ?>
             <?php get_template_part('template-parts/single/related-posts'); ?>
-            <?php
-            $newsletter = locate_template('template-parts/flexi/newsletter_001.php');
-            if ($newsletter !== '') {
-                get_template_part('template-parts/flexi/newsletter_001');
-            }
-            ?>
+
+            <?php if (locate_template('template-parts/flexi/newsletter_001.php') !== '') : ?>
+                <?php get_template_part('template-parts/flexi/newsletter_001'); ?>
+            <?php endif; ?>
         <?php endif; ?>
 
+        <?php load_flexible_content_templates($post_id); ?>
     <?php endwhile; ?>
 <?php else : ?>
     <section class="py-16">
-        <div class="mx-auto w-full max-w-[1280px] px-5 text-center font-comfortaa text-[18px] text-[#1d1d1d]">
+        <div class="mx-auto w-full max-w-[1280px] px-5 text-center">
             <p><?php esc_html_e('No content found.', 'matrix-starter'); ?></p>
         </div>
     </section>

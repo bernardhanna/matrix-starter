@@ -6,7 +6,7 @@
  */
 ?>
 <article
-    <?php post_class(matrix_pace_content_article_classes()); ?>
+    <?php post_class(matrix_content_article_classes()); ?>
     id="post-<?php the_ID(); ?>"
 >
     <div class="entry-content">

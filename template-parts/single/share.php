@@ -1,6 +1,6 @@
 <?php
 /**
- * Post share row — Facebook, LinkedIn, Bluesky.
+ * Post share row.
  *
  * @package Matrix_Starter
  *
@@ -17,8 +17,8 @@ $position = (string) ($args['position'] ?? 'top');
 
 if ($urls === []) {
     $post_id = get_the_ID();
-    if ($post_id && function_exists('matrix_pace_post_share_urls')) {
-        $urls = matrix_pace_post_share_urls((int) $post_id);
+    if ($post_id && function_exists('matrix_post_share_urls')) {
+        $urls = matrix_post_share_urls((int) $post_id);
     }
 }
 
@@ -27,8 +27,8 @@ if ($urls === []) {
 }
 
 $wrap_class = $position === 'bottom'
-    ? 'pace-post-share pace-post-share--bottom mt-12 border-t border-[#ecf0f4] pt-10 md:mt-16 md:pt-12'
-    : 'pace-post-share pace-post-share--top mb-8 md:mb-10';
+    ? 'post-share post-share--bottom mt-12 border-t border-[#ecf0f4] pt-10 md:mt-16 md:pt-12'
+    : 'post-share post-share--top mb-8 md:mb-10';
 
 $networks = [
     'facebook' => __('Share on Facebook', 'matrix-starter'),
@@ -38,7 +38,7 @@ $networks = [
 ?>
 <div class="<?php echo esc_attr($wrap_class); ?>" role="group" aria-label="<?php esc_attr_e('Share this article', 'matrix-starter'); ?>">
     <div class="flex flex-wrap items-center gap-4">
-        <span class="font-montserrat text-[14px] font-semibold leading-[21px] text-[#003b65]">
+        <span class="text-sm font-semibold text-[#003b65]">
             <?php esc_html_e('Share', 'matrix-starter'); ?>
         </span>
         <div class="flex flex-wrap items-center gap-3">
@@ -49,14 +49,14 @@ $networks = [
                 ?>
                 <a
                     href="<?php echo esc_url($urls[$key]); ?>"
-                    class="<?php echo esc_attr(matrix_pace_btn_classes('share')); ?> inline-flex items-center justify-center"
+                    class="<?php echo esc_attr(matrix_btn_classes('share')); ?> inline-flex items-center justify-center"
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="<?php echo esc_attr($label); ?>"
                 >
                     <?php
-                    if (function_exists('matrix_pace_share_icon_svg')) {
-                        echo matrix_pace_share_icon_svg($key); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                    if (function_exists('matrix_share_icon_svg')) {
+                        echo matrix_share_icon_svg($key); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                     }
                     ?>
                 </a>

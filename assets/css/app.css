@@ -81,7 +81,7 @@ body {
 
 @layer components {
   /*
-   * PACE buttons — use matrix_pace_btn_classes() or variant classes explicitly.
+   * Theme buttons — use matrix_btn_classes() or variant classes explicitly.
    * Bare .btn has no hover fill (avoids accidental tint on logos / nav wrappers).
    */
   .btn {
