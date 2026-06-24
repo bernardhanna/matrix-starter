@@ -14,11 +14,33 @@ $is_people_archive = is_post_type_archive('people');
 $is_faq_archive    = is_post_type_archive('faq');
 $is_post_archive   = is_category() || is_tag() || is_author() || is_date() || is_search();
 
-if ($is_post_archive) {
-    $term = $queried_object instanceof WP_Term ? $queried_object : null;
-    get_template_part('template-parts/hero/subhero', null, matrix_pace_blog_subhero_args($term));
-    get_template_part('template-parts/blog/pace-listing');
-    get_template_part('template-parts/flexi/newsletter_001');
+if ($is_faq_archive) {
+    get_template_part('template-parts/header/page-header-rd');
+    ?>
+    <div class="bg-white w-full overflow-hidden">
+      <div class="px-4 mx-auto lg:max-w-max-1549">
+        <?php
+        get_template_part('template-parts/pages/faqs-all', null, [
+            'show_view_all' => false,
+        ]);
+        ?>
+      </div>
+      <?php get_template_part('template-parts/footer/site-links'); ?>
+    </div>
+    <?php
+} elseif ($is_post_archive) {
+    get_template_part('template-parts/header/page-header-rd');
+    ?>
+    <div class="px-4 mx-auto max-w-max-1596 desktop:px-0 bg-white">
+      <?php
+      if (is_home()) {
+          get_template_part('template-parts/blog/featured');
+      }
+      get_template_part('template-parts/blog/archive');
+      ?>
+    </div>
+    <?php
+    get_template_part('template-parts/footer/site-links');
 } else {
     $archive_title = is_category()
         ? single_cat_title('', false)

@@ -33,7 +33,7 @@ function matrix_acf_relaxed_post_types(): array {
  * @return list<string>
  */
 function matrix_acf_relaxed_builder_field_names(): array {
-    return ['flexible_content_blocks', 'hero_content_blocks'];
+    return ['flexible_content_blocks', 'flexible_content', 'hero_content_blocks'];
 }
 
 /**

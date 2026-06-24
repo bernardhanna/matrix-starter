@@ -1,0 +1,180 @@
+{
+  "mode": "full",
+  "baseUrl": "http://localhost:10029",
+  "scannedAt": "2026-06-23T10:04:54.625Z",
+  "pagesScanned": 11,
+  "minScoreRequired": 80,
+  "lowestScore": 97,
+  "totalViolations": 6,
+  "navigationFailures": 0,
+  "results": [
+    {
+      "url": "http://localhost:10029/",
+      "violationCount": 1,
+      "score": 97,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                "#productContentOne > .pb-0.leading-8.lg\\:font-reg420"
+              ],
+              "html": "<h4 class=\"text-sm-md-font lg:text-md-font font-regular z-10 pb-0 text-center leading-8 text-white lg:pb-6 lg:text-left lg:font-reg420 lg:md-font\" x-transition.delay.150ms=\"\">\n                      Large Sourdough Donuts                    </h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/about-us/",
+      "violationCount": 0,
+      "score": 100,
+      "violations": []
+    },
+    {
+      "url": "http://localhost:10029/our-shops/",
+      "violationCount": 1,
+      "score": 97,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                ".location-item.mobile\\:border-black.mobile\\:border-4:nth-child(1) > .mobile\\:w-3\\/5.lg\\:w-2\\/3.lg\\:-top-4 > .mobile\\:pt-0.pt-10.flex-col > .max-mobile\\:order-1.max-mobile\\:hidden"
+              ],
+              "html": "<h4 class=\"w-full pt-3 leading-normal max-mobile:order-1 max-mobile:hidden text-font-28 tablet-sm:text-md-font font-reg420 text-black-full\">The Rolling Donut Bachelors Walk</h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/our-donuts/",
+      "violationCount": 1,
+      "score": 97,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                ".post-2070 > .max-md\\:rounded-t-lg[x-data=\"{ isHovered: false }\"][href$=\"donut-box/\"] > .max-md.md\\:pt-4.flex-col > .md\\:mt-2.max-md\\:flex-col.max-md\\:p-4 > .text-mob-md-font.lg\\:text-sm-md-font"
+              ],
+              "html": "<h4 class=\"block text-center text-black-full text-mob-md-font lg:text-sm-md-font font-reg420 font-edmondsans\">Apple Crumble</h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/contact-us/",
+      "violationCount": 1,
+      "score": 97,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                "h4"
+              ],
+              "html": "<h4 class=\"pb-4 lg:pt-0 lg:p-0 lg:text-lg-font text-lg-font font-reg420 lg:text-leading-10\">FAQS</h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/weddings-events/",
+      "violationCount": 1,
+      "score": 97,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                ".max-w-\\[1368px\\] > h4"
+              ],
+              "html": "<h4 class=\"leading-10 text-white text-md-font lg:text-lg-font font-reg420\">Wedding Testimonials</h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/frequently-asked-questions/",
+      "violationCount": 1,
+      "score": 97,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                "h4"
+              ],
+              "html": "<h4 class=\"pb-4 lg:text-lg-font text-lg-font font-reg420 lg:text-leading-10\">FAQs</h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/product/custom-order/",
+      "violationCount": 0,
+      "score": 100,
+      "violations": []
+    },
+    {
+      "url": "http://localhost:10029/cart/",
+      "violationCount": 0,
+      "score": 100,
+      "violations": []
+    },
+    {
+      "url": "http://localhost:10029/careers/",
+      "violationCount": 0,
+      "score": 100,
+      "violations": []
+    },
+    {
+      "url": "http://localhost:10029/accessibility/",
+      "violationCount": 0,
+      "score": 100,
+      "violations": []
+    }
+  ]
+}

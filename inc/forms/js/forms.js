@@ -116,7 +116,8 @@
 
               if (ok) {
                 form.dataset.sent = '1';
-                showBanner(form, 'Thanks! Your message has been sent.', true);
+                const successMsg = form.getAttribute('data-success-message') || 'Thanks! Your message has been sent.';
+                showBanner(form, successMsg, true);
                 form.reset();
                 // Reset Turnstile invisible widget if one was rendered
                 if (window.turnstile && form._tsWidgetId) {

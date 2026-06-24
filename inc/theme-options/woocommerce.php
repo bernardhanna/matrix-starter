@@ -72,6 +72,17 @@ $woocommerce
 
     // Accordion: Cart
     ->addAccordion('cart_settings', ['label' => 'Cart Page Settings', 'open' => false])
+        ->addSelect('rd_cart_feedback_mode', [
+            'label'         => 'Add to Cart Feedback',
+            'instructions'  => 'Choose how customers are notified after adding items. Side cart slides in from the right (similar to Side Cart WooCommerce). Popup shows the legacy centred overlay.',
+            'choices'       => [
+                'popup'     => 'Popup notification (legacy)',
+                'side_cart' => 'Side cart slide-out',
+            ],
+            'default_value' => 'popup',
+            'ui'            => 1,
+            'return_format' => 'value',
+        ])
         ->addTrueFalse('hide_cart_hero', [
             'label' => 'Hide Hero/Header',
             'ui'    => true,
@@ -91,6 +102,24 @@ $woocommerce
             'label' => 'Hide Login Prompt',
             'ui'    => true,
         ])
+        ->addImage('ty_bg', [
+            'label'         => 'Thank You Page Background',
+            'instructions'  => 'Repeating pattern behind the order confirmation page. Leave empty for a solid background.',
+            'return_format' => 'id',
+            'preview_size'  => 'medium',
+            'library'       => 'all',
+        ])
+
+    // Accordion: My Account
+    ->addAccordion('myaccount_settings', ['label' => 'My Account Page', 'open' => false])
+        ->addImage('myaccount_bg', [
+            'label'         => 'Page Background Image',
+            'instructions'  => 'Repeating pattern behind the My Account page (tabs, orders, addresses, etc.). Leave empty for a solid black background when logged in.',
+            'return_format' => 'id',
+            'preview_size'  => 'medium',
+            'library'       => 'all',
+        ])
+
 ->addAccordion('woo_email_branding', ['label' => 'Email Branding', 'open' => false])
 
     ->addTrueFalse('woo_email_enforce', [

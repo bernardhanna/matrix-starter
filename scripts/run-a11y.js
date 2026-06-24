@@ -18,14 +18,19 @@ const cliUrl = process.argv[3];
 const base = cliUrl || process.env.BASE_URL || process.env.WP_HOME || 'http://localhost:10014/';
 const baseUrl = new URL(base).href.replace(/\/$/, '');
 
-const quickPaths = ['/', '/about/', '/events/', '/contact/'];
+const quickPaths = ['/', '/about-us/', '/our-donuts/', '/contact-us/'];
 const fullPaths = [
   '/',
-  '/about/',
-  '/events/',
-  '/contact/',
-  '/resources/',
-  '/partners/',
+  '/about-us/',
+  '/our-shops/',
+  '/our-donuts/',
+  '/contact-us/',
+  '/weddings-events/',
+  '/frequently-asked-questions/',
+  '/product/custom-order/',
+  '/cart/',
+  '/careers/',
+  '/accessibility/',
 ];
 
 const pathsToScan = mode === 'full' ? fullPaths : quickPaths;

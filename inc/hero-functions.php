@@ -43,6 +43,10 @@ function load_hero_templates($post_id = null)
     $post_id = is_home() ? get_option('page_for_posts') : get_the_ID();
   }
 
+  if (function_exists('matrix_rd_skip_pace_hero') && matrix_rd_skip_pace_hero((int) $post_id)) {
+    return;
+  }
+
   // Debugging: Log which page ID is being used
   error_log("Loading Hero Templates for Post ID: " . $post_id);
 

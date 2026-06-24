@@ -1,0 +1,45 @@
+/**
+ * Rolling Donut brand typography (Edmondsans + Laca via CDN Fonts).
+ * Loads after matrix-starter so body copy matches legacy site.
+ */
+
+html,
+body {
+  font-family: Edmondsans, edmondsans, sans-serif;
+}
+
+.font-edmondsans,
+.font-reg420 {
+  font-family: Edmondsans, edmondsans, sans-serif;
+}
+
+.font-laca,
+.font-lighter {
+  font-family: Laca, Montserrat, sans-serif;
+}
+
+.font-reg420 {
+  font-weight: 420;
+}
+
+.font-lighter {
+  font-weight: 250;
+}
+
+.font-regular {
+  font-weight: 400;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-bolder {
+  font-weight: 600;
+}
+
+#site-nav,
+#site-nav .btn-menu,
+.rd-topbar {
+  font-family: Edmondsans, edmondsans, sans-serif;
+}

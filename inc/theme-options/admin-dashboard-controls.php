@@ -33,7 +33,46 @@ add_action('admin_menu', function () {
         remove_menu_page('edit.php?post_type=acf-field-group');
         remove_menu_page('acf-settings-tools');
     }
+
+    if (matrix_admin_control_enabled('hide_wpclever_menu')) {
+        remove_menu_page('wpclever');
+    }
+
+    if (matrix_admin_control_enabled('hide_getwooplugins_menu')) {
+        remove_menu_page('getwooplugins');
+    }
+
+    if (matrix_admin_control_enabled('hide_easywpsmtp_menu')) {
+        remove_menu_page('easy-wp-smtp');
+    }
 }, 999);
+
+/**
+ * Move WooCommerce to the top of the admin menu so it is the first option.
+ * Products is promoted alongside it so the store tools stay grouped together.
+ */
+add_filter('custom_menu_order', '__return_true');
+add_filter('menu_order', function ($menu_order) {
+    if (!is_array($menu_order)) {
+        return $menu_order;
+    }
+
+    $promote = ['woocommerce', 'edit.php?post_type=product'];
+    $promoted = [];
+    foreach ($promote as $slug) {
+        $index = array_search($slug, $menu_order, true);
+        if ($index !== false) {
+            $promoted[] = $slug;
+            unset($menu_order[$index]);
+        }
+    }
+
+    if (empty($promoted)) {
+        return $menu_order;
+    }
+
+    return array_merge($promoted, array_values($menu_order));
+});
 
 add_action('admin_bar_menu', function ($wp_admin_bar) {
     if (!($wp_admin_bar instanceof WP_Admin_Bar)) {

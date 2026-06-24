@@ -63,6 +63,8 @@ module.exports = {
         secondary: ['Playfair', 'serif'],
         montserrat: [`var(--font-montserrat, '${THEME_TOKENS.font.montserrat}')`, 'sans-serif'],
         comfortaa: [`var(--font-comfortaa, '${THEME_TOKENS.font.comfortaa}')`, 'sans-serif'],
+        edmondsans: ['Edmondsans', 'edmondsans', 'sans-serif'],
+        laca: ['Laca', 'Montserrat', 'sans-serif'],
       },
       colors: {
         slate: {
@@ -136,6 +138,10 @@ module.exports = {
           'interactive-text': `var(--color-state-interactive-text, ${THEME_TOKENS.state.interactiveText})`,
           focus: `var(--color-state-focus, ${THEME_TOKENS.state.focusRing})`,
         },
+        'black-full': '#000000',
+        'black-border-solid': '#000000',
+        'yellow-primary': '#ffed56',
+        'red-critical': '#f55959',
       },
       backgroundColor: {
         'hover': '#F6F6F6', // Now available as hover:bg-hover-bg
@@ -147,6 +153,21 @@ module.exports = {
         'xs': '14px',
         base: '16px',
         wp_editor_p: '20px',
+        'reg-font': '1.25rem',
+        'sm-md-font': '24px',
+        'text-tiny': '10px',
+        'text-sm-md-font': '24px',
+      },
+      fontWeight: {
+        reg420: '420',
+      },
+      height: {
+        nav: '165px',
+      },
+      zIndex: {
+        99: '99',
+        100: '100',
+        1000: '1000',
       },
       width: {
         'container-md': '1084px',
@@ -154,6 +175,12 @@ module.exports = {
         'container': '1280px',
       },
       maxWidth: {
+        'max-1182': '73.875rem',
+        'max-1549': '96.8125rem',
+        'max-95': '95%',
+        'max-242': '15.125rem',
+        'max-128': '6rem',
+        sitewidth: '107.875rem',
         'container': '70rem',
         'xxs': '320px',
         'xs': '480px',
@@ -205,10 +232,15 @@ module.exports = {
       mob: '575px',
       sm: '640px',
       md: '768px',
-      tab: '993px', 
+      tab: '993px',
+      'tablet-sm': '993px',
       lg: '1084px',
+      nav: '1150px',
+      laptop: '1250px',
       xl: '1280px',
       xxl: '1440px',
+      desktop: '1628px',
+      'one-xl': '1600px',
       ultrawide: '1920px',
     },
     container: {
@@ -245,6 +277,11 @@ module.exports = {
       addVariant('hocus', ['&:hover', '&:focus-visible']);
 
       addUtilities({
+        // Legacy donut "hard" card shadow (matches therollingdonut.ie cards/forms).
+        // Registered as a utility so responsive variants (e.g. md:boxshadow-two) compile.
+        '.boxshadow-two': {
+          boxShadow: '0px 8px 0px 0px rgba(0, 0, 0, 0.25)',
+        },
         '.a11y-focus': {
           outline: 'none',
         },
@@ -255,6 +292,22 @@ module.exports = {
         '.tap-target': {
           minWidth: `var(--size-touch-target, ${THEME_TOKENS.size.touchTarget})`,
           minHeight: `var(--size-touch-target, ${THEME_TOKENS.size.touchTarget})`,
+        },
+        /* Beat legacy `.featured-donuts .splide__arrows { display: none }` at <=1084px */
+        '.featured-donuts .splide__arrows': {
+          display: 'flex !important',
+        },
+        '.featured-donuts .splide__arrow': {
+          position: 'relative !important',
+          top: 'auto !important',
+          left: 'auto !important',
+          right: 'auto !important',
+          transform: 'none !important',
+          background: 'transparent !important',
+          opacity: '1 !important',
+        },
+        '.featured-donuts .splide__arrow svg': {
+          display: 'block !important',
         },
       });
     }),

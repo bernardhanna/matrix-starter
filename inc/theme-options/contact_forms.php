@@ -85,6 +85,27 @@ $forms_opts
   ->addText('turnstile_secret_key', [
     'label'            => 'Turnstile Secret Key',
     'conditional_logic'=> [[['field' => 'captcha_provider','operator'=>'==','value'=>'turnstile']]],
+  ])
+
+  ->addMessage('autoresponder_info', 'Autoresponder', [
+    'message' => 'Theme forms use the same user autoresponder copy as Gravity Forms (imported automatically per form ID). Override below only if you need to change the Contact Us email after removing Gravity Forms.',
+  ])
+  ->addTrueFalse('contact_autoresponder_override', [
+    'label'         => 'Override Contact Us autoresponder',
+    'instructions'  => 'When enabled, replaces the imported Gravity Forms user notification for form #33.',
+    'default_value' => 0,
+    'ui'            => 1,
+  ])
+  ->addText('contact_autoresponder_subject', [
+    'label'             => 'Contact autoresponder subject',
+    'default_value'     => 'We have received your inquiry',
+    'conditional_logic' => [[['field' => 'contact_autoresponder_override', 'operator' => '==', 'value' => '1']]],
+  ])
+  ->addTextarea('contact_autoresponder_message', [
+    'label'             => 'Contact autoresponder message',
+    'rows'              => 4,
+    'default_value'     => 'Thank you for getting in touch. We have received your inquiry and will get back to you within one business day.',
+    'conditional_logic' => [[['field' => 'contact_autoresponder_override', 'operator' => '==', 'value' => '1']]],
   ]);
 
 if (!function_exists('matrix_get_brevo_api_key')) {

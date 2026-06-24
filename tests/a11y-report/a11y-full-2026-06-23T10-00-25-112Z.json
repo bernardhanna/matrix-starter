@@ -1,0 +1,227 @@
+{
+  "mode": "full",
+  "baseUrl": "http://localhost:10029",
+  "scannedAt": "2026-06-23T10:01:07.520Z",
+  "pagesScanned": 10,
+  "minScoreRequired": 80,
+  "lowestScore": 93,
+  "totalViolations": 8,
+  "navigationFailures": 0,
+  "results": [
+    {
+      "url": "http://localhost:10029/",
+      "violationCount": 3,
+      "score": 93,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                "#productContentOne > .pb-0.leading-8.lg\\:font-reg420"
+              ],
+              "html": "<h4 class=\"text-sm-md-font lg:text-md-font font-regular z-10 pb-0 text-center leading-8 text-white lg:pb-6 lg:text-left lg:font-reg420 lg:md-font\" x-transition.delay.150ms=\"\">\n                      Large Sourdough Donuts                    </h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        },
+        {
+          "id": "image-redundant-alt",
+          "impact": "minor",
+          "description": "Ensure image alternative is not repeated as text",
+          "help": "Alternative text of images should not be repeated as text",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/image-redundant-alt?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                "#featured-slider-slide01 > .featured-slide.tablet-sm\\:flex-row.pb-8 > .tablet-sm\\:w-1\\/2.laptop\\:h-\\[800px\\].h-auto > .h-full.flex-col.items-center > .mt-12.max-tablet-sm\\:p-8.pb-12 > .allergen-list > .pb-\\[12px\\]:nth-child(1) > .allergen-img.mr-\\[10px\\][alt=\"Milk\"]"
+              ],
+              "html": "<img src=\"http://localhost:10029/wp-content/uploads/2023/08/Property-1milk.png\" alt=\"Milk\" class=\"allergen-img mr-[10px]\">",
+              "failureSummary": "Fix all of the following:\n  Element contains <img> element with alt text that duplicates existing text"
+            },
+            {
+              "target": [
+                "#featured-slider-slide01 > .featured-slide.tablet-sm\\:flex-row.pb-8 > .tablet-sm\\:w-1\\/2.laptop\\:h-\\[800px\\].h-auto > .h-full.flex-col.items-center > .mt-12.max-tablet-sm\\:p-8.pb-12 > .allergen-list > .pb-\\[12px\\]:nth-child(2) > .allergen-img.mr-\\[10px\\][alt=\"Soybeans\"]"
+              ],
+              "html": "<img src=\"http://localhost:10029/wp-content/uploads/2023/08/Frame-1742.png\" alt=\"Soybeans\" class=\"allergen-img mr-[10px]\">",
+              "failureSummary": "Fix all of the following:\n  Element contains <img> element with alt text that duplicates existing text"
+            },
+            {
+              "target": [
+                "img[alt=\"Nuts\"]"
+              ],
+              "html": "<img src=\"http://localhost:10029/wp-content/uploads/2023/08/Property-1contains-nutsmixed.png\" alt=\"Nuts\" class=\"allergen-img mr-[10px]\">",
+              "failureSummary": "Fix all of the following:\n  Element contains <img> element with alt text that duplicates existing text"
+            },
+            {
+              "target": [
+                "#featured-slider-slide01 > .featured-slide.tablet-sm\\:flex-row.pb-8 > .tablet-sm\\:w-1\\/2.laptop\\:h-\\[800px\\].h-auto > .h-full.flex-col.items-center > .mt-12.max-tablet-sm\\:p-8.pb-12 > .allergen-list > .pb-\\[12px\\]:nth-child(4) > .allergen-img.mr-\\[10px\\][alt=\"Cereals\"]"
+              ],
+              "html": "<img src=\"http://localhost:10029/wp-content/uploads/2023/08/Frame-1739.png\" alt=\"Cereals\" class=\"allergen-img mr-[10px]\">",
+              "failureSummary": "Fix all of the following:\n  Element contains <img> element with alt text that duplicates existing text"
+            }
+          ]
+        },
+        {
+          "id": "landmark-unique",
+          "impact": "moderate",
+          "description": "Ensure landmarks are unique",
+          "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-unique?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                "#featured-slider"
+              ],
+              "html": "<div class=\"splide relative overflow-visible tablet-sm:[&_.splide__pagination]:hidden splide--fade splide--ltr splide--draggable is-active is-overflow is-initialized\" id=\"featured-slider\" role=\"region\" aria-roledescription=\"carousel\">",
+              "failureSummary": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/about-us/",
+      "violationCount": 0,
+      "score": 100,
+      "violations": []
+    },
+    {
+      "url": "http://localhost:10029/our-shops/",
+      "violationCount": 1,
+      "score": 97,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                ".location-item.mobile\\:border-black.mobile\\:border-4:nth-child(1) > .mobile\\:w-3\\/5.lg\\:w-2\\/3.lg\\:-top-4 > .mobile\\:pt-0.pt-10.flex-col > .max-mobile\\:order-1.max-mobile\\:hidden"
+              ],
+              "html": "<h4 class=\"w-full pt-3 leading-normal max-mobile:order-1 max-mobile:hidden text-font-28 tablet-sm:text-md-font font-reg420 text-black-full\">The Rolling Donut Bachelors Walk</h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/our-donuts/",
+      "violationCount": 1,
+      "score": 97,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                ".post-2070 > .max-md\\:rounded-t-lg[x-data=\"{ isHovered: false }\"][href$=\"donut-box/\"] > .max-md.md\\:pt-4.flex-col > .md\\:mt-2.max-md\\:flex-col.max-md\\:p-4 > .text-mob-md-font.lg\\:text-sm-md-font"
+              ],
+              "html": "<h4 class=\"block text-center text-black-full text-mob-md-font lg:text-sm-md-font font-reg420 font-edmondsans\">Apple Crumble</h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/contact-us/",
+      "violationCount": 1,
+      "score": 97,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                "h4"
+              ],
+              "html": "<h4 class=\"pb-4 lg:pt-0 lg:p-0 lg:text-lg-font text-lg-font font-reg420 lg:text-leading-10\">FAQS</h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/weddings-events/",
+      "violationCount": 1,
+      "score": 97,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                ".max-w-\\[1368px\\] > h4"
+              ],
+              "html": "<h4 class=\"leading-10 text-white text-md-font lg:text-lg-font font-reg420\">Wedding Testimonials</h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/frequently-asked-questions/",
+      "violationCount": 1,
+      "score": 97,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "description": "Ensure the order of headings is semantically correct",
+          "help": "Heading levels should only increase by one",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "nodes": [
+            {
+              "target": [
+                "h4"
+              ],
+              "html": "<h4 class=\"pb-4 lg:text-lg-font text-lg-font font-reg420 lg:text-leading-10\">FAQs</h4>",
+              "failureSummary": "Fix any of the following:\n  Heading order invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:10029/product/custom-order/",
+      "violationCount": 0,
+      "score": 100,
+      "violations": []
+    },
+    {
+      "url": "http://localhost:10029/cart/",
+      "violationCount": 0,
+      "score": 100,
+      "violations": []
+    },
+    {
+      "url": "http://localhost:10029/careers/",
+      "violationCount": 0,
+      "score": 100,
+      "violations": []
+    }
+  ]
+}

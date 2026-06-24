@@ -95,23 +95,7 @@ add_action('template_redirect', function () {
     }
 });
 
-// 7) AJAX cart count fragment
-add_filter('woocommerce_add_to_cart_fragments', function ($fragments) {
-    $count = (function_exists('WC') && WC()->cart) ? (int) WC()->cart->get_cart_contents_count() : 0;
-
-    ob_start(); ?>
-    <span
-      class="woocommerce-cart-count <?php echo $count > 0 ? 'inline-flex justify-center items-center py-1 font-bold leading-none text-white rounded-full lg:px-2 lg:ml-2 bg-primary' : 'hidden'; ?>"
-      aria-live="polite"
-      aria-atomic="true"
-    >
-      <?php echo $count > 0 ? esc_html($count) : ''; ?>
-    </span>
-    <?php
-
-    $fragments['.woocommerce-cart-count'] = ob_get_clean();
-    return $fragments;
-});
+// 7) Header cart badge/total sync via Alpine (rolling-donut-navbar.js), not WC fragment replacement.
 
 // 8) WooCommerce cart fragments (front-end only)
 add_action('wp_enqueue_scripts', function () {
@@ -130,7 +114,7 @@ add_filter('script_loader_tag', function ($tag, $handle) {
         'wc-country-select','wc-address-i18n',
         'selectWoo','jquery-blockui','jquery-payment',
         'wc-add-to-cart-variation','wc-password-strength-meter',
-        'wc-credit-card-form','wc-cart-fragments'
+        'wc-credit-card-form','wc-cart','wc-cart-fragments'
     ];
     if (in_array($handle, $no_defer, true)) return $tag;
 
@@ -205,6 +189,18 @@ add_filter('loop_shop_per_page', function($cols) { return 15; }, 20);
 remove_action('woocommerce_before_main_content', 'woocommerce_output_content_wrapper', 10);
 remove_action('woocommerce_after_main_content',  'woocommerce_output_content_wrapper_end', 10);
 
+// Re-add a semantic <main> landmark so WooCommerce templates (shop, single
+// product, box builder) expose one main landmark and a working skip-link target
+// (a11y: landmark-one-main, skip-link, bypass blocks). Cart/checkout/account use
+// page.php which already provides <main id="main-content">, and they do not fire
+// these hooks, so there is no duplicate main.
+add_action('woocommerce_before_main_content', function () {
+    echo '<main id="main-content" class="site-main w-full overflow-hidden" tabindex="-1">';
+}, 0);
+add_action('woocommerce_after_main_content', function () {
+    echo '</main>';
+}, 100);
+
 // Cart hero
 add_action('woocommerce_before_main_content', 'matrix_add_cart_hero_section', 5);
 function matrix_add_cart_hero_section() {
@@ -238,231 +234,14 @@ add_filter('body_class', function ($classes) {
   return $classes;
 });
 
-/* =========================
- * SAFE CHECKOUT TWEAKS (no form restructuring)
- * ========================= */
+// Checkout legacy parity lives in inc/rolling-donut-checkout.php.
 
-// Wrap the whole checkout area (outside the <form>)
-add_action('woocommerce_before_checkout_form', function () {
-  if (!is_checkout()) return;
-  echo '<div class="px-6 mx-auto max-w-[1140px]">';
-  echo '  <h1 class="text-[2.125rem] font-semibold text-[#0A1119]">Checkout</h1>';
-  echo '  <div class="mt-6">'; // keep structure simple; do columns in CSS
-}, 0);
-
-add_action('woocommerce_after_checkout_form', function () {
-  if (!is_checkout()) return;
-  echo '  </div>'; // .mt-6
-  echo '</div>';    // container
-}, 0);
-
-// Make sure Woo notices render (errors/validation/etc.)
-add_action('woocommerce_before_checkout_form', 'woocommerce_output_all_notices', 5);
-
-// Shipping heading
-add_action('woocommerce_before_checkout_shipping_form', function () {
-  echo '<h2 class="mb-4 text-xl font-medium text-[#0A1119]">Shipping details</h2>';
-}, 5);
-
-// Order review heading (wording)
-add_filter('woocommerce_order_review_heading', fn() => __('Order summary', 'woocommerce'));
-
-// Checkout body class for CSS scoping
-add_filter('body_class', function ($classes) {
-  if (function_exists('is_checkout') && is_checkout()) $classes[] = 'tw-checkout';
-  return $classes;
+// MY ACCOUNT
+add_filter('woocommerce_account_menu_items', function (array $items): array {
+  unset($items['downloads']);
+  return $items;
 });
 
-// Order summary thumbnails
-add_filter('woocommerce_cart_item_name', function ($name, $cart_item, $cart_key) {
-  if (!is_checkout()) return $name;
-  $thumb = apply_filters('woocommerce_cart_item_thumbnail', $cart_item['data']->get_image('thumbnail'), $cart_item, $cart_key);
-  return '<div class="flex gap-3 items-start">'.
-           '<div class="overflow-hidden w-14 h-14 rounded border border-gray-200 shrink-0">'.$thumb.'</div>'.
-           '<div>'.$name.'</div>'.
-         '</div>';
-}, 10, 3);
-
-/* --- Shipping toggle defaults --- */
-
-// Default to "Deliver to a different address" unchecked
-add_filter('pre_option_woocommerce_ship_to_destination', function ($val) {
-  return is_checkout() ? 'billing' : $val;
-}, 99);
-
-add_filter('woocommerce_ship_to_different_address_checked', function ($checked) {
-  if (isset($_POST['ship_to_different_address'])) {
-    return (bool) $_POST['ship_to_different_address'];
-  }
-  return false;
-}, 999);
-
-// Optional: rename the checkbox label
-add_filter('gettext', function ($translated, $text, $domain) {
-  if ($domain === 'woocommerce' && $text === 'Ship to a different address?') {
-    return __('Deliver to a different address', 'matrix-starter');
-  }
-  return $translated;
-}, 10, 3);
-
-// Hide order notes block if you don’t want it
-add_filter('woocommerce_enable_order_notes_field', '__return_false', 99);
-
-/* --- HTML5 attributes & required class (does NOT replace Woo validation) --- */
-
-add_filter('woocommerce_form_field_args', function ($args) {
-  if (!empty($args['required'])) {
-    $args['class'][] = 'validate-required';
-  }
-  return $args;
-}, 10);
-
-add_filter('woocommerce_checkout_fields', function ($fields) {
-
-  // Billing
-  foreach (['billing_first_name','billing_last_name','billing_address_1','billing_city','billing_postcode','billing_email','billing_phone'] as $k) {
-    if (isset($fields['billing'][$k])) {
-      $fields['billing'][$k]['custom_attributes']['required'] = 'required';
-    }
-  }
-  if (isset($fields['billing']['billing_email'])) {
-    $fields['billing']['billing_email']['type'] = 'email';
-  }
-  if (isset($fields['billing']['billing_phone'])) {
-    $fields['billing']['billing_phone']['type'] = 'tel';
-    $fields['billing']['billing_phone']['custom_attributes']['pattern'] = '[0-9+\-\s()]+';
-  }
-
-  // Shipping (when shown)
-  foreach (['shipping_first_name','shipping_last_name','shipping_address_1','shipping_city','shipping_postcode'] as $k) {
-    if (isset($fields['shipping'][$k])) {
-      $fields['shipping'][$k]['custom_attributes']['required'] = 'required';
-    }
-  }
-
-  return $fields;
-});
-
-// Keep first+last on one line, push email below (runs late so it beats Stripe/gateways)
-add_filter('woocommerce_checkout_fields', function ($fields) {
-    if (!isset($fields['billing'])) return $fields;
-
-    // ---- First name
-    if (isset($fields['billing']['billing_first_name'])) {
-        $fields['billing']['billing_first_name']['priority'] = 10;
-        $classes = $fields['billing']['billing_first_name']['class'] ?? [];
-        if (!in_array('form-row-first', $classes, true)) $classes[] = 'form-row-first';
-        if (!in_array('validate-required', $classes, true)) $classes[] = 'validate-required';
-        $fields['billing']['billing_first_name']['class'] = $classes;
-    }
-
-    // ---- Last name
-    if (isset($fields['billing']['billing_last_name'])) {
-        $fields['billing']['billing_last_name']['priority'] = 20;
-        $classes = $fields['billing']['billing_last_name']['class'] ?? [];
-        if (!in_array('form-row-last', $classes, true)) $classes[] = 'form-row-last';
-        if (!in_array('validate-required', $classes, true)) $classes[] = 'validate-required';
-        $fields['billing']['billing_last_name']['class'] = $classes;
-    }
-
-    // ---- Email (Stripe often sets priority=1 + custom class)
-    if (isset($fields['billing']['billing_email'])) {
-        $fields['billing']['billing_email']['priority'] = 30; // after names
-        $classes = $fields['billing']['billing_email']['class'] ?? [];
-        if (!in_array('form-row-wide', $classes, true)) $classes[] = 'form-row-wide';
-        $fields['billing']['billing_email']['class'] = $classes;
-    }
-
-    // (optional) Phone under email
-    if (isset($fields['billing']['billing_phone'])) {
-        $fields['billing']['billing_phone']['priority'] = 40;
-        $classes = $fields['billing']['billing_phone']['class'] ?? [];
-        if (!in_array('form-row-wide', $classes, true)) $classes[] = 'form-row-wide';
-        $fields['billing']['billing_phone']['class'] = $classes;
-    }
-
-    return $fields;
-}, 999); // late = override gateway mutations
-
-
-add_action('wp_enqueue_scripts', function () {
-  if (!is_checkout()) return;
-
-  wp_add_inline_style('matrix-starter', <<<CSS
-/* Matrix checkout row layout */
-.tw-checkout .woocommerce-billing-fields__field-wrapper,
-.tw-checkout .woocommerce-shipping-fields__field-wrapper,
-.tw-checkout .woocommerce-additional-fields__field-wrapper {
-  display: flex; flex-wrap: wrap; gap: 1rem;
-}
-.tw-checkout .form-row-first,
-.tw-checkout .form-row-last { flex: 1 1 12rem; min-width: 12rem; max-width: 50%; }
-.tw-checkout .form-row-wide   { flex: 0 0 100%; }
-CSS);
-}, 50);
-
-
-/* --- Optional UX: disable Place Order until visible required fields look filled --- */
-add_action('wp_footer', function () {
-  if (!is_checkout()) return; ?>
-  <script>
-  jQuery(function($){
-    var $form = $('form.checkout');
-    var $btn  = $('#place_order');
-
-    function requiredVisibleFilled(){
-      var ok = true;
-      $form.find('.validate-required:visible').each(function(){
-        var $input = $(this).find('input, select, textarea').first();
-        if (!$input.length) return;
-        var val = ($input.is('select') ? $input.val() : $.trim($input.val()));
-        if (!val) ok = false;
-      });
-      return ok;
-    }
-
-    function toggle(){
-      $btn.prop('disabled', !requiredVisibleFilled());
-    }
-
-    toggle();
-    $form.on('keyup change', 'input,select,textarea', toggle);
-    $(document.body).on('updated_checkout', toggle);
-  });
-  </script>
-<?php }, 100);
-
-// ORDER RECEIVED
-/**
- * Move "Order summary" heading inside #order_review, above the table.
- * - Print our heading at priority 5 (before Woo's table at priority 10)
- * - Hide Woo's default outside heading
- */
-
-// 1) Output heading inside #order_review (right above the table)
-add_action('woocommerce_checkout_order_review', function () {
-    echo '<h3 class="mb-4 text-lg font-semibold tw-order-heading text-[#0A1119]">Order summary</h3>';
-}, 5);
-
-// 2) Hide Woo’s default heading that sits outside #order_review
-add_filter('woocommerce_order_review_heading', '__return_empty_string'); // removes the text
-
-add_filter('body_class', function ($classes) {
-  if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-received')) {
-    $classes[] = 'tw-thankyou';
-  }
-  return $classes;
-});
-
-
-// CHECKOUT SHIPPING 
-// TEMP for styling; remove after
-add_filter('woocommerce_cart_needs_shipping', '__return_true');
-add_filter('woocommerce_cart_needs_shipping_address', '__return_true');
-add_filter('woocommerce_ship_to_different_address_checked', '__return_false'); // default unchecked
-
-
-// MY ACCOUNT 
 add_filter('body_class', function (array $classes) {
   if (function_exists('is_account_page') && is_account_page()) {
     $classes[] = 'tw-myaccount';

@@ -7,30 +7,30 @@ $blogFields = new FieldsBuilder('blog_fields');
 
 $blogFields
   ->addGroup('pace_blog_settings', [
-    'label' => 'PACE — News index',
-    'instructions' => 'Blog home and category archives (Figma 3:1233 / 3:1412).',
+    'label' => 'Blog / News index',
+    'instructions' => 'Blog home and category archive header.',
   ])
     ->addText('hero_kicker', [
       'label' => 'Hero kicker',
-      'default_value' => "WHAT'S NEW",
+      'default_value' => 'THE BLOG',
     ])
     ->addText('hero_title', [
       'label' => 'Hero title (blog home)',
-      'default_value' => 'News, events & media',
+      'default_value' => 'Our Blog',
     ])
     ->addTextarea('hero_intro', [
       'label' => 'Hero intro (blog home)',
       'rows' => 3,
-      'default_value' => 'Latest milestones, updates, and announcements from across the consortium.',
+      'default_value' => 'The latest news, flavours and stories from The Rolling Donut.',
     ])
     ->addColorPicker('hero_background', [
       'label' => 'Hero background',
-      'default_value' => '#003b65',
+      'default_value' => '#000000',
     ])
     ->addSelect('decoration_style', [
       'label' => 'Hero decoration',
       'choices' => [
-        'yellow_stacked' => 'Yellow stacked (Figma 3:1306)',
+        'yellow_stacked' => 'Yellow stacked',
         'default_grey'   => 'Default grey',
         'blue_stacked'   => 'Blue stacked',
         'yellow_wave'    => 'Yellow wave',
@@ -55,8 +55,8 @@ $blogFields
     ])
     ->addText('category_slugs', [
       'label' => 'Category tab slugs',
-      'instructions' => 'Comma-separated slugs for tab navigation (order preserved).',
-      'default_value' => 'news,success-stories,press-releases,events',
+      'instructions' => 'Comma-separated slugs for tab navigation (order preserved). Leave empty to use all blog categories.',
+      'default_value' => '',
     ])
   ->endGroup();
 

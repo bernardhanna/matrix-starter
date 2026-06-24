@@ -22,6 +22,24 @@ $admin_controls
             'ui' => 1,
             'default_value' => 0,
         ])
+        ->addTrueFalse('hide_wpclever_menu', [
+            'label' => 'Hide WPClever from WP Admin',
+            'instructions' => 'Hides the WPClever (WPC Product Bundles) menu in dashboard.',
+            'ui' => 1,
+            'default_value' => 0,
+        ])
+        ->addTrueFalse('hide_getwooplugins_menu', [
+            'label' => 'Hide GetWooPlugins from WP Admin',
+            'instructions' => 'Hides the GetWooPlugins (Variation Swatches) menu in dashboard.',
+            'ui' => 1,
+            'default_value' => 0,
+        ])
+        ->addTrueFalse('hide_easywpsmtp_menu', [
+            'label' => 'Hide Easy WP SMTP from WP Admin',
+            'instructions' => 'Hides the Easy WP SMTP menu in dashboard.',
+            'ui' => 1,
+            'default_value' => 0,
+        ])
         ->addTrueFalse('disable_comments_sitewide', [
             'label' => 'Disable Comments Sitewide',
             'instructions' => 'Closes comments/pings on frontend and removes comment support from post types.',

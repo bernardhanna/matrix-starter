@@ -1,0 +1,698 @@
+/**
+ * Single product page — gallery + add to cart (legacy app.css excerpts).
+ */
+
+.woocommerce div.product div.images .main-slide-img {
+  height: 520px;
+  object-fit: cover;
+  border-radius: 19.225px;
+}
+
+.merch__single {
+  margin-top: 1rem;
+}
+
+/* Thumbnails: one rounded border (avoid square Splide nav slide + rounded img double border) */
+#thumbnail-slider .splide__track--nav > .splide__list > .splide__slide,
+#thumbnail-slider .splide__track--nav > .splide__list > .splide__slide.main-thumb {
+  border: 2px solid transparent !important;
+  border-radius: 12.304px !important;
+  overflow: hidden !important;
+  background: transparent;
+}
+
+#thumbnail-slider .splide__track--nav > .splide__list > .splide__slide.is-active {
+  border-color: #000 !important;
+}
+
+#thumbnail-slider .woocommerce-product-gallery__image,
+#thumbnail-slider .woocommerce-product-gallery__image a {
+  display: block;
+  border-radius: 12.304px;
+  overflow: hidden;
+}
+
+.main-thumb .woocommerce-product-gallery__image img {
+  height: 198.401px !important;
+  border-radius: 12.304px;
+  border: none !important;
+  object-fit: cover;
+  display: block;
+  width: 100%;
+}
+
+/* Main gallery arrows (legacy yellow + black border) */
+.woocommerce-product-gallery .splide__arrow,
+.woocommerce div.product div.images .splide__arrow {
+  height: 2.9936rem;
+  width: 2.9936rem;
+  opacity: 1;
+  background: #ffed56 !important;
+  border: 2px solid #000 !important;
+}
+
+.woocommerce-product-gallery .splide__arrow svg,
+.woocommerce div.product div.images .splide__arrow svg {
+  fill: #000 !important;
+  height: 1.2em;
+  width: 1.2em;
+}
+
+.woocommerce-product-gallery .splide__arrow--prev,
+.woocommerce div.product div.images .splide__arrow--prev {
+  left: 1.6rem;
+}
+
+.woocommerce-product-gallery .splide__arrow--next,
+.woocommerce div.product div.images .splide__arrow--next {
+  right: 1.6rem;
+}
+
+.woocommerce-product-gallery .splide__arrow:hover,
+.woocommerce div.product div.images .splide__arrow:hover {
+  background: #ffed56 !important;
+  opacity: 1;
+}
+
+.woocommerce-product-gallery .splide__arrow:hover svg path,
+.woocommerce div.product div.images .splide__arrow:hover svg path {
+  fill: #000 !important;
+}
+
+@media (max-width: 1084px) {
+  .main-thumb .woocommerce-product-gallery__image img {
+    height: 100px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-thumb .woocommerce-product-gallery__image img {
+    display: none;
+  }
+}
+
+.single_add_to_cart_button.disabled {
+  opacity: 0.5 !important;
+  pointer-events: all !important;
+  background: #e1e1e1 !important;
+  border: 3px solid #e1e1e1 !important;
+  cursor: not-allowed !important;
+}
+
+/* Add to cart — override legacy.css .button.alt pill (black/white) with yellow-border style */
+.woocommerce div.product form.cart .single_add_to_cart_button.button.alt,
+.woocommerce div.product form.cart button.single_add_to_cart_button.button.alt {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 368px !important;
+  height: 58px !important;
+  margin-top: 0.5rem !important;
+  padding: 0 1.5rem !important;
+  border-radius: 72px !important;
+  border: 2px solid #facf08 !important;
+  background: #000 !important;
+  color: #facf08 !important;
+  font-size: 1rem !important;
+  font-weight: 420 !important;
+  line-height: 1.25 !important;
+  letter-spacing: normal !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.woocommerce div.product form.cart .single_add_to_cart_button.button.alt:hover,
+.woocommerce div.product form.cart button.single_add_to_cart_button.button.alt:hover {
+  background: #ffed56 !important;
+  color: #000 !important;
+  border-color: #facf08 !important;
+}
+
+.woocommerce div.product form.cart .single_add_to_cart_button.button.alt:disabled,
+.woocommerce div.product form.cart .single_add_to_cart_button.button.alt.disabled,
+.woocommerce div.product form.cart .single_add_to_cart_button.button.alt.woosb-disabled {
+  opacity: 0.5 !important;
+  pointer-events: all !important;
+  background: #e1e1e1 !important;
+  border: 2px solid #e1e1e1 !important;
+  color: #484848 !important;
+  cursor: not-allowed !important;
+}
+
+/* Mobile-only title + price band above the product gallery slider
+ * (non-box-builder products). Hidden on desktop. */
+.rd-mobile-gallery-head {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .rd-mobile-gallery-head {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    width: 100%;
+    background: #fff;
+    padding: 0.75rem 1rem 0.6rem;
+    text-align: center;
+  }
+
+  .rd-mobile-gallery-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #000;
+  }
+
+  .rd-mobile-gallery-price,
+  .rd-mobile-gallery-price .woocommerce-Price-amount {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #000;
+    margin: 0;
+  }
+}
+
+/* Floating mobile action bar (non-box-builder products). Hidden on desktop;
+ * fixed to the bottom of the viewport on smaller screens. */
+.rd-mobile-actionbar {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .rd-mobile-actionbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9990;
+    padding: 0.7rem 1rem;
+    padding-bottom: calc(0.7rem + env(safe-area-inset-bottom, 0px));
+    background: #000;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
+    transform: translateY(0);
+    transition: transform 0.25s ease;
+  }
+
+  /* Slid out of view once the real inline buttons are on screen. */
+  .rd-mobile-actionbar.rd-actionbar-hidden {
+    transform: translateY(120%);
+    pointer-events: none;
+  }
+
+  .rd-mobile-actionbar-add,
+  .rd-mobile-actionbar-buy {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 48px;
+    border-radius: 72px;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .rd-mobile-actionbar-add {
+    border: 2px solid #ffed56;
+    background: #ffed56;
+    color: #000;
+  }
+
+  .rd-mobile-actionbar-buy {
+    border: 2px solid #ffed56;
+    background: transparent;
+    color: #ffed56;
+  }
+
+  .rd-mobile-actionbar-add:active {
+    background: #000;
+    color: #ffed56;
+  }
+
+  .rd-mobile-actionbar-buy:active {
+    background: #ffed56;
+    color: #000;
+  }
+
+  /* Stop the fixed bar from covering the last of the page content. */
+  body.single-product {
+    padding-bottom: 76px;
+  }
+}
+
+/* Buy Now — express checkout pill (solid yellow), sits under Add to cart */
+.woocommerce div.product form.cart .rd-buy-now-button,
+.woocommerce div.product form.cart button.rd-buy-now-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 368px !important;
+  height: 58px !important;
+  margin-top: 0.5rem !important;
+  padding: 0 1.5rem !important;
+  border-radius: 72px !important;
+  border: 2px solid #000 !important;
+  background: #ffed56 !important;
+  color: #000 !important;
+  font-size: 1rem !important;
+  font-weight: 420 !important;
+  line-height: 1.25 !important;
+  letter-spacing: normal !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.woocommerce div.product form.cart .rd-buy-now-button:hover,
+.woocommerce div.product form.cart button.rd-buy-now-button:hover {
+  background: #000 !important;
+  color: #ffed56 !important;
+  border-color: #000 !important;
+}
+
+.woocommerce div.product form.cart .rd-buy-now-button:disabled,
+.woocommerce div.product form.cart .rd-buy-now-button.disabled {
+  opacity: 0.5 !important;
+  pointer-events: all !important;
+  background: #e1e1e1 !important;
+  border: 2px solid #e1e1e1 !important;
+  color: #484848 !important;
+  cursor: not-allowed !important;
+}
+
+/* ACF product add-ons (box-builder-woo) */
+#custom-product-addons {
+  margin: 1rem 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+#custom-product-addons .product-addon-field {
+  margin-bottom: 1rem;
+}
+
+#custom-product-addons label {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #000;
+  font-weight: 420;
+}
+
+#custom-product-addons select,
+#custom-product-addons textarea,
+#custom-product-addons input[type="file"],
+#custom-product-addons input[type="text"],
+#custom-product-addons input[type="number"] {
+  width: 100%;
+  max-width: 416px;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+}
+
+/* Hero: price stacked under title */
+.woocommerce-header-hero-inner.flex-col .text-container,
+section .flex-col .text-container.product-price-wrap {
+  display: block;
+  width: 100%;
+}
+
+section .product-price {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.product-summary-header .entry-titles {
+  display: block;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+/* Non-box-builder single product: hero band is removed, so the title and price
+ * share one wrapping row and the title is scaled down a notch. */
+.rd-title-price-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.85rem;
+  row-gap: 0.15rem;
+}
+
+.rd-title-price-row .entry-titles {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+  line-height: 1.1;
+}
+
+.rd-title-price-row .rd-summary-price {
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+}
+
+.rd-title-price-row .rd-summary-price del {
+  margin-right: 0.35rem;
+  font-weight: 500;
+  opacity: 0.55;
+}
+
+.rd-title-price-row .rd-summary-price ins {
+  text-decoration: none;
+}
+
+/* Legacy guard: hide the summary <h2> for any header that is not the standard
+ * title/price row. The hero band has been removed site-wide and every product now
+ * uses .rd-title-price-row, so the title always stays put — this only catches
+ * stray/legacy markup. */
+@media (min-width: 1024px) {
+  .product-summary-header:not(.rd-title-price-row) .entry-titles {
+    display: none;
+  }
+}
+
+.summary .product_meta {
+  display: none;
+}
+
+/* Quantity controls (legacy) */
+.summary .quantity,
+form.cart .quantity {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 416px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.summary .quantity_input,
+form.cart .quantity_input {
+  width: 167px;
+  height: 44px;
+  max-width: 418px;
+}
+
+.summary .quantity_input .qty,
+form.cart .quantity_input .qty {
+  width: 100%;
+  text-align: center;
+  border: none;
+  background: transparent;
+}
+
+.decrement-btn,
+.increment-btn {
+  box-shadow: 0 4px 0 0 rgb(0 0 0 / 25%);
+  height: 29px;
+  width: 29px;
+  border-radius: 4px;
+}
+
+.woosb-quantity .input-text.qty.text.hasQtyButtons {
+  width: 200px;
+}
+
+/* Full description below summary title */
+#info-open .product_description {
+  padding: 0;
+}
+
+#info-open .product_description h4,
+#info-open .product_description p,
+#info-open .product_description ul {
+  margin-bottom: 0.75rem;
+}
+
+.summary .product_description {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+/* "Please note" callout for box-builder add-on help text (e.g. the Special
+ * Occasion dropdown note). The copy lives in an ACF help-message field, so we
+ * style the rendered paragraph rather than editing the stored content. */
+#custom-product-addons .rd-addon-note {
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid #000;
+  border-left-width: 6px;
+  border-radius: 8px;
+  background: #fff8d4;
+  color: #000;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+#custom-product-addons .rd-addon-note p {
+  margin: 0;
+}
+
+#custom-product-addons .rd-addon-note strong {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.summary .woocommerce-product-details__short-description {
+  display: none;
+}
+
+/* WOOSB bundle list */
+.woosb-products {
+  border-width: 1px 0 0;
+  border-style: dotted;
+  border-color: #e5e5e5;
+  background: #000;
+  border-radius: 1rem;
+  border: 3px solid #000;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.woosb-products .woosb-product .woosb-title .woosb-title-inner a,
+.woosb-products .woosb-product .woosb-name a {
+  color: #fff;
+}
+
+.woosb-products .woosb-product .woosb-price .amount {
+  display: inline-block;
+  color: #fff;
+}
+
+.summary {
+  height: 100%;
+}
+
+.woosb-alert {
+  padding: 1rem;
+  border-left: 4px solid #222;
+  background-color: #f55959;
+  font-size: 18px;
+  margin-top: 1.5rem !important;
+}
+
+/* Related products grid */
+.rd-related-product ul.products {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rd-related-product ul.products > li.product {
+  flex: 0 0 calc(50% - 0.5rem);
+  max-width: 12rem;
+}
+
+@media (min-width: 640px) {
+  .rd-related-product ul.products > li.product {
+    flex: 0 0 12rem;
+    max-width: 12rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .rd-related-product ul.products > li.product {
+    flex: 0 0 calc(25% - 1.125rem);
+    max-width: none;
+  }
+}
+
+.rd-related-product .related-post-img {
+  height: 157px;
+  max-height: 157px;
+  min-height: 157px;
+}
+
+@media (min-width: 1024px) {
+  .rd-related-product .related-post-img {
+    height: 200px;
+    max-height: 200px;
+    min-height: 200px;
+  }
+}
+
+/* Product description accordion body: a little more breathing room. The element
+ * carries Tailwind's px-4/py-4 utilities (emitted !important here), so override
+ * with !important to win the cascade. */
+#info-open-body {
+  padding: 2rem !important;
+}
+
+@media (min-width: 1024px) {
+  #info-open-body {
+    padding: 2.5rem !important;
+  }
+}
+
+/* Collapsible "Note to customer" field: hidden behind an "Add Note" toggle.
+ * Top/bottom dividers set it apart from the box above and the cart button below. */
+.rd-note {
+  width: 100%;
+  margin: 0.85rem 0;
+  padding: 0.85rem 0;
+  border-top: 1px solid #d9d9d9;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+.rd-note-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  color: #000;
+  padding: 0.25rem 0;
+  user-select: none;
+}
+
+.rd-note-summary::-webkit-details-marker {
+  display: none;
+}
+
+.rd-note-icon {
+  position: relative;
+  width: 1.6rem;
+  height: 1.6rem;
+  flex: 0 0 auto;
+  background: #ffed56;
+  border: 2px solid #000;
+  border-radius: 50%;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+/* Lift + shadow the yellow circle when hovering the toggle. */
+.rd-note-summary:hover .rd-note-icon,
+.rd-note-summary:focus-visible .rd-note-icon {
+  transform: scale(1.1);
+  background: #ffe21f;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.rd-note-icon::before,
+.rd-note-icon::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.7rem;
+  height: 2px;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+  transition: transform 0.2s ease;
+}
+
+.rd-note-icon::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+/* Toggle the plus into a minus when open. */
+.rd-note[open] .rd-note-icon::after {
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+
+.rd-note-body {
+  margin-top: 0.5rem;
+}
+
+/* Tailwind preflight can override the UA rule that hides closed <details>
+ * content, so hide the note body explicitly until the disclosure is open. */
+.rd-note:not([open]) .rd-note-body {
+  display: none;
+}
+
+/* Custom product option selects (Football Team / Special Occasion) set
+ * appearance:none, but the Tailwind Forms `form-select` background arrow isn't
+ * in the compiled CSS, so the native caret disappears. Draw our own chevron and
+ * reserve room for it. */
+#custom-product-addons select.custom-dropdown-group-select,
+#custom-product-addons select#custom_product_option,
+select.custom-dropdown-group-select,
+#custom_product_option {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='m6 8 4 4 4-4' stroke='%23111827' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.1rem 1.1rem;
+  padding-right: 2.5rem !important;
+}
+
+@media (max-width: 1024px) {
+.wp-singular .rd-mobile-gallery-head {
+  display: none!important;
+ }
+}
+
+@media (max-width: 768px) {
+   .rd-title-price-row {
+    display: none!important;
+   }
+   .wp-singular .rd-mobile-gallery-head {
+    display: flex!important;
+   }
+   .wp-singular .rd-mobile-gallery-title {
+    font-size: 1.25rem!important;
+   }
+   .wp-singular .rd-mobile-gallery-price {
+    font-size: 1.25rem!important;
+   }
+   body.rd-bb-active .wp-singular .rd-mobile-gallery-head,
+   body.rd-bb-active.wp-singular .rd-mobile-gallery-head {
+    display: none!important;
+   }
+}
+
+/* Variation (merch) validation notice + disabled Buy Now state. */
+.rd-variation-notice {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid #c0392b;
+  border-radius: 8px;
+  background: #fdecea;
+  color: #8a1c12;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.rd-variation-notice[hidden] {
+  display: none !important;
+}
+.rd-buy-now-button.disabled,
+.rd-buy-now-button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

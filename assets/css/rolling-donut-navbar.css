@@ -1,0 +1,738 @@
+/**
+ * Rolling Donut — header / navigation (ported from legacy Sage theme).
+ */
+
+/* Headroom: single header bar — pin, slide away on scroll down, return on scroll up */
+.rd-header-bar {
+  transition: transform 0.3s ease-in-out;
+  will-change: transform;
+}
+
+.rd-header-bar--pinned {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.rd-header-bar--hidden {
+  transform: translate3d(0, -100%, 0);
+  pointer-events: none;
+}
+
+/* Mobile menu open: header chrome above drawer (z-index needs a positioned ancestor) */
+.rd-header-bar--menu-open {
+  position: relative;
+  z-index: 1200;
+}
+
+#site-nav.navbar.rd-nav--menu-open,
+.rd-header-bar--menu-open #site-nav {
+  position: relative;
+  z-index: 100;
+}
+
+@media (max-width: 1149.98px) {
+  .rd-header-bar--menu-open {
+    background-color: transparent;
+  }
+
+  .rd-header-bar--menu-open #site-nav.navbar {
+    background-color: transparent;
+  }
+
+  .rd-header-bar--menu-open #site-nav .iconify {
+    color: #fff;
+  }
+
+  .rd-header-bar--menu-open #site-nav .iconify svg {
+    color: #fff;
+  }
+
+  .rd-header-bar--menu-open #site-nav .mobile-logo--default {
+    display: none !important;
+  }
+
+  .rd-header-bar--menu-open #site-nav .mobile-logo--open {
+    display: block !important;
+  }
+
+  .rd-header-bar:not(.rd-header-bar--menu-open) #site-nav .mobile-logo--open {
+    display: none !important;
+  }
+}
+
+header.rd-header.z-\[1200\] {
+  z-index: 1200;
+}
+
+.rd-header-spacer {
+  display: block;
+  width: 100%;
+  pointer-events: none;
+}
+
+.z-\[100\] {
+  z-index: 100;
+}
+
+.z-\[1000\] {
+  z-index: 1000;
+}
+
+.z-999999 {
+  z-index: 999999;
+}
+
+/* Keep header above page sections (hero, featured slider, etc.) */
+header.relative.z-\[200\] {
+  position: relative;
+  z-index: 200;
+}
+
+.site-main {
+  position: relative;
+  z-index: 1;
+}
+
+#site-nav {
+  position: relative;
+  z-index: 200;
+  overflow: visible;
+}
+
+#site-nav nav#menu {
+  overflow: visible;
+}
+
+#site-nav .submenu {
+  top: 100%;
+}
+
+#site-nav .cart-contents {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+#site-nav .cart-contents .iconify {
+  display: block;
+  flex-shrink: 0;
+}
+
+.rd-mobile-utilities a {
+  display: inline-flex;
+  align-items: center;
+}
+
+#site-nav .basket-detail,
+.rd-mobile-utilities .basket-detail {
+  position: relative;
+  right: 0;
+  margin-top: -10px;
+  margin-left: -10px;
+}
+
+#site-nav nav .submenu a:hover {
+  background-color: var(--rd-yellow-primary);
+  color: var(--rd-black-full);
+}
+
+#site-nav nav ul,
+#site-nav .submenu {
+  overflow: visible;
+}
+
+/* Full-screen drawer below nav chrome (legacy z-index: 99) */
+.rd-mobile-menu {
+  z-index: 99;
+}
+
+#rd-search-panel {
+  z-index: 1050;
+}
+
+:root {
+  --rd-yellow-primary: #ffed56;
+  --rd-black-full: #000000;
+  --rd-red-critical: #f55959;
+  --rd-donut-icon: url('/wp-content/uploads/2024/03/top-donut.png');
+  --rd-donut-icon-hover: url('/wp-content/uploads/2024/03/yellowdonut.png');
+}
+
+#site-nav .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 150ms ease-in-out, background-color 150ms ease-in-out;
+  white-space: nowrap;
+}
+
+/* Figma: black 40px promo bar */
+.rd-topbar {
+  min-height: 40px;
+}
+
+.rd-topbar[data-rd-topbar-hidden],
+.rd-topbar.hidden {
+  display: none !important;
+}
+
+#site-nav .btn-menu {
+  position: relative;
+  right: 0;
+  width: 100%;
+  max-width: 15.125rem;
+  min-width: 242px;
+  padding: 16px 24px;
+  border-radius: 132px;
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 700;
+  color: #fff;
+  background-color: var(--rd-black-full);
+  text-decoration: none;
+  gap: 10px;
+}
+
+#site-nav .btn-menu::before {
+  content: '';
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  margin-right: 0.4rem;
+  background-image: var(--rd-donut-icon);
+  background-repeat: no-repeat;
+  background-size: contain;
+  vertical-align: middle;
+}
+
+#site-nav .btn-menu:hover,
+#site-nav .btn-menu:focus-visible {
+  color: var(--rd-black-full);
+  background-color: var(--rd-yellow-primary);
+  text-decoration: none;
+}
+
+#site-nav .btn-menu:hover::before,
+#site-nav .btn-menu:focus-visible::before {
+  background-image: var(--rd-donut-icon-hover);
+}
+
+@media (min-width: 1150px) and (max-width: 1180px) {
+  #site-nav .btn-menu {
+    font-size: 18px;
+    padding: 0;
+    height: 56px;
+    width: 180px;
+  }
+}
+
+#site-nav .nav-line,
+.top-nav .nav-line {
+  width: 1px;
+  height: 32px;
+  align-self: center;
+  flex-shrink: 0;
+  background-color: #000;
+  margin: 0;
+  position: relative;
+}
+
+.top-nav .iconify,
+.rd-mobile-utilities .iconify {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+#site-nav .place-nav-icon {
+  left: 0;
+  top: 0;
+  position: relative;
+}
+
+#site-nav .logo {
+  width: 152px;
+  object-fit: contain;
+}
+
+@media (max-width: 1250px) {
+  #site-nav .logo {
+    width: 115px;
+  }
+}
+
+#site-nav .mobile-logo {
+  width: 86px;
+  height: 80px;
+  display: none;
+}
+
+@media (max-width: 1149.98px) {
+  #site-nav .desktop-logo {
+    display: none;
+  }
+
+  #site-nav .mobile-logo {
+    display: block;
+  }
+}
+
+#site-nav nav .active:not(.btn-menu) {
+  text-decoration: underline;
+}
+
+#site-nav nav .submenu .current-menu-item > a,
+#site-nav nav .submenu .current_page_item > a {
+  background-color: #000;
+  color: #fff;
+}
+
+#site-nav .hamburger_close,
+#site-nav .hamburger_open {
+  width: 43px;
+  height: 40px;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+@media (max-width: 1149.98px) {
+  #site-nav .hamburger {
+    min-height: 48px;
+    min-width: 48px;
+    height: 3rem;
+    width: 3rem;
+    overflow: visible;
+  }
+
+  #site-nav .hamburger_close,
+  #site-nav .hamburger_open {
+    width: 43px;
+    height: 40px;
+    min-width: 43px;
+    min-height: 40px;
+    background-size: 43px 40px;
+    background-position: center;
+  }
+
+  #site-nav nav#menu {
+    align-items: center;
+  }
+}
+
+#site-nav .hamburger_close {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='43' height='40' viewBox='0 0 43 40' fill='none'%3E%3Crect x='1.64062' y='1' width='39.6' height='38' rx='11' fill='white' stroke='black' stroke-width='2'/%3E%3Cline x1='11.5' y1='11.5' x2='31.38' y2='11.5' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='11.5' y1='19.5' x2='31.38' y2='19.5' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='11.5' y1='27.5' x2='31.38' y2='27.5' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+#site-nav .hamburger_open {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='43' height='40' viewBox='0 0 43 40' fill='none'%3E%3Crect x='1.64062' y='1' width='39.6' height='38' rx='11' fill='white' stroke='white' stroke-width='2'/%3E%3Cline x1='1.5' y1='-1.5' x2='20.9443' y2='-1.5' transform='matrix(0.720833 0.693109 -0.720833 0.693109 12.3105 13)' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='1.5' y1='-1.5' x2='20.9443' y2='-1.5' transform='matrix(0.720833 -0.693109 0.720833 0.693109 14.1602 28.7783)' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+#site-nav .basket-detail,
+.rd-mobile-utilities .basket-detail {
+  min-width: 14px;
+  min-height: 14px;
+}
+
+#site-nav .cart-contents-count.basket-detail,
+.rd-mobile-utilities .cart-contents-count.basket-detail {
+  background-color: var(--rd-red-critical, #ff4d4f);
+  border: 2px solid var(--rd-black-border-solid, #000);
+  border-radius: 9999px;
+  color: #fff;
+  font-size: 0.625rem;
+  line-height: 1;
+}
+
+#site-nav .background-cover {
+  background-image: var(--mobile-bg-image, none);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+#rd-search-panel {
+  background-image: var(--mobile-bg-image, none);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+.-t-0-1 {
+  top: -0.1rem;
+}
+
+/* Mobile drawer layout */
+.rd-mobile-menu {
+  overflow: hidden;
+}
+
+.rd-mobile-menu--has-bg {
+  background-color: var(--rd-black-full);
+}
+
+.rd-mobile-menu__nav {
+  padding-top: 7.5rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.rd-mobile-menu__list {
+  margin: 0 auto;
+}
+
+.rd-mobile-menu__item {
+  width: 100%;
+  text-align: center;
+}
+
+@media (max-width: 1149.98px) {
+  /* Order now: full-width yellow pill, white border on hover */
+  #rd-mobile-menu .rd-mobile-menu__item--cta {
+    align-self: stretch;
+    width: 100%;
+    max-width: none;
+  }
+
+  #rd-mobile-menu .mob-menu-order-btn {
+    position: static;
+    right: auto;
+    left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: auto;
+    padding: 14px 28px;
+    border-radius: 132px;
+    border: 2px solid transparent;
+    background-color: var(--rd-yellow-primary) !important;
+    color: var(--rd-black-full) !important;
+    font-size: 1.125rem;
+    line-height: 1.25;
+    font-weight: 700;
+    text-decoration: none;
+    text-align: center;
+    box-sizing: border-box;
+    transition:
+      border-color 150ms ease-in-out,
+      background-color 150ms ease-in-out;
+  }
+
+  #rd-mobile-menu .mob-menu-order-btn::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  #rd-mobile-menu .mob-menu-order-btn__icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    fill: var(--rd-black-full);
+    stroke: var(--rd-black-full);
+  }
+
+  #rd-mobile-menu .mob-menu-order-btn:hover,
+  #rd-mobile-menu .mob-menu-order-btn:focus-visible {
+    background-color: var(--rd-yellow-primary) !important;
+    border-color: #fff !important;
+    color: var(--rd-black-full) !important;
+    text-decoration: none;
+  }
+}
+
+@media (max-width: 575px) {
+  .rd-mobile-menu__nav {
+    padding-top: 6.75rem;
+  }
+
+  .rd-mobile-menu__item {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  #rd-mobile-menu .mob-menu-order-btn {
+    padding: 12px 22px;
+    font-size: 1rem;
+  }
+
+  #rd-mobile-menu .mob-menu-order-btn__icon {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* Desktop phone: tight gap between icon and number */
+@media (min-width: 1150px) {
+  .top-nav a[href^='tel:'] {
+    gap: 0.375rem;
+  }
+
+  .top-nav a[href^='tel:'] .nav-line {
+    display: none;
+  }
+}
+
+/*
+ * Desktop nav breakpoint is 1150px (Tailwind lg is 1084px).
+ * Between 1084px and 1149px keep mobile chrome; from 1150px show desktop menus.
+ */
+@media (min-width: 1084px) and (max-width: 1149.98px) {
+  #site-nav .hamburger {
+    display: flex !important;
+  }
+
+  #site-nav .rd-mobile-utilities {
+    display: flex !important;
+  }
+
+  #site-nav .top-nav {
+    display: none !important;
+  }
+
+  #site-nav ul.nav-left,
+  #site-nav ul.nav-right,
+  #site-nav ul.nav-combined {
+    display: none !important;
+  }
+
+  /*
+   * The desktop `lg:` utilities (Tailwind lg = 1084px) fire in this band even
+   * though the desktop menus stay hidden until 1150px. Without resetting them the
+   * right-hand utilities collapse to the centre (lg:w-full + lg:justify-start),
+   * #menu is pulled up (lg:-mt-2) and the logo is clipped (lg:bottom-4 + lg:w-1/6).
+   * Re-assert the mobile three-column layout: toggle | logo | utilities.
+   */
+  #site-nav nav#menu {
+    margin-top: 0 !important;
+  }
+
+  #site-nav nav#menu > div:first-of-type,
+  #site-nav nav#menu > div:last-of-type {
+    width: 33.3333% !important;
+  }
+
+  #site-nav nav#menu > div:last-of-type {
+    justify-content: flex-end !important;
+  }
+
+  #site-nav .nav-center {
+    bottom: auto !important;
+    width: 33.3333% !important;
+  }
+}
+
+@media (min-width: 1150px) {
+  #site-nav .hamburger,
+  #site-nav .rd-mobile-utilities {
+    display: none !important;
+  }
+
+  #site-nav .top-nav {
+    display: flex !important;
+  }
+
+  #site-nav .top-nav a[href^='tel:'] {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 1150px) and (max-width: 1249.98px) {
+  #site-nav ul.nav-left,
+  #site-nav ul.nav-right {
+    display: none !important;
+  }
+
+  #site-nav ul.nav-combined {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 1250px) {
+  #site-nav ul.nav-left,
+  #site-nav ul.nav-right {
+    display: flex !important;
+  }
+
+  #site-nav ul.nav-combined {
+    display: none !important;
+  }
+}
+
+/* Product search (replaces FiboSearch) */
+.rd-product-search__form {
+  position: relative;
+}
+
+/* `input.` prefix raises specificity above @tailwindcss/forms' [type='search']
+ * base styles, which otherwise force a 1px grey border, square corners and a
+ * blue focus ring on this field. */
+input.rd-product-search__input {
+  padding: 13px 24px 13px 48px;
+  font-family: inherit;
+  background-color: #fff;
+  border: 2px solid #000;
+  color: #484848;
+  font-size: 24px;
+  font-weight: 410;
+  line-height: 26px;
+  max-width: 1182px;
+  height: 80px;
+  border-radius: 72px;
+  width: 100%;
+  display: block;
+}
+
+input.rd-product-search__input:hover,
+input.rd-product-search__input:focus {
+  background-color: #fff;
+  border-color: #000;
+  outline: none;
+  box-shadow: none;
+}
+
+/* Desktop: present the open search as a clean white drawer below the nav rather
+ * than a bare pill floating over the page content underneath. */
+@media (min-width: 769px) {
+  #rd-search-panel.search-bar-container {
+    background: #fff;
+    padding-top: 16px;
+    padding-bottom: 24px;
+    box-shadow: 0 14px 24px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.rd-product-search__icon {
+  color: #000;
+}
+
+.rd-product-search__dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 1100;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.rd-product-search__status {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #484848;
+}
+
+.rd-product-search__results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.rd-product-search__result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid #000;
+}
+
+.rd-product-search__result:last-child {
+  border-bottom: 0;
+}
+
+.rd-product-search__result:hover,
+.rd-product-search__result--active {
+  background: #fff3c4;
+}
+
+.rd-product-search__thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.rd-product-search__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.rd-product-search__title {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.rd-product-search__price {
+  font-size: 14px;
+  color: #484848;
+}
+
+.rd-product-search__type {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a8a8a;
+  order: -1;
+}
+
+.rd-product-search__view-all {
+  display: block;
+  padding: 12px 16px;
+  text-align: center;
+  font-weight: 600;
+  color: #000;
+  text-decoration: underline;
+  border-top: 1px solid #000;
+}
+
+.rd-product-search__view-all:hover {
+  background: #fff3c4;
+}
+
+@media (max-width: 768px) {
+  input.rd-product-search__input {
+    background-color: transparent;
+    border-color: #fff;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  input.rd-product-search__input:hover,
+  input.rd-product-search__input:focus {
+    background-color: transparent;
+    border-color: #fff;
+    outline: none;
+    box-shadow: none;
+  }
+
+  input.rd-product-search__input::placeholder {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .rd-product-search__icon {
+    color: #fff;
+  }
+
+  .rd-product-search__dropdown {
+    border-color: #fff;
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "mode": "quick",
+  "baseUrl": "http://localhost:10029",
+  "scannedAt": "2026-06-23T10:20:47.008Z",
+  "pagesScanned": 3,
+  "averageScore": 72,
+  "lowestScore": 67,
+  "minScoreRequired": 50,
+  "results": [
+    {
+      "url": "http://localhost:10029/",
+      "performance": 71,
+      "lcpMs": 3427,
+      "fcpMs": 1667,
+      "tbtMs": 0,
+      "cls": 0.03,
+      "speedIndexMs": 2269
+    },
+    {
+      "url": "http://localhost:10029/our-donuts/",
+      "performance": 77,
+      "lcpMs": 2582,
+      "fcpMs": 1742,
+      "tbtMs": 0,
+      "cls": 0.032,
+      "speedIndexMs": 1742
+    },
+    {
+      "url": "http://localhost:10029/product/custom-order/",
+      "performance": 67,
+      "lcpMs": 3922,
+      "fcpMs": 2182,
+      "tbtMs": 2,
+      "cls": 0.03,
+      "speedIndexMs": 2182
+    }
+  ]
+}

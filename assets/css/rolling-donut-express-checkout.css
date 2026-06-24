@@ -1,0 +1,958 @@
+/**
+ * Express checkout — hybrid step layout.
+ */
+
+.rd-express-checkout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .rd-express-checkout {
+    grid-template-columns: minmax(0, 55%) minmax(0, 45%);
+    gap: 2.5rem;
+  }
+}
+
+.rd-express-checkout__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
+}
+
+.rd-express-checkout__summary {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  /* overflow-hidden on page wrappers breaks position: sticky */
+  body.woocommerce-checkout #main-content,
+  body.woocommerce-checkout .site-main,
+  body.woocommerce-checkout .rd-express-checkout-page,
+  body.woocommerce-checkout form.checkout.rd-express-checkout-form,
+  body.woocommerce-checkout .rd-express-checkout {
+    overflow: visible;
+  }
+}
+
+/* Pin the order summary + payment column while the (often very long) "Your
+   details" step is scrolled, so customers don't have to scroll back up to
+   reach payment. We ONLY do this when the viewport is tall enough to show the
+   whole column (incl. the Pay button); otherwise the max-height cap would clip
+   the bottom of the column behind an internal scrollbar and the Pay button
+   would appear cut off on shorter laptop screens. Below the height threshold
+   the column flows normally and the page scrolls, so nothing is clipped.
+   Mobile (<1024px) keeps it static/stacked. */
+@media (min-width: 1024px) and (min-height: 800px) {
+  .rd-express-checkout__summary {
+    position: sticky;
+    top: 1.5rem;
+    align-self: start;
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
+    overflow-x: visible;
+    scrollbar-width: thin;
+  }
+}
+
+/* Progress bar — full-width row above both columns */
+.rd-checkout-progress {
+  margin-bottom: 2rem;
+}
+
+.rd-checkout-progress__list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rd-checkout-progress__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  position: relative;
+}
+
+.rd-checkout-progress__item:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 1rem;
+  left: calc(50% + 1.1rem);
+  width: calc(100% - 2.2rem);
+  height: 2px;
+  background: #d9d9d9;
+  z-index: 0;
+}
+
+.rd-checkout-progress__item--complete:not(:last-child)::after,
+.rd-checkout-progress__item--active:not(:last-child)::after {
+  background: #000;
+}
+
+.rd-checkout-progress__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 2px solid #000;
+  background: #fff;
+  font-size: 0.875rem;
+  font-weight: 420;
+  position: relative;
+  z-index: 1;
+}
+
+.rd-checkout-progress__item--complete .rd-checkout-progress__number,
+.rd-checkout-progress__item--active .rd-checkout-progress__number {
+  background: #ffed56;
+}
+
+.rd-checkout-progress__label {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  font-weight: 350;
+}
+
+.rd-checkout-progress__item {
+  cursor: default;
+}
+
+.rd-checkout-progress__item--complete,
+.rd-checkout-progress__item--pay,
+.rd-checkout-progress__item--active {
+  cursor: pointer;
+}
+
+.rd-checkout-progress__item--pay {
+  cursor: pointer;
+}
+
+/* Step cards */
+.rd-checkout-step {
+  border: 2px solid #000;
+  border-radius: 1.25rem;
+  padding: 0;
+  background: #fff;
+  transition: opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rd-checkout-step__shell {
+  padding: 1.5rem;
+}
+
+.rd-checkout-step--upcoming {
+  opacity: 0.72;
+}
+
+.rd-checkout-step--active {
+  opacity: 1;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.rd-checkout-step--collapsed .rd-checkout-step__shell {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.rd-checkout-step__header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem 1rem;
+  align-items: center;
+}
+
+.rd-checkout-step__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 2px solid #000;
+  background: #ffed56;
+  font-size: 0.875rem;
+  font-weight: 420;
+  flex-shrink: 0;
+}
+
+.rd-checkout-step--collapsed .rd-checkout-step__number {
+  background: #fff;
+}
+
+.rd-checkout-step__heading {
+  min-width: 0;
+}
+
+/* Step + payment headings — unified style, matching the "Order Details"
+   title (text-base-font / 18px, font-reg420, sentence case — no forced caps). */
+.rd-express-checkout-form .rd-checkout-step__title,
+.rd-express-checkout-form #payment h3,
+.rd-express-checkout-form .woocommerce-checkout-payment h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  line-height: 1.3;
+  font-weight: 420;
+  text-transform: none;
+}
+
+.rd-checkout-step__summary {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: #444;
+  font-weight: 350;
+}
+
+.rd-checkout-step--active .rd-checkout-step__summary,
+.rd-checkout-step--upcoming .rd-checkout-step__summary {
+  display: none;
+}
+
+.rd-checkout-step__change,
+.rd-checkout-step__back {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  text-decoration: underline;
+  font-size: 0.875rem;
+  font-weight: 420;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  color: #000;
+}
+
+.rd-checkout-step__body {
+  margin-top: 1.25rem;
+}
+
+.rd-checkout-step:not(.rd-checkout-step--active) .rd-checkout-step__body {
+  display: none !important;
+}
+
+.rd-checkout-step__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.rd-checkout-step__continue.button {
+  margin: 0;
+  border-radius: 999px;
+  border: 3px solid #000;
+  background: #ffed56;
+  color: #000;
+  font-weight: 420;
+  padding: 0.85rem 1.5rem;
+  min-height: 3rem;
+}
+
+.rd-checkout-step__continue.button:hover {
+  background: #fff6a7;
+}
+
+/* Contextual notices */
+.rd-checkout-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.rd-checkout-notice {
+  margin: 0;
+  padding: 0.65rem 0.9rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  font-weight: 350;
+}
+
+.rd-checkout-notice--info {
+  background: #f5f5f5;
+  border: 1px solid #e3e3e3;
+}
+
+.rd-checkout-notice--warning {
+  background: #fff5f5;
+  border: 1px solid #f3c3c3;
+  color: #a11;
+  font-weight: 420;
+}
+
+.rd-express-checkout-form.rd-fulfilment-collection .rd-checkout-notices__delivery-only,
+.rd-express-checkout-form.rd-fulfilment-collection .rd-checkout-notice--delivery {
+  display: none !important;
+}
+
+.rd-express-checkout-form.rd-fulfilment-delivery .rd-checkout-notice--collection {
+  display: none !important;
+}
+
+/* Step validation errors */
+.rd-checkout-step__errors {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.15rem;
+  border: 3px solid #d63638;
+  border-radius: 0.85rem;
+  background: #ffe9e9;
+  color: #7a1010;
+  box-shadow: 0 6px 18px rgba(214, 54, 56, 0.18);
+}
+
+.rd-checkout-step__errors-title {
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.rd-checkout-step__errors-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  list-style: disc;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.rd-checkout-step__errors-list li + li {
+  margin-top: 0.4rem;
+}
+
+.rd-checkout-step__errors--pulse {
+  animation: rd-checkout-error-pulse 0.9s ease;
+}
+
+@keyframes rd-checkout-error-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  35% {
+    transform: scale(1.015);
+  }
+}
+
+.rd-checkout-step--has-error {
+  border-color: #d63638;
+  box-shadow: 0 0 0 3px rgba(214, 54, 56, 0.2), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+#payment.rd-checkout-step--has-error {
+  border: 3px solid #d63638;
+  border-radius: 1rem;
+  padding-top: 0.75rem;
+}
+
+.rd-express-checkout-form .form-row.woocommerce-invalid label {
+  color: #b32d2e;
+  font-weight: 600;
+}
+
+.rd-express-checkout-form .woocommerce-invalid .input-text,
+.rd-express-checkout-form .woocommerce-invalid select,
+.rd-express-checkout-form .woocommerce-invalid textarea {
+  border-color: #d63638 !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 0 2px rgba(214, 54, 56, 0.25);
+  background: #fff8f8;
+}
+
+.rd-express-shipping-body.rd-field-error {
+  box-shadow: inset 0 0 0 3px #d63638;
+  border-radius: 1rem;
+  background: #fff8f8;
+}
+
+form.checkout > .woocommerce-NoticeGroup-checkout {
+  display: none;
+}
+
+.rd-checkout-details-hint {
+  margin: 0 0 1rem;
+}
+
+.rd-express-checkout-form.rd-fulfilment-collection .rd-delivery-hint,
+.rd-express-checkout-form.rd-fulfilment-delivery .rd-collection-hint {
+  display: none !important;
+}
+
+#rd-checkout-step-method .rd-express-shipping-table,
+#rd-checkout-step-method .rd-express-shipping-methods {
+  width: 100%;
+}
+
+#rd-checkout-step-method .rd-express-shipping-methods {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+#rd-checkout-step-method .woocommerce-shipping-totals > th {
+  display: none;
+}
+
+#rd-checkout-step-method ul.woocommerce-shipping-methods {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+#rd-checkout-step-method ul.woocommerce-shipping-methods > li,
+#rd-checkout-step-method ul.woocommerce-shipping-methods > li.rd-shipping-option {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  margin: 0;
+  padding: 1rem 1.5rem;
+  border-radius: 0.5rem;
+  background: #eaeaea;
+  transition: background-color 0.15s ease;
+}
+
+#rd-checkout-step-method .shipping-method-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+#rd-checkout-step-method .shipping-method-wrapper label {
+  display: block;
+  flex: 1;
+  margin: 0;
+  line-height: 1.4;
+}
+
+#rd-checkout-step-method .shipping-method-wrapper input.shipping_method {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+#rd-checkout-step-method .rd-shipping-option-pickup {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+#rd-checkout-step-method .rd-shipping-option-pickup .pickup-location-field,
+#rd-checkout-step-method .rd-shipping-option-pickup .pickup-location-lookup-field {
+  width: 100%;
+  margin: 0;
+}
+
+/* Pickup-location picker visibility is owned by CSS, keyed on the selected
+   shipping method, rather than JS inline `display`. This makes switching
+   delivery -> collection always reveal the location picker, with no dependence
+   on JS/AJAX event ordering: the moment the pickup radio is checked, `:has()`
+   shows the field (and `.rd-pickup-visible` is a JS-set fallback for browsers
+   without `:has()`). Hidden by default so a non-selected pickup option's stray
+   field never lingers. !important on the shown state beats any leftover inline
+   `display:none` from the pickup plugin's AJAX re-render. */
+#rd-checkout-step-method .rd-shipping-option .rd-shipping-option-pickup,
+#rd-checkout-step-method .rd-shipping-option > .pickup-location-field {
+  display: none;
+}
+
+#rd-checkout-step-method .rd-shipping-option:has(input.shipping_method:checked) .rd-shipping-option-pickup,
+#rd-checkout-step-method .rd-shipping-option:has(input.shipping_method:checked) .pickup-location-field,
+#rd-checkout-step-method .rd-shipping-option-pickup.rd-pickup-visible,
+#rd-checkout-step-method .pickup-location-field.rd-pickup-visible {
+  display: block !important;
+}
+
+#rd-checkout-step-method ul.woocommerce-shipping-methods > li:hover,
+#rd-checkout-step-method ul.woocommerce-shipping-methods > li:has(input:checked) {
+  background: #fff6a7;
+}
+
+#rd-checkout-step-method .pickup-location-lookup {
+  width: 100%;
+  padding-left: 2rem;
+  margin-top: 0;
+  height: 3.5rem;
+  font-weight: 350;
+  border-radius: 12.5rem;
+}
+
+/* Select2 bakes a fixed px width into the pickup-location container at init
+   time, so it neither shrinks nor grows with its column. Force it to the full
+   field width with width + max-width (overriding the inline px width) so the
+   "Select a Pickup location" box is always exactly 100% wide and never spills
+   out of the option box. Visibility is CSS-driven (see .rd-pickup-visible /
+   :has rules above), so the box is laid out while the step is on screen and
+   no longer risks collapsing to 0 from a hidden-init. */
+#rd-checkout-step-method .pickup-location-field .select2-container {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+#rd-checkout-step-method .pickup-location-field .select2-container .select2-selection--single {
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* Every Select2 in the checkout (billing/shipping State & Country dropdowns,
+   etc.) bakes a fixed px width into its container at init time and won't shrink
+   with its column. On some widths that baked width is wider than the field, so
+   the container spills past the column and the whole page scrolls sideways.
+   Capping them all to their field keeps the checkout from overflowing. */
+.rd-express-checkout-form .select2-container {
+  max-width: 100% !important;
+}
+
+/* If the pickup dropdown ever renders inline inside the step (e.g. Select2 is
+   re-initialised during a step transition), make sure it fills the field
+   instead of collapsing into a thin vertical strip. Body-level overlay
+   dropdowns are unaffected since they're not inside the step. */
+#rd-checkout-step-method .select2-container--open .select2-dropdown {
+  width: 100% !important;
+  min-width: 100% !important;
+  left: 0 !important;
+  right: auto !important;
+}
+
+#rd-checkout-step-method .select2-container--default .select2-selection--single {
+  position: relative;
+  height: 3.5rem;
+  border-radius: 12.5rem;
+}
+
+#rd-checkout-step-method .select2-container--default .select2-selection--single .select2-selection__rendered {
+  padding-left: 1.75rem;
+  line-height: 3.5rem;
+  padding-right: 2.75rem;
+}
+
+/* Keep the pickup-location dropdown aligned directly under the input.
+   Legacy per-breakpoint left offsets were removed so select2 can position natively. */
+.woocommerce-checkout .select2-container--open .select2-dropdown {
+  left: 0 !important;
+  right: auto !important;
+}
+
+/* Delivery Slots (Iconic) date field box — drop the plugin's default padding. */
+.wds-fieldbox-sub-field {
+  padding: 0px;
+}
+
+/* "Note to delivery driver" textarea showed two borders: the input wrapper's
+   pill border plus the textarea's own outline. Keep a single, textarea-shaped
+   border by dropping the outline and giving the wrapper a sensible radius. */
+#order_comments {
+  outline: 0 !important;
+  border: 0 !important;
+}
+
+#order_comments_field .woocommerce-input-wrapper {
+  border-radius: 0.625rem;
+}
+
+/* Space the "Billing address is different…" checkbox from its label text. */
+.rd-bill-different-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Restore a visible dropdown chevron on the pickup selector. */
+#rd-checkout-step-method .select2-container--default .select2-selection--single .select2-selection__arrow {
+  top: 0;
+  bottom: 0;
+  height: auto;
+  right: 1.25rem;
+  display: flex;
+  align-items: center;
+}
+
+#rd-checkout-step-method .select2-container--default .select2-selection--single .select2-selection__arrow b {
+  position: static !important;
+  margin: 0 !important;
+  display: block !important;
+  border-color: #291f19 transparent transparent transparent !important;
+  border-style: solid !important;
+  border-width: 6px 5px 0 5px !important;
+}
+
+/* The native Country / Region and State selects use appearance:none (which
+   hides the browser's built-in arrow) but have no replacement, so they showed
+   no dropdown indicator. Add a chevron and keep room for it on the right. */
+.rd-express-checkout-form .woocommerce-input-wrapper select.country_select,
+.rd-express-checkout-form .woocommerce-input-wrapper select.state_select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-color: transparent !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23291f19' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 1.25rem center !important;
+  background-size: 12px 8px !important;
+  padding-right: 2.5rem !important;
+}
+
+/* When the selected country has no states (e.g. France, Germany), WooCommerce
+   replaces the State / County control with a bare hidden input. The field's
+   label and the rounded input wrapper still render, leaving an empty bordered
+   box with a dangling label. Hide any address field row whose wrapper contains
+   only that hidden input so it disappears cleanly when switching country. */
+.rd-express-checkout-form p:has(> .woocommerce-input-wrapper > input[type="hidden"]:only-child) {
+  display: none !important;
+}
+
+/* Safety net: a .single-field-wrapper carries padding-bottom for row spacing,
+   so an empty one (e.g. left behind when a field's <p> is relocated) would add
+   a phantom gap. Collapse any empty wrapper. */
+.rd-express-checkout-form .single-field-wrapper:empty {
+  display: none !important;
+}
+
+#rd-checkout-step-schedule .iconic-wds-fields,
+#rd-checkout-step-schedule #jckwds-fields {
+  margin-top: 0;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+#rd-checkout-step-schedule .wds-fieldbox-header,
+#rd-checkout-step-schedule .iconic-wds-fields__title {
+  display: none !important;
+}
+
+#rd-checkout-step-schedule .jckwds-delivery-date > label,
+#rd-checkout-step-schedule #jckwds-delivery-date-wrapper label {
+  margin-left: 0.5rem;
+}
+
+.rd-express-checkout-form.rd-fulfilment-collection .rd-delivery-hint,
+.rd-express-checkout-form.rd-fulfilment-collection .rd-checkout-shipping-block,
+.rd-express-checkout-form.rd-fulfilment-collection .woocommerce-additional-fields {
+  display: none !important;
+}
+
+.rd-express-checkout-form.rd-fulfilment-delivery #ship-to-different-address {
+  display: none !important;
+}
+
+.rd-express-checkout-form.rd-fulfilment-delivery:not(.rd-show-billing) .rd-checkout-billing-block {
+  display: none !important;
+}
+
+.rd-express-checkout-form.rd-fulfilment-delivery.rd-show-billing .rd-checkout-billing-block #billing_phone_field,
+.rd-express-checkout-form.rd-fulfilment-delivery.rd-show-billing .rd-checkout-billing-block #billing_email_field {
+  display: none !important;
+}
+
+.rd-express-checkout-form.rd-fulfilment-delivery .shipping_address {
+  display: block !important;
+}
+
+.rd-express-checkout-form .rd-delivery-address-heading {
+  margin-bottom: 1rem;
+}
+
+.rd-express-checkout-form .rd-delivery-contact {
+  margin-top: 0.5rem;
+}
+
+.rd-express-checkout-form .rd-bill-different-row {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.rd-express-checkout-form.rd-fulfilment-delivery.rd-show-billing .rd-checkout-billing-block {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 1023px) {
+  /* Keep natural source order on mobile: progress → steps (method, date,
+     details) → order summary + payment. Previously `order: -1` pulled the
+     summary (which contains the payment form + Pay button + terms) above the
+     steps, so customers saw "Pay now" before choosing anything. */
+  .rd-express-checkout__main {
+    order: 0;
+  }
+
+  .rd-express-checkout__summary {
+    order: 1;
+  }
+
+  body.woocommerce-checkout.rd-has-mobile-pay-bar {
+    padding-bottom: 5.5rem;
+  }
+}
+
+/* Single Eircode field — hide any leftover WC postcode row */
+.rd-express-checkout-form #shipping_postcode_field {
+  display: none !important;
+}
+
+/* Iconic no-dates — friendlier panel replaces plugin error */
+.rd-express-checkout-form .iconic-wds-fields--has-error .iconic-wds-fields__error {
+  display: none !important;
+}
+
+.rd-schedule-unavailable {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  border: 2px solid #f0c040;
+  border-radius: 1rem;
+  background: #fffbea;
+}
+
+.rd-schedule-unavailable__title {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.rd-schedule-unavailable__text,
+.rd-schedule-unavailable__contact {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.rd-schedule-unavailable__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.rd-schedule-unavailable__actions .button {
+  flex: 1 1 auto;
+  min-width: 9rem;
+}
+
+.rd-schedule-unavailable__contact {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.rd-schedule-unavailable__contact a {
+  text-decoration: underline;
+}
+
+#rd-checkout-step-schedule .rd-checkout-step__continue:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Collapsed terms in payment area */
+.rd-terms-collapse {
+  margin: 0 0 1rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.rd-terms-collapse__summary {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  list-style: none;
+}
+
+.rd-terms-collapse__summary::-webkit-details-marker {
+  display: none;
+}
+
+.rd-terms-collapse__summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 0.35rem;
+  transition: transform 0.15s ease;
+}
+
+.rd-terms-collapse[open] .rd-terms-collapse__summary::before {
+  transform: rotate(90deg);
+}
+
+.rd-terms-collapse__content {
+  max-height: 12rem;
+  overflow-y: auto;
+  padding: 0 1rem 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  border-top: 1px solid #e5e5e5;
+}
+
+/* `wc_terms_and_conditions_page_content()` wraps the real terms text in a
+   nested `<div class="woocommerce-terms-and-conditions" style="display:none">`,
+   and the custom collapse wraps that in another same-classed div. WooCommerce
+   keeps the inner div hidden (inline `display:none`), so the panel stayed blank
+   even when this <details> was open. When the details is open the native
+   collapse already controls visibility, so force every nested terms wrapper
+   visible (the closed <details> still hides them natively). */
+.rd-terms-collapse[open] .woocommerce-terms-and-conditions {
+  display: block !important;
+}
+
+/* The terms collapse lives inside `.woocommerce-checkout-payment`, which
+   WooCommerce/Stripe covers with a blockUI overlay (position:absolute,
+   z-index:1000) while the payment element initialises. That overlay intercepts
+   clicks, so the "Read terms & conditions" summary never opened on a real
+   click. Lift the collapse above the overlay so it stays interactive. */
+.rd-terms-collapse {
+  position: relative;
+  z-index: 1001;
+}
+
+/* Order details accordion (checkout order review table) */
+.rd-order-summary {
+  overflow: hidden;
+}
+
+.rd-order-summary__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  list-style: none;
+  background: #eaeaea;
+}
+
+.rd-order-summary__bar::-webkit-details-marker {
+  display: none;
+}
+
+.rd-order-summary__title {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.rd-order-summary__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rd-order-summary__total {
+  font-weight: 600;
+}
+
+.rd-order-summary__total .amount {
+  font-weight: 600;
+}
+
+.rd-order-summary__chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 2px solid #000;
+  border-radius: 9999px;
+  flex: 0 0 auto;
+  transition: transform 0.15s ease;
+}
+
+.rd-order-summary__chevron::before {
+  content: "";
+  display: block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: -0.18rem;
+  border-right: 2px solid #000;
+  border-bottom: 2px solid #000;
+  transform: rotate(45deg);
+}
+
+.rd-order-summary[open] .rd-order-summary__chevron {
+  transform: rotate(180deg);
+}
+
+/* The total is already surfaced in the open body, so avoid duplicating it in
+   the bar while expanded. */
+.rd-order-summary[open] .rd-order-summary__total {
+  display: none;
+}
+
+/* Mobile sticky pay bar */
+.rd-mobile-pay-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0));
+  background: #fff;
+  border-top: 2px solid #000;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.rd-mobile-pay-bar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.rd-mobile-pay-bar__total {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.rd-mobile-pay-bar__label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+
+.rd-mobile-pay-bar__amount {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.rd-mobile-pay-bar__button {
+  flex-shrink: 0;
+  min-width: 8.5rem;
+  margin: 0 !important;
+  padding: 0.85rem 1.25rem !important;
+  height: auto !important;
+}
+
+@media (min-width: 1024px) {
+  .rd-mobile-pay-bar {
+    display: none !important;
+  }
+}
+
+/* Privacy policy fine print was rendering at 1.25rem (20px), too large for
+   small print. Scale it down to normal body size while keeping the light weight. */
+.rd-express-checkout-form .woocommerce-privacy-policy-text,
+.rd-express-checkout-form .woocommerce-privacy-policy-text p {
+  font-size: 1rem;
+  font-style: normal;
+  font-weight: 350;
+  line-height: 1.5;
+  padding-bottom: 0;
+  padding-top: 0.6rem;
+}

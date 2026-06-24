@@ -28,7 +28,9 @@ function matrix_starter_setup() {
     add_image_size('hero-xxlarge', 1920,1080, true);
 
     register_nav_menus(array(
-        'primary'       => esc_html__('Primary Menu', 'matrix-starter'),
+        'primary'              => esc_html__('Primary Menu', 'matrix-starter'),
+        'primary_navigation'   => esc_html__('Primary Navigation (Rolling Donut)', 'matrix-starter'),
+        'sitemap_navigation'   => esc_html__('Sitemap Navigation (Rolling Donut)', 'matrix-starter'),
         // Footer columns (match the new footer layout)
         'footer_one'    => esc_html__('Footer — Project', 'matrix-starter'),
         'footer_two'    => esc_html__("Footer — What's New", 'matrix-starter'),
@@ -66,8 +68,27 @@ if (file_exists(get_template_directory() . '/vendor/autoload.php')) {
 require_once get_template_directory() . '/inc/enqueue-fonts.php';
 require_once get_template_directory() . '/inc/enqueue-scripts.php';
 require_once get_template_directory() . '/inc/archive-hero-functions.php';
+require_once get_template_directory() . '/inc/pace-helpers.php';
 require_once get_template_directory() . '/inc/hero-functions.php';
 require_once get_template_directory() . '/inc/flexible-content-functions.php';
+require_once get_template_directory() . '/inc/legacy-flexi-bridge.php';
+require_once get_template_directory() . '/inc/rolling-donut-fonts.php';
+require_once get_template_directory() . '/inc/rolling-donut-acf.php';
+require_once get_template_directory() . '/inc/rolling-donut-navbar.php';
+require_once get_template_directory() . '/inc/rolling-donut-product-search.php';
+require_once get_template_directory() . '/inc/rolling-donut-blog.php';
+require_once get_template_directory() . '/inc/rolling-donut-home.php';
+require_once get_template_directory() . '/inc/rolling-donut-footer.php';
+require_once get_template_directory() . '/inc/rolling-donut-woocommerce.php';
+require_once get_template_directory() . '/inc/rolling-donut-a11y.php';
+require_once get_template_directory() . '/inc/rolling-donut-performance.php';
+require_once get_template_directory() . '/inc/rolling-donut-single-product.php';
+require_once get_template_directory() . '/inc/rolling-donut-locations.php';
+require_once get_template_directory() . '/inc/rolling-donut-flexi-meta.php';
+require_once get_template_directory() . '/inc/rolling-donut-sections.php';
+require_once get_template_directory() . '/inc/rolling-donut-contact.php';
+require_once get_template_directory() . '/inc/rolling-donut-weddings.php';
+require_once get_template_directory() . '/inc/rolling-donut-sitemap.php';
 require_once get_template_directory() . '/inc/autoload-helpers-setup.php';
 
 /**
@@ -86,6 +107,7 @@ add_action('acf/init', function () {
     require_once get_template_directory() . '/inc/autoload-acf-fields.php';
     require_once get_template_directory() . '/inc/autoload-acf-groups.php';
     require_once get_template_directory() . '/inc/theme-options.php';
+    require_once get_template_directory() . '/inc/theme-test-runner-admin.php';
 }, 5);
 
 /**

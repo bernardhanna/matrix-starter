@@ -63,6 +63,13 @@ const baseConfig = {
   plugins: [
     require('@tailwindcss/forms'),
     require('@tailwindcss/typography'),
+    // Legacy donut "hard" card shadow (matches therollingdonut.ie cards/forms).
+    // Registered as a utility so responsive variants (e.g. md:boxshadow-two) compile.
+    plugin(({ addUtilities }) => {
+      addUtilities({
+        '.boxshadow-two': { boxShadow: '0px 8px 0px 0px rgba(0, 0, 0, 0.25)' },
+      });
+    }),
     // If this ESM plugin caused issues, keep it disabled:
     // require('tailwindcss-pseudo')({ empty:true, before:true, after:true }),
   ],

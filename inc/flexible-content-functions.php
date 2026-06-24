@@ -2,35 +2,8 @@
 // File: inc/flexible-content-functions.php
 
 /**
- * Load Flexible Content Templates
- * 
- * Automatically loads flexible content templates based on the layout name
+ * Flexi loader lives in inc/legacy-flexi-bridge.php (supports flexible_content + flexible_content_blocks).
  */
-function load_flexible_content_templates($post_id = null)
-{
-  // If no post_id is provided, use the current page's ID
-  if (!$post_id) {
-    $post_id = is_home() ? get_option('page_for_posts') : get_the_ID();
-  }
-
-  // Debugging: Log which page ID is being used
-  error_log("Loading Flexible Content for Post ID: " . $post_id);
-
-  if ($post_id && have_rows('flexible_content_blocks', $post_id)) {
-    while (have_rows('flexible_content_blocks', $post_id)) : the_row();
-      $layout = get_row_layout();
-      $template_path = get_template_directory() . '/template-parts/flexi/' . $layout . '.php';
-
-      if (file_exists($template_path)) {
-        get_template_part('template-parts/flexi/' . $layout);
-      } else {
-        error_log("Missing flexible content template file: {$layout}.php");
-      }
-    endwhile;
-  } else {
-    error_log("No ACF Flexible Content Blocks found for Post ID: " . $post_id);
-  }
-}
 /**
  * Get Available Flexible Content Layouts
  * 

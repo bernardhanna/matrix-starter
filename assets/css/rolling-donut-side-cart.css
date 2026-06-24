@@ -1,0 +1,253 @@
+.rd-side-cart {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.rd-side-cart.is-open {
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.rd-side-cart__overlay {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: rgb(0 0 0 / 45%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.rd-side-cart.is-open .rd-side-cart__overlay {
+  opacity: 1;
+}
+
+.rd-side-cart__panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 420px);
+  max-width: 100%;
+  height: 100%;
+  background: #fff;
+  border-left: 2px solid #291f19;
+  box-shadow: -8px 0 24px rgb(0 0 0 / 15%);
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rd-side-cart.is-open .rd-side-cart__panel {
+  transform: translateX(0);
+}
+
+.rd-side-cart__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.rd-side-cart__inner.is-loading {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.rd-side-cart__inner.is-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: 2rem;
+  height: 2rem;
+  margin: -1rem 0 0 -1rem;
+  border: 2px solid rgb(41 31 25 / 20%);
+  border-top-color: #291f19;
+  border-radius: 50%;
+  animation: rd-side-cart-spin 0.7s linear infinite;
+}
+
+@keyframes rd-side-cart-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rd-side-cart__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 2px solid #291f19;
+  background: #ffed56;
+  flex-shrink: 0;
+}
+
+.rd-side-cart__title {
+  margin: 0;
+}
+
+/* Smaller header title + subtotal than the theme's text-lg-font utility.
+ * Scoped to .rd-side-cart so it wins over the single-class utility without
+ * needing !important. */
+.rd-side-cart .rd-side-cart__title {
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.rd-side-cart .rd-side-cart__subtotal-amount {
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+/* Slightly smaller item titles than the theme's text-sm-md-font utility.
+ * Scoped to .rd-side-cart so it wins over the single-class utility. */
+.rd-side-cart .rd-side-cart__item-name {
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.rd-side-cart__items {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.75rem 0;
+  list-style: none;
+}
+
+.rd-side-cart__item {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid rgb(41 31 25 / 12%);
+}
+
+.rd-side-cart__item-image img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid #291f19;
+}
+
+.rd-side-cart__item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rd-side-cart__item-name {
+  display: block;
+  line-height: 1.35;
+}
+
+.rd-side-cart__remove {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 2px solid #291f19;
+  border-radius: 9999px;
+  background: #fff;
+  color: #291f19;
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rd-side-cart__remove:hover {
+  background: #ffed56;
+}
+
+.rd-side-cart__item-meta {
+  margin-top: 0.35rem;
+}
+
+.rd-side-cart__item .donut-box-builder-items {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.rd-side-cart__item .donut-box-builder-items small {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.rd-side-cart__footer {
+  flex-shrink: 0;
+  padding: 1rem 1.25rem 1.5rem;
+  background: #fafafa;
+  border-top: 2px solid #291f19;
+}
+
+.rd-side-cart__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 4.5rem;
+  border: 2px solid #291f19;
+  font-family: Edmondsans, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 420;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.rd-side-cart__btn--primary {
+  background: #291f19;
+  color: #ffed56;
+}
+
+.rd-side-cart__btn--primary:hover {
+  background: #ffed56;
+  color: #291f19;
+}
+
+.rd-side-cart__btn--secondary {
+  background: #ffed56;
+  color: #291f19;
+}
+
+.rd-side-cart__btn--secondary:hover {
+  background: #291f19;
+  color: #ffed56;
+}
+
+.rd-side-cart__btn--ghost {
+  background: transparent;
+  color: #291f19;
+}
+
+.rd-side-cart__btn--ghost:hover {
+  background: rgb(255 237 86 / 35%);
+}
+
+body.rd-side-cart-open {
+  overflow: hidden;
+}
+
+.rd-cart-feedback-side .js-cart-header .cart-contents,
+.rd-cart-feedback-side .js-cart-header-mobile .cart-contents {
+  cursor: pointer;
+}

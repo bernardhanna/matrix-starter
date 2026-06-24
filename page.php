@@ -1,39 +1,71 @@
 <?php
+/**
+ * Default page template — legacy page.blade.php (RD header + gutenburg content).
+ */
 get_header();
-$enable_breadcrumbs = get_field('enable_breadcrumbs', 'option'); // Returns true/false
+
+$matrix_rd_is_account_page = function_exists('is_account_page') && is_account_page();
+$matrix_rd_account_logged_in = $matrix_rd_is_account_page && is_user_logged_in();
+
+$matrix_rd_myaccount_bg_url = function_exists('get_field') && function_exists('matrix_rd_acf_image_url')
+    ? matrix_rd_acf_image_url(get_field('myaccount_bg', 'option'))
+    : '';
+
+$matrix_rd_account_has_bg = $matrix_rd_is_account_page && $matrix_rd_myaccount_bg_url !== '';
+$matrix_rd_special_bg = $matrix_rd_account_has_bg;
+
+$matrix_rd_bg_url = '';
+if ($matrix_rd_account_has_bg) {
+    $matrix_rd_bg_url = $matrix_rd_myaccount_bg_url;
+}
+
+$main_classes = 'site-main w-full overflow-hidden';
+if ($matrix_rd_special_bg) {
+    $main_classes .= ' bg-repeat bg-black-full min-h-[1000px] max-tablet:py-8';
+} elseif ($matrix_rd_account_logged_in) {
+    $main_classes .= ' bg-black-full';
+} else {
+    $main_classes .= ' bg-white';
+}
+
+$main_style = $matrix_rd_bg_url !== ''
+    ? ' style="background-image: url(' . esc_url($matrix_rd_bg_url) . ');"'
+    : '';
 ?>
-<main id="main-content" class="overflow-hidden w-full site-main">
-    <?php load_hero_templates(); ?>
+<main id="main-content" class="<?php echo esc_attr($main_classes); ?>"<?php echo $main_style; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+  <?php
+  while (have_posts()) :
+      the_post();
 
+      if (function_exists('is_account_page') && is_account_page()) {
+          wc_get_template('custom/woocommerce-header.php');
+      } else {
+          get_template_part('template-parts/header/page-header-rd');
+      }
 
-    <?php
-    $enable_breadcrumbs = get_field('enable_breadcrumbs', 'option');
-    $skip_breadcrumbs   = is_page(['contact-us', 'about-us']);
-
-    if ($enable_breadcrumbs !== false && !$skip_breadcrumbs) :
-        get_template_part('template-parts/header/breadcrumbs');
-    endif;
-    ?>
-
-    <?php
-    if (have_posts()) :
-        while (have_posts()) : the_post();
-            if (trim(get_the_content()) != '') : ?>
-                <div class="<?php echo esc_attr(function_exists('is_checkout') && is_checkout() ? 'max-w-[1095px] mx-auto max-xl:px-5' : matrix_content_container_classes()); ?>">
-                    <?php
-                    get_template_part('template-parts/content/content', 'page');
-                    ?>
-                </div>
-    <?php endif;
-        endwhile;
-    else :
-        echo '<p>No content found</p>';
-    endif;
-    ?>
-
-    <?php load_flexible_content_templates(); ?>
+      if (function_exists('is_account_page') && is_account_page()) {
+          $content_wrap = 'mx-auto lg:max-w-max-1568 px-4 pt-6 pb-12 lg:pb-20';
+          $content_inner_class = 'max-w-none';
+      } else {
+          $content_wrap = 'mx-auto lg:max-w-max-1568 px-4 pt-6 pb-12 lg:pb-20';
+          $content_inner_class = 'gutenburg entry-content max-w-none';
+      }
+      ?>
+  <div class="<?php echo esc_attr($content_wrap); ?>">
+    <div class="<?php echo esc_attr($content_inner_class); ?>">
+      <?php the_content(); ?>
+      <?php
+      wp_link_pages([
+          'before' => '<nav class="page-nav"><p>' . esc_html__('Pages:', 'matrix-starter') . '</p>',
+          'after'  => '</nav>',
+      ]);
+      ?>
+    </div>
+  </div>
+      <?php
+      matrix_rd_load_page_flexi_if_present(get_the_ID());
+  endwhile;
+  ?>
 </main>
-
 <?php
 get_footer();
-?>

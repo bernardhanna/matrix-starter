@@ -1,0 +1,149 @@
+/**
+ * Rolling Donut — single blog post (legacy single.blade.php).
+ */
+
+.margin-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.max-w-max-sitewidth {
+  max-width: 107.875rem;
+}
+
+@media (max-width: 1084px) {
+  .mob-no-b-border {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+  }
+}
+
+.single-post .e-content img,
+.single-post .entry-content img {
+  margin: 0 0 1.5em;
+}
+
+.single-post .alignleft,
+.single-post img.alignleft {
+  margin-right: 1.5em;
+  display: inline;
+  float: left;
+}
+
+.single-post .alignright,
+.single-post img.alignright {
+  margin-left: 1.5em;
+  display: inline;
+  float: right;
+}
+
+.single-post .aligncenter,
+.single-post img.aligncenter {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Body typography — override Matrix .entry-content blue/Public Sans on singles */
+.single-post .e-content h1,
+.single-post .e-content h2,
+.single-post .e-content h3,
+.single-post .gutenburg h1,
+.single-post .gutenburg h2,
+.single-post .gutenburg h3,
+.single-post .e-content h1.wp-block-heading,
+.single-post .e-content h2.wp-block-heading,
+.single-post .e-content h3.wp-block-heading,
+.single-post .gutenburg h1.wp-block-heading,
+.single-post .gutenburg h2.wp-block-heading,
+.single-post .gutenburg h3.wp-block-heading {
+  padding-top: 0;
+  padding-bottom: 0;
+  font-family: Edmondsans, edmondsans, sans-serif;
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 3.5rem;
+  color: #000;
+  letter-spacing: normal;
+}
+
+.single-post .e-content h2,
+.single-post .gutenburg h2,
+.single-post .e-content h2.wp-block-heading,
+.single-post .gutenburg h2.wp-block-heading {
+  padding-bottom: 1rem;
+}
+
+.single-post .e-content h4,
+.single-post .gutenburg h4,
+.single-post .e-content h4.wp-block-heading,
+.single-post .gutenburg h4.wp-block-heading {
+  padding-top: 0;
+  padding-bottom: 0;
+  font-family: Edmondsans, edmondsans, sans-serif;
+  font-size: 32px;
+  font-weight: 420;
+  line-height: 3.5rem;
+  color: #000;
+  letter-spacing: normal;
+}
+
+.single-post .e-content h5,
+.single-post .gutenburg h5,
+.single-post .e-content h5.wp-block-heading,
+.single-post .gutenburg h5.wp-block-heading {
+  padding-top: 0;
+  padding-bottom: 0;
+  font-family: Edmondsans, edmondsans, sans-serif;
+  font-size: 28px;
+  font-weight: 420;
+  line-height: 3.5rem;
+  color: #000;
+  letter-spacing: normal;
+}
+
+.single-post .e-content h6,
+.single-post .gutenburg h6,
+.single-post .e-content h6.wp-block-heading,
+.single-post .gutenburg h6.wp-block-heading {
+  padding-top: 0;
+  padding-bottom: 0;
+  font-family: Edmondsans, edmondsans, sans-serif;
+  font-size: 24px;
+  font-weight: 420;
+  line-height: 3.5rem;
+  color: #000;
+  letter-spacing: normal;
+}
+
+.single-post .e-content p,
+.single-post .gutenburg p,
+.single-post .e-content li,
+.single-post .gutenburg li {
+  font-family: Laca, Montserrat, sans-serif;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.3rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: #000;
+}
+
+.single-post .e-content a,
+.single-post .gutenburg a {
+  color: inherit;
+  text-decoration: underline;
+  transition: color 150ms ease-out;
+}
+
+.single-post .e-content a:hover,
+.single-post .gutenburg a:hover {
+  text-decoration: underline;
+}
+
+.single-post .e-content strong,
+.single-post .e-content b,
+.single-post .gutenburg strong,
+.single-post .gutenburg b {
+  font-weight: 700;
+}

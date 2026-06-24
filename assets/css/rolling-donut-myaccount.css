@@ -1,0 +1,144 @@
+/**
+ * WooCommerce My Account — logged-in navigation, typography, and form overrides.
+ */
+
+body.tw-myaccount.logged-in .woocommerce-MyAccount-navigation ul {
+  scrollbar-width: thin;
+}
+
+body.tw-myaccount.logged-in .woocommerce-MyAccount-navigation-link.is-active {
+  border-color: #ffed56 !important;
+}
+
+body.tw-myaccount.logged-in .woocommerce-MyAccount-navigation-link.is-active a {
+  color: #ffed56 !important;
+  opacity: 1;
+}
+
+body.tw-myaccount.logged-in .woocommerce-MyAccount-navigation a {
+  color: #fff;
+}
+
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content {
+  box-shadow: 0 4px 0 0 rgb(0 0 0 / 25%);
+  font-family: Laca, Montserrat, sans-serif;
+}
+
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content p,
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content li,
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content address {
+  font-family: Laca, Montserrat, sans-serif;
+  color: #000;
+}
+
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content h3,
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content h4 {
+  font-family: Edmondsans, edmondsans, sans-serif;
+  font-weight: 420;
+  color: #000;
+}
+
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content a {
+  color: inherit;
+}
+
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content .woocommerce-Input,
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content .input-text,
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content select {
+  border-radius: 200px;
+  border: 1px solid #d8d7ce;
+  font-family: Laca, Montserrat, sans-serif;
+}
+
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content label {
+  font-family: Laca, Montserrat, sans-serif;
+  font-weight: 300;
+  color: #000;
+}
+
+body.tw-myaccount.logged-in .woocommerce-address-fields .form-row {
+  margin-bottom: 1.5rem;
+}
+
+body.tw-myaccount.logged-in #billing_country_field,
+body.tw-myaccount.logged-in #shipping_country_field {
+  display: none;
+}
+
+body.tw-myaccount.logged-in #billing_state_field .woocommerce-input-wrapper,
+body.tw-myaccount.logged-in #shipping_state_field .woocommerce-input-wrapper {
+  height: 3.5rem;
+}
+
+body.tw-myaccount.logged-in #billing_state_field .select2-selection--single,
+body.tw-myaccount.logged-in #shipping_state_field .select2-selection--single {
+  height: 3.5rem;
+  border: none;
+  border-radius: 200px;
+  background: transparent;
+}
+
+body.tw-myaccount.tw-auth .woocommerce-MyAccount-content {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+body.tw-myaccount.tw-auth .woocommerce-notices-wrapper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+/* Legacy .input-text overrides pl-11 — keep auth field insets consistent */
+body.tw-myaccount.tw-auth form .woocommerce-Input {
+  border-width: 1px;
+  padding-left: 2.75rem;
+}
+
+body.tw-myaccount.tw-auth form .woocommerce-Input--password {
+  padding-right: 3rem;
+}
+
+/* WooCommerce wraps password fields — keep full width and aligned with icon padding */
+body.tw-myaccount.tw-auth form .relative .password-input {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+
+body.tw-myaccount.tw-auth form .password-input {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+
+body.tw-myaccount.tw-auth form .password-input input[type="password"],
+body.tw-myaccount.tw-auth form .password-input input[type="text"] {
+  width: 100%;
+  max-width: 100%;
+  padding-left: 2.75rem;
+  padding-right: 3rem;
+}
+
+body.tw-myaccount.tw-auth form .show-password-input {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+body.tw-myaccount.tw-auth [x-cloak] {
+  display: none !important;
+}

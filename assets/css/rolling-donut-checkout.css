@@ -1,0 +1,226 @@
+/**
+ * Checkout overrides — layout fixes + legacy path fixes not covered by rolling-donut-legacy.css.
+ */
+
+label[for="payment_method_stripe"]::after {
+  content: url('../images/checkout/card-icons.png');
+}
+
+/* Soften AJAX refresh flash on order review, payment, and delivery slots */
+.woocommerce-checkout form.checkout.processing .blockUI.blockOverlay,
+.woocommerce-checkout .iconic-wds-fields .blockUI.blockOverlay,
+.woocommerce-checkout #order_review .blockUI.blockOverlay,
+.woocommerce-checkout #payment .blockUI.blockOverlay {
+  opacity: 0.12 !important;
+  background: #fff !important;
+}
+
+/* Keep payment visible below the order summary after AJAX fragment updates */
+.woocommerce-checkout #order_review > .woocommerce-checkout-payment,
+.woocommerce-checkout #payment.woocommerce-checkout-payment {
+  display: block;
+  position: relative;
+  z-index: 2;
+  margin-top: 1.5rem;
+}
+
+.woocommerce-checkout #payment .payment_box {
+  display: block;
+  min-height: 2rem;
+}
+
+.woocommerce-checkout #payment .payment_box.payment_method_stripe {
+  display: block !important;
+}
+
+.woocommerce-checkout #payment .wc-stripe-upe-element {
+  display: block;
+  min-height: 3rem;
+  width: 100%;
+}
+
+.woocommerce-checkout #payment .wc-upe-form {
+  display: block;
+  width: 100%;
+}
+
+.woocommerce-checkout #payment .wc-saved-payment-methods[data-count="0"] {
+  display: none !important;
+}
+
+.woocommerce-checkout #payment #wc-stripe-upe-form {
+  display: block !important;
+}
+
+/* Neutralise matrix-starter .form-row flex layout on checkout fields */
+.woocommerce-checkout .woocommerce-billing-fields__field-wrapper p,
+.woocommerce-checkout .woocommerce-shipping-fields__field-wrapper p,
+.woocommerce-checkout .woocommerce-account-fields p.form-row {
+  display: block !important;
+  float: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-wrap: nowrap !important;
+  gap: 0 !important;
+  clear: both !important;
+}
+
+.woocommerce-checkout .woocommerce-billing-fields__field-wrapper label,
+.woocommerce-checkout .woocommerce-shipping-fields__field-wrapper label {
+  display: block !important;
+  float: none !important;
+  width: 100% !important;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.woocommerce-checkout .single-field-wrapper {
+  width: 100%;
+  padding-bottom: 1rem !important;
+}
+
+.woocommerce-checkout .name-field {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 0;
+}
+
+@media (min-width: 1300px) {
+  .woocommerce-checkout .name-field {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .woocommerce-checkout .name-field .single-field-wrapper {
+    max-width: 362px;
+    flex: 1 1 0;
+  }
+}
+
+.woocommerce-checkout .woocommerce-input-wrapper {
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 200px;
+  border: 1px solid #d8d7ce;
+  height: 3.5rem;
+}
+
+.woocommerce-checkout .woocommerce-input-wrapper .input-text,
+.woocommerce-checkout .woocommerce-input-wrapper select,
+.woocommerce-checkout .woocommerce-input-wrapper .select2-selection--single {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-left: 2.75rem !important;
+  border-radius: 200px;
+}
+
+.woocommerce-checkout .icon-address-2 .input-text,
+.woocommerce-checkout .icon-postcode .input-text,
+.woocommerce-checkout #billing_address_2,
+.woocommerce-checkout #shipping_address_2,
+.woocommerce-checkout #custom_shipping_eircode {
+  padding-left: 1.5rem !important;
+}
+
+/* Delivery/collection is local only, so the shipping country stays hidden
+   (forced to the store base). Billing is global, so the billing country
+   selector is shown to allow customers to bill from any country. */
+#shipping_country_field {
+  display: none !important;
+}
+
+/* Icon pseudo-elements (fallback if legacy bundle order shifts) */
+.woocommerce-checkout .icon-first-name .woocommerce-input-wrapper::before,
+.woocommerce-checkout .icon-last-name .woocommerce-input-wrapper::before {
+  content: url('https://api.iconify.design/ph/user-light.svg?width=22&height=22');
+  position: absolute;
+  left: 1rem;
+  z-index: 1;
+  width: 19.5px;
+  height: 19.5px;
+  pointer-events: none;
+}
+
+.woocommerce-checkout .icon-company .woocommerce-input-wrapper::before {
+  content: url('https://api.iconify.design/carbon/location-company.svg?width=22&height=22');
+  position: absolute;
+  left: 1rem;
+  z-index: 1;
+  width: 19.5px;
+  height: 19.5px;
+  pointer-events: none;
+}
+
+.woocommerce-checkout .icon-address-1 .woocommerce-input-wrapper::before {
+  content: url('https://api.iconify.design/octicon/home-24.svg?width=22&height=22');
+  position: absolute;
+  left: 1rem;
+  z-index: 1;
+  width: 19.5px;
+  height: 19.5px;
+  pointer-events: none;
+}
+
+.woocommerce-checkout .icon-city .woocommerce-input-wrapper::before,
+.woocommerce-checkout .icon-state .woocommerce-input-wrapper::before {
+  content: url('https://api.iconify.design/ph/map-pin.svg?width=22&height=22');
+  position: absolute;
+  left: 1rem;
+  z-index: 1;
+  width: 19.5px;
+  height: 19.5px;
+  pointer-events: none;
+}
+
+.woocommerce-checkout .icon-phone .woocommerce-input-wrapper::before,
+.woocommerce-checkout .validate-phone .woocommerce-input-wrapper::before {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath fill='%2331373d' d='m34.06 26.407l-3.496-3.496a4.942 4.942 0 0 0-8.34 2.528c-5.765-1.078-11.372-6.662-11.721-11.653a4.908 4.908 0 0 0 2.586-1.36a4.943 4.943 0 0 0 0-6.99L9.594 1.94a4.943 4.943 0 0 0-6.99 0C-7.882 12.426 23.574 43.882 34.06 33.396a4.944 4.944 0 0 0 0-6.989'/%3E%3C/svg%3E");
+  position: absolute;
+  left: 1rem;
+  z-index: 1;
+  width: 19.5px;
+  height: 19.5px;
+  pointer-events: none;
+}
+
+.woocommerce-checkout .icon-email .woocommerce-input-wrapper::before,
+.woocommerce-checkout .validate-email .woocommerce-input-wrapper::before {
+  content: url('https://api.iconify.design/carbon/email.svg?width=22&height=22');
+  position: absolute;
+  left: 1rem;
+  z-index: 1;
+  width: 19.5px;
+  height: 19.5px;
+  pointer-events: none;
+}
+
+.woocommerce-checkout .icon-address-2 .woocommerce-input-wrapper::before {
+  display: none;
+}
+
+.woocommerce-checkout #billing_state_field .select2-container,
+.woocommerce-checkout #shipping_state_field .select2-container {
+  width: 100% !important;
+}
+
+.woocommerce-checkout #billing_state_field .select2-selection--single,
+.woocommerce-checkout #shipping_state_field .select2-selection--single {
+  height: 3.5rem;
+  border: none;
+  border-radius: 200px;
+  background: transparent;
+}
+
+.woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__rendered {
+  padding-left: 2.75rem;
+  line-height: 3.5rem;
+}

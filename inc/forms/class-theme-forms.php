@@ -368,6 +368,11 @@ class Theme_Forms {
       $this->result(false, 'terms_required');
     }
 
+    $validation_message = apply_filters('matrix_theme_forms_before_send', '', $form_id, $fields);
+    if (is_string($validation_message) && $validation_message !== '') {
+      $this->result(false, $validation_message);
+    }
+
     // 3) Files
     $attachments = [];
     foreach ($_FILES as $file) {

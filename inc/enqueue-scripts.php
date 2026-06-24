@@ -15,6 +15,35 @@ function matrix_is_wc_flow_page(): bool {
 }
 
 /**
+ * Whether Headroom.js is enabled (Theme Options) and allowed on this request.
+ */
+function matrix_headroom_enabled(): bool {
+  if (matrix_is_wc_flow_page()) {
+    return false;
+  }
+  // Rolling Donut uses Alpine headroom (matrix-rd-headroom.js), not Headroom.js.
+  if (function_exists('matrix_rd_nav_should_show') && matrix_rd_nav_should_show()) {
+    return false;
+  }
+  if (! function_exists('get_field')) {
+    return false;
+  }
+  $enabled_scripts = get_field('enabled_scripts', 'option');
+  return is_array($enabled_scripts) && in_array('headroom', $enabled_scripts, true);
+}
+
+/**
+ * Base Tailwind classes for #site-nav when Headroom is active (also safelisted).
+ * Position fixed is toggled in JS only after scroll (headroom--not-top).
+ */
+function matrix_headroom_nav_classes(): string {
+  if (! matrix_headroom_enabled()) {
+    return '';
+  }
+  return 'relative w-full z-50 transition-transform duration-300 ease-in-out translate-y-0';
+}
+
+/**
  * ACF option values may be arrays (label/value), nested arrays, or objects.
  * Normalize to a plain UTF-8 string for CAPTCHA keys and inline JSON.
  */
@@ -86,6 +115,24 @@ function matrix_starter_enqueue_scripts() {
     .sr-person-card__img{object-fit:cover;}
   ');
 
+  /*
+   * Klaviyo sign-up popup: the form design ships its close (X) icon with a
+   * transparent stroke (rgba(255,255,255,0)) sitting on the white logo panel, so
+   * the X is invisible. Force a visible glyph on a light, contrasting chip so it
+   * reads on both the dark and white halves of the popup. Targets Klaviyo''s
+   * own close button class, which is stable across forms.
+   */
+  wp_add_inline_style('matrix-starter', '
+    .klaviyo-close-form{
+      background:rgba(255,255,255,.92) !important;
+      box-shadow:0 1px 4px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.12) !important;
+      opacity:1 !important;
+      visibility:visible !important;
+    }
+    .klaviyo-close-form svg{opacity:1 !important;overflow:visible !important;}
+    .klaviyo-close-form svg *{stroke:#111 !important;opacity:1 !important;}
+  ');
+
   // PACE stat counters (IntersectionObserver — no Alpine dependency)
   $pace_counters_js = get_template_directory() . '/assets/js/pace-counters.js';
   if (file_exists($pace_counters_js)) {
@@ -151,22 +198,67 @@ wp_add_inline_script(
   // Conditionally enqueue based on Theme Options
   $enabled_scripts = function_exists('get_field') ? get_field('enabled_scripts', 'option') : [];
   if (is_array($enabled_scripts)) {
-    if (in_array('font_awesome', $enabled_scripts, true)) wp_enqueue_style('font-awesome');
+    // Font Awesome is already loaded site-wide by the footer (handle
+    // 'fontawesome-6' in inc/rolling-donut-footer.php). Enqueuing this second
+    // copy shipped two full Font Awesome stylesheets + webfonts on every page,
+    // so the 'font_awesome' toggle no longer loads a duplicate.
     if (in_array('hamburger_css', $enabled_scripts, true)) wp_enqueue_style('hamburgers-css');
     if (in_array('flowbite',      $enabled_scripts, true)) wp_enqueue_script('flowbite');
     if (in_array('slick',         $enabled_scripts, true)) { wp_enqueue_style('slick-css'); wp_enqueue_script('slick-js'); }
-    if (in_array('headroom',      $enabled_scripts, true) && ! matrix_is_wc_flow_page()) {
+    if (matrix_headroom_enabled()) {
       wp_enqueue_script('headroom');
       wp_add_inline_script('headroom', "
-        document.addEventListener('DOMContentLoaded', function() {
-          var header = document.querySelector('#site-nav');
-          if (!header || typeof Headroom === 'undefined') return;
-          header.classList.add('fixed','top-0','left-0','w-full','z-50','transition-transform','duration-300','ease-in-out','translate-y-0');
-          var headroom = new Headroom(header, { tolerance: 5, offset: 100 });
-          headroom.onPin   = function(){ header.classList.remove('-translate-y-full'); header.classList.add('translate-y-0'); };
-          headroom.onUnpin = function(){ header.classList.remove('translate-y-0'); header.classList.add('-translate-y-full'); };
-          headroom.init();
-        });
+        (function () {
+          var fixedClasses = ['fixed', 'top-0', 'left-0'];
+
+          function matrixSyncSiteHeaderHeight() {
+            var header = document.getElementById('site-nav');
+            if (!header) return;
+            document.documentElement.style.setProperty('--site-header-height', header.offsetHeight + 'px');
+          }
+          window.matrixSyncSiteHeaderHeight = matrixSyncSiteHeaderHeight;
+
+          function matrixHeadroomSetAtTop(header, atTop) {
+            if (atTop) {
+              fixedClasses.forEach(function (cls) { header.classList.remove(cls); });
+              header.classList.add('relative');
+              header.classList.remove('-translate-y-full');
+              header.classList.add('translate-y-0');
+            } else {
+              header.classList.remove('relative');
+              fixedClasses.forEach(function (cls) { header.classList.add(cls); });
+            }
+            matrixSyncSiteHeaderHeight();
+          }
+
+          document.addEventListener('DOMContentLoaded', function () {
+            var header = document.querySelector('#site-nav');
+            if (!header || typeof Headroom === 'undefined') return;
+            matrixSyncSiteHeaderHeight();
+            var headroom = new Headroom(header, { tolerance: 5, offset: 100 });
+            headroom.onTop = function () {
+              matrixHeadroomSetAtTop(header, true);
+            };
+            headroom.onNotTop = function () {
+              matrixHeadroomSetAtTop(header, false);
+            };
+            headroom.onPin = function () {
+              header.classList.remove('-translate-y-full');
+              header.classList.add('translate-y-0');
+              matrixSyncSiteHeaderHeight();
+            };
+            headroom.onUnpin = function () {
+              if (header.classList.contains('headroom--top')) return;
+              header.classList.remove('translate-y-0');
+              header.classList.add('-translate-y-full');
+              matrixSyncSiteHeaderHeight();
+            };
+            headroom.init();
+            matrixHeadroomSetAtTop(header, window.scrollY <= headroom.offset);
+          });
+          window.addEventListener('resize', matrixSyncSiteHeaderHeight);
+          window.addEventListener('scroll', matrixSyncSiteHeaderHeight, { passive: true });
+        })();
       ");
     }
     if (in_array('leaflet', $enabled_scripts, true)) { wp_enqueue_style('leaflet'); wp_enqueue_script('leaflet'); }
@@ -235,8 +327,8 @@ wp_add_inline_script(
 
       // Theme + Woo essentials
       'jquery','jquery-core','jquery-migrate',
-      'matrix-starter','theme-forms','matrix-newsletter',
-      'wc-cart-fragments','woocommerce',
+      'matrix-starter','theme-forms','matrix-newsletter','matrix-rd-cart',
+      'wc-cart','wc-cart-fragments','woocommerce',
       'recaptcha','turnstile',
       'alpine-intersect','alpine',
       'wc-checkout','wc-country-select','wc-address-i18n',
