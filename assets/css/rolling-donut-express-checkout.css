@@ -537,6 +537,21 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   right: auto !important;
 }
 
+/* The pickup dropdown is anchored to its field wrapper (dropdownParent), but
+   Select2 positions the open container with a document-absolute `top`. Inside the
+   position:relative wrapper that double-counts the field's page offset, so the
+   options list drops hundreds of px down the page (landing over the payment
+   section) instead of beneath the input. Pin the container flush below the field
+   so the location list always opens immediately under "Select a Pickup location". */
+#rd-checkout-step-method .pickup-location-field > .select2-container--open {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  margin-top: 0.25rem !important;
+}
+
 #rd-checkout-step-method .select2-container--default .select2-selection--single {
   position: relative;
   height: 3.5rem;

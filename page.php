@@ -7,22 +7,31 @@ get_header();
 $matrix_rd_is_account_page = function_exists('is_account_page') && is_account_page();
 $matrix_rd_account_logged_in = $matrix_rd_is_account_page && is_user_logged_in();
 
+$matrix_rd_is_thankyou = function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-received');
+
 $matrix_rd_myaccount_bg_url = function_exists('get_field') && function_exists('matrix_rd_acf_image_url')
     ? matrix_rd_acf_image_url(get_field('myaccount_bg', 'option'))
     : '';
 
+$matrix_rd_ty_bg_url = $matrix_rd_is_thankyou && function_exists('get_field') && function_exists('matrix_rd_acf_image_url')
+    ? matrix_rd_acf_image_url(get_field('ty_bg', 'option'))
+    : '';
+
 $matrix_rd_account_has_bg = $matrix_rd_is_account_page && $matrix_rd_myaccount_bg_url !== '';
-$matrix_rd_special_bg = $matrix_rd_account_has_bg;
+$matrix_rd_thankyou_has_bg = $matrix_rd_is_thankyou && $matrix_rd_ty_bg_url !== '';
+$matrix_rd_special_bg = $matrix_rd_account_has_bg || $matrix_rd_thankyou_has_bg;
 
 $matrix_rd_bg_url = '';
 if ($matrix_rd_account_has_bg) {
     $matrix_rd_bg_url = $matrix_rd_myaccount_bg_url;
+} elseif ($matrix_rd_thankyou_has_bg) {
+    $matrix_rd_bg_url = $matrix_rd_ty_bg_url;
 }
 
 $main_classes = 'site-main w-full overflow-hidden';
 if ($matrix_rd_special_bg) {
     $main_classes .= ' bg-repeat bg-black-full min-h-[1000px] max-tablet:py-8';
-} elseif ($matrix_rd_account_logged_in) {
+} elseif ($matrix_rd_account_logged_in || $matrix_rd_is_thankyou) {
     $main_classes .= ' bg-black-full';
 } else {
     $main_classes .= ' bg-white';
@@ -43,7 +52,7 @@ $main_style = $matrix_rd_bg_url !== ''
           get_template_part('template-parts/header/page-header-rd');
       }
 
-      if (function_exists('is_account_page') && is_account_page()) {
+      if ((function_exists('is_account_page') && is_account_page()) || $matrix_rd_is_thankyou) {
           $content_wrap = 'mx-auto lg:max-w-max-1568 px-4 pt-6 pb-12 lg:pb-20';
           $content_inner_class = 'max-w-none';
       } else {

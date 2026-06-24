@@ -104,7 +104,14 @@ $woocommerce
         ])
         ->addImage('ty_bg', [
             'label'         => 'Thank You Page Background',
-            'instructions'  => 'Repeating pattern behind the order confirmation page. Leave empty for a solid background.',
+            'instructions'  => 'Repeating pattern behind the order confirmation page. Leave empty for a solid black background.',
+            'return_format' => 'id',
+            'preview_size'  => 'medium',
+            'library'       => 'all',
+        ])
+        ->addImage('ty_image', [
+            'label'         => 'Thank You Page Image',
+            'instructions'  => 'Illustration shown beside the order confirmation (e.g. a celebratory donut). Leave empty to show the order summary full width.',
             'return_format' => 'id',
             'preview_size'  => 'medium',
             'library'       => 'all',

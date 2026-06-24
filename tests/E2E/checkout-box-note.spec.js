@@ -2,19 +2,17 @@
 const { test, expect } = require('@playwright/test');
 
 /**
- * Checkout — edit a box's "Note to customer" from the Order Details accordion.
+ * Checkout — box details accordion is read-only (no editing).
  *
  * Box-builder (WPC bundle + rd-box-builder) parents render a collapsible
  * accordion inside the checkout "Order Details" summary. It lists the box
- * contents and add-ons read-only, and lets the customer edit just the customer
- * note in place over AJAX (the locked-in options are not editable here).
+ * contents and add-ons read-only. Editing the box (including the customer note)
+ * is only offered in the cart, NOT at checkout.
  *
- * This spec guards that flow:
+ * This spec guards that:
  *   1. the box accordion is present in the order review,
- *   2. expanding it and editing the note saves over AJAX,
- *   3. the new note shows in the read-only summary,
- *   4. the note survives a checkout reload (it was persisted to the cart line,
- *      which is what later reaches the order line item + packing slip).
+ *   2. it can be expanded to show the read-only box contents/add-ons,
+ *   3. there is no edit affordance at checkout (no "Edit" button, no edit form).
  *
  * Env:
  *   BASE_URL              - site origin (see playwright.config.cjs)
@@ -116,43 +114,26 @@ async function openBoxAccordion(page) {
   return true;
 }
 
-test.describe('Checkout — edit box note in Order Details', () => {
+test.describe('Checkout — box details are read-only', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
   });
 
-  test('editing the note saves, shows in the summary, and survives reload', async ({ page }) => {
+  test('the box accordion shows at checkout with no edit controls', async ({ page }) => {
     const added = await addBoxToBasket(page);
     test.skip(!added, `No box-builder product/add button at ${PRODUCT_PATH} (set RD_BB_PRODUCT_PATH).`);
 
     const hasAccordion = await openBoxAccordion(page);
     test.skip(!hasAccordion, 'No box accordion in the checkout order review (cart empty or not a box product).');
 
-    const note = `Leave with the neighbour at no. 7 — ${Date.now()}`;
+    // The read-only summary is present (box contents / add-ons are still shown).
+    await expect(page.locator(ACC_VIEW).first()).toBeVisible();
 
-    // Enter edit mode (at checkout this button is labelled "Edit note").
-    await page.locator(ACC_EDIT).first().click();
-    await expect(page.locator(ACC_FORM).first()).toBeVisible();
-
-    await page.locator(ACC_NOTE).first().fill(note);
-
-    // Saving posts to admin-ajax (rd_bb_update_addons) and swaps the summary in place.
-    const saved = page
-      .waitForResponse((res) => /admin-ajax\.php/i.test(res.url()) && res.request().method() === 'POST', {
-        timeout: 15000,
-      })
-      .catch(() => null);
-    await page.locator(ACC_SAVE).first().click();
-    await saved;
-
-    // The read-only summary now shows the new note.
-    await expect(page.locator(ACC_VIEW).first()).toContainText(note);
-    await expect(page.locator(ACC_VIEW).first()).toContainText(/note to customer/i);
-
-    // Reload the checkout: the note was persisted to the cart line, so it must
-    // still be there (this is the same value that reaches the order + packing slip).
-    const stillThere = await openBoxAccordion(page);
-    expect(stillThere).toBe(true);
-    await expect(page.locator(ACC_VIEW).first()).toContainText(note);
+    // Editing is only allowed in the cart, so the edit affordances must NOT exist
+    // anywhere in the checkout order review.
+    await expect(page.locator(ACC_EDIT)).toHaveCount(0);
+    await expect(page.locator(ACC_FORM)).toHaveCount(0);
+    await expect(page.locator(ACC_NOTE)).toHaveCount(0);
+    await expect(page.locator(ACC_SAVE)).toHaveCount(0);
   });
 });

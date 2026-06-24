@@ -15,6 +15,11 @@
     // restorePickupSelection). The guard stops a restore from re-entering itself.
     var rememberedPickup = '';
     var pickupRestoreGuard = false;
+    // Phase 1 auto-advance: the Method and Date steps are single-choice, so once
+    // a valid choice is made we move the customer to the next step automatically.
+    // The Continue buttons stay as a manual fallback. Can be disabled by the
+    // server via `autoAdvance: false`.
+    var autoAdvanceEnabled = config.autoAdvance !== false;
 
     function orderSummaryDefaultOpen() {
         // Collapsed by default on all devices; users expand to see line items.
@@ -1289,6 +1294,37 @@
         }
     }
 
+    // Auto-advance a single-choice step (Method = index 0, Schedule = index 1)
+    // once it validates. Deliberately silent: it never applies error highlights,
+    // so an as-yet-incomplete step (collection chosen but no location picked, a
+    // date not yet selected, or no dates available) is simply a no-op and the
+    // customer keeps using the step until it's satisfied. Only advances forward
+    // and only from the step the customer is currently on, so a programmatic
+    // refresh or a tweak to an already-completed step can't yank them forward.
+    function maybeAutoAdvanceStep(index) {
+        if (!autoAdvanceEnabled) {
+            return;
+        }
+
+        // Only the single-choice steps auto-advance; Details is left manual.
+        if (index !== 0 && index !== 1) {
+            return;
+        }
+
+        if (currentWizardStep !== index) {
+            return;
+        }
+
+        var slug = wizardSteps[index];
+
+        if (getStepErrorsForSlug(slug, false).length) {
+            return;
+        }
+
+        clearStepErrors(slug);
+        goToWizardStep(index + 1);
+    }
+
     function scrollToPayment() {
         var $payment = $('#payment.woocommerce-checkout-payment, #payment').first();
 
@@ -1325,9 +1361,58 @@
 
         if (options.scroll !== false) {
             scrollToPayment();
+            // Activate the card field right away so the customer can start typing
+            // as soon as they land on payment. Wait for the scroll animation to
+            // settle first. Skipped on the final place-order/mobile-pay path
+            // (scroll === false) so submitting doesn't steal focus.
+            window.setTimeout(focusPaymentCardField, 360);
         }
 
         return true;
+    }
+
+    // Move focus into the Stripe card field once the customer reaches payment.
+    // Stripe mounts the card inputs inside a cross-origin iframe, so focusing the
+    // iframe element hands focus to the Payment Element, which places the caret in
+    // its first field (card number). The iframe can still be (re)initialising just
+    // after an updated_checkout refresh, so retry until it's present.
+    function focusPaymentCardField() {
+        var $payment = $('#payment');
+
+        if (!$payment.length) {
+            return;
+        }
+
+        ensureStripePaymentVisible();
+
+        var $cardRadio = $payment.find('input[name="payment_method"]').filter(':visible').first();
+        if ($cardRadio.length && !$cardRadio.is(':checked')) {
+            $cardRadio.prop('checked', true).trigger('click');
+        }
+
+        var attempts = 0;
+        (function tryFocus() {
+            var iframe = $payment.find('iframe').filter(function () {
+                return /__privateStripeFrame/.test(this.name || '');
+            }).get(0) || $payment.find('iframe').get(0);
+
+            if (iframe) {
+                try {
+                    // preventScroll so focusing doesn't fight the scroll-to-payment
+                    // animation (ignored gracefully by older browsers).
+                    iframe.focus({ preventScroll: true });
+                } catch (e) {
+                    try {
+                        iframe.focus();
+                    } catch (err) {}
+                }
+                return;
+            }
+
+            if (attempts++ < 10) {
+                window.setTimeout(tryFocus, 150);
+            }
+        })();
     }
 
     function validateWizardStep(index) {
@@ -1530,6 +1615,20 @@
         }
     });
 
+    // Auto-advance off the Method step when a pickup location is chosen. Bound to
+    // the genuine user-selection event (select2:select) only — never the generic
+    // `change` — so programmatic restores/order-review refreshes can't push the
+    // customer forward. Guarded against restores for belt-and-braces.
+    $(document).on('select2:select', '#rd-checkout-step-method select.pickup-location-lookup', function () {
+        if (pickupRestoreGuard || !$(this).val()) {
+            return;
+        }
+
+        window.setTimeout(function () {
+            maybeAutoAdvanceStep(0);
+        }, 0);
+    });
+
     // Guarantee the menu is anchored at the instant it opens, regardless of when
     // LPP last (re-)initialised its picker. If it's still body-parented we cancel
     // this open and, on the next tick (so selectWoo's in-progress open() unwinds
@@ -1582,6 +1681,16 @@
         }
     );
     $(document).on('change', 'input.shipping_method', applyFulfilmentMode);
+    // Auto-advance off the Method step once a choice is made. Delivery validates
+    // immediately, so it jumps to the Date step; collection needs a pickup
+    // location first, so it's a silent no-op here until that's chosen (handled by
+    // the pickup-location handler below). Deferred so applyFulfilmentMode and any
+    // Local Pickup Plus DOM work settle before we evaluate validity.
+    $(document).on('change', 'input.shipping_method', function () {
+        window.setTimeout(function () {
+            maybeAutoAdvanceStep(0);
+        }, 0);
+    });
     $(document).on('change', '#rd-bill-different-address-checkbox', function () {
         var $form = $('form.checkout.rd-express-checkout-form');
         if (!$form.hasClass('rd-fulfilment-delivery')) {
@@ -1596,6 +1705,17 @@
             syncBillingFromShippingForStripe();
         }
     });
+    // Auto-advance off the Date step once a date is chosen. The Iconic datepicker
+    // sets #jckwds-delivery-date and fires change; deferred so its value (and any
+    // updated_checkout refresh it kicks off) settles before we validate. When no
+    // dates are available the schedule step reports an error, so this stays a
+    // silent no-op and the customer sees the "no dates" panel instead.
+    $(document).on('change', '#jckwds-delivery-date', function () {
+        window.setTimeout(function () {
+            maybeAutoAdvanceStep(1);
+        }, 0);
+    });
+
     $(window).on('resize', updateMobilePayBarVisibility);
 
     $(window).on('load', function () {

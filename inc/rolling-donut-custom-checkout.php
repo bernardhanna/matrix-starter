@@ -168,8 +168,11 @@ function add_custom_shipping_eircode_field($fields) {
         'type'        => 'text',
         'class'       => array('form-row-wide'),
         'label'       => __('Eircode ', 'woocommerce'),
-        'placeholder' => __('Enter your Eircode if known'),
-        'required'    => false,
+        'placeholder' => __('Enter your Eircode'),
+        // Required for delivery (shipping). Billing Eircode stays optional via the
+        // IE locale filter above. WooCommerce only validates shipping fields when a
+        // shipping address is actually needed, so collection orders are unaffected.
+        'required'    => true,
         'priority'    => 71, // Set priority just after County (typically priority 70)
     );
 

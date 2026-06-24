@@ -39,6 +39,8 @@
     "test:e2e:pickup": "playwright test -c playwright.config.cjs tests/e2e/checkout-pickup-visibility.spec.js",
     "test:e2e:pickup:live": "playwright test -c playwright.config.cjs tests/e2e/checkout-pickup-visibility.spec.js --headed",
     "test:e2e:fulfilment-labels": "playwright test -c playwright.config.cjs tests/e2e/checkout-fulfilment-labels.spec.js",
+    "test:e2e:auto-advance": "playwright test -c playwright.config.cjs tests/e2e/checkout-auto-advance.spec.js",
+    "test:e2e:auto-advance:live": "playwright test -c playwright.config.cjs tests/e2e/checkout-auto-advance.spec.js --headed",
     "test:e2e:box-builder": "playwright test -c playwright.config.cjs tests/e2e/box-builder-cart.spec.js",
     "test:e2e:box-builder:live": "playwright test -c playwright.config.cjs tests/e2e/box-builder-cart.spec.js --headed",
     "test:e2e:box-builder-ui": "playwright test -c playwright.config.cjs tests/e2e/box-builder-builder.spec.js",

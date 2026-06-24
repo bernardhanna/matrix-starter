@@ -1656,6 +1656,11 @@ $disable_add_remove = get_post_meta($product->get_id(), '_donut_box_builder_disa
                     centerMode: true,
                     centerPadding: '40px',
                     arrows: true,
+                    // Disable touch dragging on mobile so vertical page scrolling
+                    // isn't hijacked by the carousel; flavours are navigated via arrows.
+                    swipe: false,
+                    touchMove: false,
+                    draggable: false,
                     prevArrow: '<button id="slider-prev" type="button" class="slick-prev slick-arrow"><span class="text-black-full"><</span></button>',
                     nextArrow: '<button id="slider-next" type="button" class="slick-next slick-arrow"><span class="text-black-full">></span></button>',
                     responsive: [{

@@ -175,6 +175,15 @@
   margin-top: 0.35rem;
 }
 
+/* Quantity + price line: smaller than the item name so it reads as a meta line.
+ * Scoped to .rd-side-cart so it wins over the inline `text-sm-md-font` utility. */
+.rd-side-cart .rd-side-cart__item-meta,
+.rd-side-cart .rd-side-cart__item-meta .rd-side-cart__qty,
+.rd-side-cart .rd-side-cart__item-meta .rd-side-cart__price {
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
 .rd-side-cart__item .donut-box-builder-items {
   margin: 0.5rem 0 0;
   padding-left: 1.1rem;

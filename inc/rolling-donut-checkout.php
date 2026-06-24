@@ -112,12 +112,68 @@ add_filter('wc_local_pickup_plus_pickup_location_address', 'matrix_rd_pickup_loc
  * login prompt.
  */
 function matrix_rd_checkout_render_heading(): void {
+    $logos    = function_exists('matrix_rd_nav_logos') ? matrix_rd_nav_logos() : [];
+    $logo_url = is_array($logos) ? (string) ($logos['main'] ?? '') : '';
+    $logo_alt = is_array($logos) && ! empty($logos['main_alt'])
+        ? (string) $logos['main_alt']
+        : __('The Rolling Donut logo', 'matrix-starter');
+
     echo '<div class="flex flex-col justify-start px-0 mx-auto text-left max-w-max-1568">';
-    echo '<div class="flex flex-col mb-4">';
-    echo '<h1 class="mb-2 text-black-full text-xl-font font-reg420">' . esc_html__('Check out', 'rolling-donut') . '</h1>';
+    // Heading row: the "Check out" title sits on the left while the logo is
+    // absolutely centred, so it stays in the middle of the row in line with the
+    // title regardless of the heading width.
+    echo '<div class="rd-checkout-heading-row">';
+    echo '<h1 class="rd-checkout-heading-title text-black-full text-xl-font font-reg420">' . esc_html__('Check out', 'rolling-donut') . '</h1>';
+    if ($logo_url !== '') {
+        echo '<a href="' . esc_url(home_url('/')) . '" class="rd-checkout-heading-logo" aria-label="' . esc_attr__('The Rolling Donut — home', 'matrix-starter') . '">';
+        echo '<img src="' . esc_url($logo_url) . '" alt="' . esc_attr($logo_alt) . '" />';
+        echo '</a>';
+    }
     echo '</div>';
     echo '</div>';
 }
+
+/**
+ * Layout for the checkout heading row (title left, logo centred in line).
+ */
+function matrix_rd_checkout_heading_styles(): void {
+    if (! function_exists('is_checkout') || ! is_checkout() || is_wc_endpoint_url('order-received')) {
+        return;
+    }
+    ?>
+    <style>
+        .rd-checkout-heading-row {
+            position: relative;
+            display: flex;
+            align-items: center;
+            min-height: 3rem;
+            margin-bottom: 1rem;
+        }
+        .rd-checkout-heading-title {
+            margin: 0;
+        }
+        .rd-checkout-heading-logo {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            display: inline-flex;
+            line-height: 0;
+        }
+        .rd-checkout-heading-logo img {
+            height: 3rem;
+            width: auto;
+            display: block;
+        }
+        @media (max-width: 575px) {
+            .rd-checkout-heading-logo img {
+                height: 2.25rem;
+            }
+        }
+    </style>
+    <?php
+}
+add_action('wp_head', 'matrix_rd_checkout_heading_styles');
 add_action('woocommerce_before_checkout_form', 'matrix_rd_checkout_render_heading', 5);
 
 /**
