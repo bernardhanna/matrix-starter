@@ -75,24 +75,24 @@ async function ensurePickupLocation(page) {
 }
 
 /**
- * The store has timeslot DISPLAY disabled but timeslot MANDATORY enabled (with
- * ASAP enabled), so no timeslot field renders yet the server rejects an empty
- * `jckwds-delivery-time`. Since slot display is off, the value isn't validated
- * against slots - it only needs to be non-empty. Inject an ASAP hidden field.
+ * Regression guard for "checkout keeps asking for a time slot".
+ *
+ * The store runs date-only collection/delivery: the timeslot field is DISABLED
+ * so no `jckwds-delivery-time` field renders. The plugin still had timeslot
+ * MANDATORY on, which used to reject every order with "Please select a time
+ * slot." matrix_rd_checkout_relax_timeslot_requirement() now drops that
+ * requirement server-side, so a chosen date is enough.
+ *
+ * This previously INJECTED a hidden `jckwds-delivery-time` to force the order
+ * through, which masked the bug. We now assert the field is genuinely absent and
+ * inject nothing — if the server fix regresses, place-order fails and the test
+ * catches it for real.
  */
-async function ensureDeliveryTime(page) {
-  await page.evaluate(() => {
-    const form = document.querySelector('form.checkout');
-    if (!form) return;
-    let input = form.querySelector('input[name="jckwds-delivery-time"]');
-    if (!input) {
-      input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'jckwds-delivery-time';
-      form.appendChild(input);
-    }
-    input.value = 'asap';
-  });
+async function assertNoTimeslotFieldInjected(page) {
+  const hasTimeField = await page.evaluate(
+    () => !!document.querySelector('form.checkout input[name="jckwds-delivery-time"], #jckwds-delivery-time')
+  );
+  expect(hasTimeField, 'no timeslot field renders (date-only store); the fix must work without one').toBe(false);
 }
 
 /** Fill the Stripe UPE card fields by scanning every js.stripe.com frame. */
@@ -273,7 +273,7 @@ async function completeCollectionCheckout(page, label, driverNote = '') {
     .catch(() => {});
   await page.waitForTimeout(800);
   await ensurePickupLocation(page);
-  await ensureDeliveryTime(page);
+  await assertNoTimeslotFieldInjected(page);
 
   const preSubmit = await page.evaluate(() => ({
     method: (document.querySelector('input.shipping_method:checked') || {}).value || '(none)',

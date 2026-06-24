@@ -40,6 +40,13 @@
     min-width: 0;
     width: 100% !important;
   }
+
+  /* Keep the headline inside the left column so it can't overlap the form. */
+  .newsletter .highlighted-first,
+  .newsletter .highlighted-second {
+    font-size: 30px !important;
+    line-height: 1.15 !important;
+  }
 }
 
 /* ---- Klaviyo form reset ---------------------------------------------------- */

@@ -20,17 +20,19 @@ function matrix_rd_get_cart_total_excluding_shipping(): float {
         return 0.0;
     }
 
-    $total = 0.0;
+    $cart = WC()->cart;
 
-    foreach (WC()->cart->get_cart() as $cart_item) {
-        if (isset($cart_item['line_total'])) {
-            $total += (float) $cart_item['line_total'];
-        }
+    if ($cart->is_empty()) {
+        return 0.0;
     }
 
-    $total += (float) WC()->cart->get_cart_contents_tax();
-
-    return $total;
+    // Use the cart subtotal (the same value the side cart shows) rather than
+    // `cart_contents_total`/`line_total`. WPC Product Bundles (woosb) carry their
+    // price in the line *subtotal* and leave `line_total` at 0, so summing line
+    // totals or reading `get_cart_contents_total()` yields €0.00 even though the
+    // cart has priced items. The subtotal is persisted in the session and is
+    // correct without forcing a (non-idempotent) recalculation.
+    return (float) $cart->get_subtotal() + (float) $cart->get_subtotal_tax();
 }
 
 /**

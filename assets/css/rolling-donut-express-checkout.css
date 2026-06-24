@@ -459,6 +459,13 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   margin: 0;
 }
 
+/* Positioning context for the pickup Select2 dropdown. The JS anchors the menu
+   to this wrapper (dropdownParent) so it opens directly beneath the field
+   instead of being appended to <body> and flipping above it. */
+#rd-checkout-step-method .pickup-location-field {
+  position: relative;
+}
+
 /* Pickup-location picker visibility is owned by CSS, keyed on the selected
    shipping method, rather than JS inline `display`. This makes switching
    delivery -> collection always reveal the location picker, with no dependence
@@ -542,12 +549,10 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   padding-right: 2.75rem;
 }
 
-/* Keep the pickup-location dropdown aligned directly under the input.
-   Legacy per-breakpoint left offsets were removed so select2 can position natively. */
-.woocommerce-checkout .select2-container--open .select2-dropdown {
-  left: 0 !important;
-  right: auto !important;
-}
+/* The pickup-location dropdown is now anchored to its field wrapper (see the JS
+   anchorPickupDropdown + the in-step .select2-dropdown rule above), so it no
+   longer relies on a global left override. Other body-appended Select2 menus on
+   the checkout (County/State, Country) are left to position natively. */
 
 /* Delivery Slots (Iconic) date field box — drop the plugin's default padding. */
 .wds-fieldbox-sub-field {

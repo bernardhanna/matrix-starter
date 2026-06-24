@@ -9,6 +9,12 @@
     var checkoutValidationArmed = false;
     // null = follow the responsive default; true/false = explicit user choice.
     var orderSummaryUserState = null;
+    // Last pickup location the customer genuinely chose. Local Pickup Plus can
+    // blank its <select> during an order-review refresh before its own
+    // persistence lands, so we remember the choice and restore it (see
+    // restorePickupSelection). The guard stops a restore from re-entering itself.
+    var rememberedPickup = '';
+    var pickupRestoreGuard = false;
 
     function orderSummaryDefaultOpen() {
         // Collapsed by default on all devices; users expand to see line items.
@@ -116,6 +122,87 @@
                 $select.trigger('change.select2');
             }
         });
+    }
+
+    // True when the picker's Select2/selectWoo is already anchored to its field.
+    function pickupDropdownAnchored($select, $wrap) {
+        var instance = $select.data('select2');
+        var options = instance && instance.options ? instance.options.options : null;
+        return !!(options && options.dropdownParent && options.dropdownParent[0] === $wrap[0]);
+    }
+
+    // Local Pickup Plus initialises its location <select> as a selectWoo (Select2
+    // fork) with the default dropdownParent (<body>). A body-appended menu is
+    // positioned against the viewport, so when the field sits low on screen it
+    // flips the list *above* the input and can look detached from it. Re-init the
+    // picker anchored to its field wrapper instead — preserving LPP's own options,
+    // whose templateResult/templateSelection render the address sub-lines — so the
+    // menu always opens directly beneath the input at full field width.
+    function anchorPickupSelect($select) {
+        var $wrap = $select.closest('.pickup-location-field');
+        var instance = $select.data('select2');
+
+        if (!$wrap.length || !instance || !instance.options || !instance.options.options) {
+            return;
+        }
+
+        if (pickupDropdownAnchored($select, $wrap)) {
+            return;
+        }
+
+        var value = $select.val();
+        var reinit = $.extend({}, instance.options.options, { dropdownParent: $wrap, width: '100%' });
+
+        $wrap.css('position', 'relative');
+        $select.select2('destroy');
+        $select.select2(reinit);
+
+        if (value) {
+            $select.val(value).trigger('change.select2');
+        }
+    }
+
+    // Put back a pickup location that an order-review refresh blanked out, and
+    // re-fire LPP's events so the server stores it again. LPP only persists the
+    // choice through its select2:select flow; a refresh that beats that flow
+    // re-renders the <select> back to its empty placeholder, which made the
+    // wizard wrongly report "Choose a pickup location". The guard prevents the
+    // change/select2:select we dispatch here from recursing back into a restore.
+    function restorePickupSelection() {
+        if (!rememberedPickup || pickupRestoreGuard) {
+            return;
+        }
+
+        var $select = $('#rd-checkout-step-method select.pickup-location-lookup');
+
+        if (!$select.length || $select.val()) {
+            return;
+        }
+
+        if (!$select.find('option[value="' + rememberedPickup + '"]').length) {
+            return;
+        }
+
+        pickupRestoreGuard = true;
+        $select.val(rememberedPickup);
+
+        if ($select.hasClass('select2-hidden-accessible')) {
+            $select.trigger('change.select2');
+        }
+
+        $select.trigger('change').trigger({ type: 'select2:select' });
+        window.setTimeout(function () {
+            pickupRestoreGuard = false;
+        }, 1500);
+    }
+
+    // LPP rebuilds the location field on every order-review refresh, which can
+    // drop the chosen value. Re-apply it, deferred so we run after LPP's own
+    // refresh handlers have re-created the field. (Dropdown anchoring is handled
+    // lazily at open time — see the select2:opening handler — because LPP may
+    // re-init its picker after us, undoing an eager re-anchor.)
+    function refreshPickupUi() {
+        window.setTimeout(restorePickupSelection, 0);
     }
 
     function ensureBillingToggle() {
@@ -719,8 +806,18 @@
 
         if (isPickupMethod(getChosenShippingMethod())) {
             var $pickup = $('#rd-checkout-step-method select.pickup-location-lookup');
+            var pickupVal = $pickup.length ? $pickup.val() : '';
 
-            if ($pickup.length && !$pickup.val()) {
+            // A still-in-flight order-review refresh can momentarily blank the
+            // <select>. Fall back to (and re-apply) the customer's remembered
+            // choice so the wizard doesn't block them over a transient reset —
+            // LPP reads the posted value at submit, so a populated field is valid.
+            if (!pickupVal && rememberedPickup) {
+                restorePickupSelection();
+                pickupVal = $pickup.val() || rememberedPickup;
+            }
+
+            if ($pickup.length && !pickupVal) {
                 if (applyHighlights) {
                     $pickup
                         .closest('.form-row, .pickup-location-field, .pickup-location-lookup-field')
@@ -1418,9 +1515,41 @@
         updateScheduleDateLabel();
         syncMobilePayBarTotal();
         applyPickupAddresses();
+        refreshPickupUi();
         // The order review table is re-rendered on every AJAX refresh, which
         // resets the <details> accordion. Re-apply the user's chosen state.
         applyOrderSummaryState();
+    });
+
+    // Remember every genuine pickup-location choice so a later order-review
+    // refresh that blanks the field can't lose it (see restorePickupSelection).
+    $(document).on('select2:select change', '#rd-checkout-step-method select.pickup-location-lookup', function () {
+        var value = $(this).val();
+        if (value) {
+            rememberedPickup = value;
+        }
+    });
+
+    // Guarantee the menu is anchored at the instant it opens, regardless of when
+    // LPP last (re-)initialised its picker. If it's still body-parented we cancel
+    // this open and, on the next tick (so selectWoo's in-progress open() unwinds
+    // first — destroying mid-open throws a null "query" error), re-init it
+    // anchored to the field wrapper and re-open. The result drops directly beneath
+    // the input instead of flipping above it.
+    $(document).on('select2:opening', '#rd-checkout-step-method select.pickup-location-lookup', function (event) {
+        var $select = $(this);
+        var $wrap = $select.closest('.pickup-location-field');
+
+        if (!$wrap.length || pickupDropdownAnchored($select, $wrap)) {
+            return;
+        }
+
+        event.preventDefault();
+
+        window.setTimeout(function () {
+            anchorPickupSelect($select);
+            $select.select2('open');
+        }, 0);
     });
 
     // Record genuine user toggles so AJAX refreshes don't override their choice.
@@ -1442,6 +1571,7 @@
         syncPickupVisibility();
         updateWizardSummaries();
         applyPickupAddresses();
+        refreshPickupUi();
     });
     $(document).on(
         'change input',
@@ -1480,5 +1610,6 @@
         initCheckoutWizard();
         refreshExpressCheckout();
         applyPickupAddresses();
+        refreshPickupUi();
     });
 })(jQuery);

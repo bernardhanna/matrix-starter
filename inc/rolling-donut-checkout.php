@@ -6,6 +6,7 @@
 require_once __DIR__ . '/rolling-donut-custom-checkout.php';
 require_once __DIR__ . '/rolling-donut-checkout-notices.php';
 require_once __DIR__ . '/rolling-donut-express-checkout.php';
+require_once __DIR__ . '/rolling-donut-timeslot-guard.php';
 
 /**
  * Enqueue checkout-specific assets (legacy CSS path fixes + pickup plugin).
@@ -397,6 +398,36 @@ function matrix_rd_checkout_restore_delivery_slots_from_session(): void {
     <?php
 }
 add_action('woocommerce_after_checkout_form', 'matrix_rd_checkout_restore_delivery_slots_from_session');
+
+/**
+ * Iconic delivery slots: stop the checkout demanding a time slot that can never
+ * be chosen.
+ *
+ * The store runs date-only collection/delivery: the time-slot field is disabled
+ * (timesettings_setup_enable = 0) so no slot UI ever renders. The plugin,
+ * however, still has "time slot mandatory" switched on, so every order was
+ * rejected at submit with "Please select a time slot." — there is no field for
+ * the customer to satisfy it with.
+ *
+ * Iconic\Checkout::classic_checkout_process() reads $iconic_wds->settings
+ * directly (no per-value filter) on woocommerce_checkout_process @ 10, so we
+ * relax the mandatory flag at priority 9 — but only while slots are disabled.
+ * A chosen date is then enough, which matches the live UI.
+ */
+function matrix_rd_checkout_relax_timeslot_requirement(): void {
+    global $iconic_wds;
+
+    if (! isset($iconic_wds) || ! is_object($iconic_wds) || empty($iconic_wds->settings) || ! is_array($iconic_wds->settings)) {
+        return;
+    }
+
+    if (! matrix_rd_checkout_should_relax_timeslot($iconic_wds->settings)) {
+        return;
+    }
+
+    $iconic_wds->settings['timesettings_timesettings_setup_mandatory'] = '0';
+}
+add_action('woocommerce_checkout_process', 'matrix_rd_checkout_relax_timeslot_requirement', 9);
 
 /**
  * Stripe flat appearance (legacy).
