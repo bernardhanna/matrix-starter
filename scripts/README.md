@@ -87,7 +87,7 @@ MATRIX_GITHUB_FALLBACK_ORG=bernardhanna   # optional; used when a repo is not on
 | `updraftplus` | [updraft-plus](https://github.com/Matrix-Internet/updraft-plus) | UpdraftPlus Premium — backups (license in WP Admin after install) |
 | `matrix-component-importer` | [matrix-component-importer](https://github.com/Matrix-Internet/matrix-component-importer) | Import flexi blocks / components into the theme |
 | `matrix-sitemap-generator` | [matrix-sitemap-generator](https://github.com/Matrix-Internet/matrix-sitemap-generator) | XML sitemap generation |
-| `matrix-content-gathering` | [matrix-content-gathering](https://github.com/Matrix-Internet/matrix-content-gathering) | Client content editing form, CSV import/export for ACF flexi |
+| `matrix-content-gathering` | [matrix-content-gathering-plugin](https://github.com/Matrix-Internet/matrix-content-gathering-plugin) (fallback: `bernardhanna/matrix-content-gathering`) | Client content editing form, CSV import/export for ACF flexi |
 | `matrix-qc-snags` | [matrix-qc-snags-plugin](https://github.com/Matrix-Internet/matrix-qc-snags-plugin) (fallback: `bernardhanna/matrix-qc-snags`) | In-site QC snagging overlay + Cursor agent PR bridge |
 | `matrix-golive-preflight-checks` | [Matrix-Go-Live-Preflight-Checks](https://github.com/Matrix-Internet/Matrix-Go-Live-Preflight-Checks) | Go-live preflight checks — admin dashboard + `wp matrix-preflight run` |
 

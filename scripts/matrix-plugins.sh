@@ -24,7 +24,7 @@ MATRIX_CUSTOM_PLUGINS=(
   "updraftplus|updraft-plus|UpdraftPlus"
   "matrix-component-importer|matrix-component-importer|Matrix Component Importer"
   "matrix-sitemap-generator|matrix-sitemap-generator|Matrix Sitemap Generator"
-  "matrix-content-gathering|matrix-content-gathering|Matrix Content Gathering"
+  "matrix-content-gathering|matrix-content-gathering-plugin|Matrix Content Gathering|matrix-content-gathering"
   "matrix-qc-snags|matrix-qc-snags-plugin|Matrix QC Snag|matrix-qc-snags"
   "matrix-golive-preflight-checks|Matrix-Go-Live-Preflight-Checks|Matrix Go-Live Preflight Checks"
 )
