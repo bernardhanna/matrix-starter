@@ -1,0 +1,61 @@
+name: QC PR Gate
+
+# Quality gate for pull requests (including agent-opened "cursor/*" PRs).
+# Must pass before a fix PR is merged into the base branch.
+# Installed by the Matrix QC Snag plugin.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: qc-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php:
+    name: PHP lint + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer
+
+      - name: Lint all PHP files
+        run: |
+          find . -type f -name '*.php' \
+            -not -path './vendor/*' \
+            -not -path './node_modules/*' \
+            -print0 | xargs -0 -n1 -P4 php -l
+
+      - name: Install Composer dependencies
+        if: hashFiles('composer.json') != ''
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run unit tests (Pest)
+        if: hashFiles('vendor/bin/pest') != ''
+        run: php vendor/bin/pest tests/Unit
+
+  assets:
+    name: Build assets
+    runs-on: ubuntu-latest
+    if: hashFiles('package.json') != ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build CSS + JS
+        run: npm run build --if-present

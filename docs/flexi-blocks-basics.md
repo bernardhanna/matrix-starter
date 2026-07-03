@@ -31,11 +31,10 @@ Production ACF definitions live in `acf-fields/partials/blocks/acf_{layout}.php`
 
 ## Flexi review page (`/flexi/`)
 
-Use the **Flexi blocks review** page (`/flexi/`) to preview every production block with Figma-default content.
+Use the **Flexi blocks review** page (`/flexi/`) to preview every production block with demo content.
 
-- **Seed / refresh:** `npm run pace:flexi-setup` (or `wp pace-flexi setup --force`)
-- **Logic:** `inc/setup/pace-flexi-setup.php` — adds a page intro, a label row per block, then each block’s demo data
-- **When you ship a new block:** add `acf_{layout}.php` + `template-parts/flexi/{layout}.php`, then register a seeder in `matrix_pace_flexi_review_layouts()` and bump `MATRIX_PACE_FLEXI_SETUP_VERSION`
+- **Populate:** add flexi rows in WP admin on the review page, or use project-specific seed tooling in your client repo
+- **When you ship a new block:** add `acf_{layout}.php` + `template-parts/flexi/{layout}.php`
 
 ---
 

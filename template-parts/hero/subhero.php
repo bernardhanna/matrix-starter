@@ -1,6 +1,6 @@
 <?php
 /**
- * Sub-page hero — PACE (Figma 3:881 desktop, 3:1070 mobile)
+ * Sub-page hero block
  * template-parts/hero/subhero.php
  *
  * Supports ACF hero_content_blocks rows and direct $args (archives, singles).
@@ -45,7 +45,7 @@ if ($custom_decoration <= 0 && $legacy_image > 0 && $legacy_presentation === 'fu
     $custom_decoration = $legacy_image;
 }
 
-$use_white_text = matrix_pace_subhero_is_dark_background((string) $background_color);
+$use_white_text = matrix_subhero_is_dark_background((string) $background_color);
 $explicit_white = array_key_exists('use_white_text', $args)
     ? $args['use_white_text']
     : get_sub_field('use_white_text');
@@ -139,7 +139,7 @@ if ($padding_classes === []) {
 
 $section_extra = trim((string) $sf('section_extra_classes', ''));
 
-$decoration_fill = matrix_pace_subhero_resolve_decoration_fill(
+$decoration_fill = matrix_subhero_resolve_decoration_fill(
     (string) $decoration_style,
     $decoration_color
 );
@@ -147,7 +147,7 @@ $decoration_fill = matrix_pace_subhero_resolve_decoration_fill(
 $show_decoration = $decoration_style !== 'none'
     && ($decoration_style !== 'custom' || $custom_decoration > 0);
 
-$kicker_class = matrix_pace_subhero_kicker_class((string) $background_color, $use_white_text);
+$kicker_class = matrix_subhero_kicker_class((string) $background_color, $use_white_text);
 $title_class = $use_white_text
     ? 'break-words text-[36px] font-extrabold leading-[39.6px] tracking-[-0.36px] text-white lg:text-[56px] lg:leading-[61.6px] lg:tracking-[-0.56px]'
     : 'break-words text-[36px] font-extrabold leading-[39.6px] tracking-[-0.36px] text-[#003b65] lg:text-[56px] lg:leading-[61.6px] lg:tracking-[-0.56px]';
@@ -155,7 +155,7 @@ $desc_style_id = $section_id . '-desc-style';
 
 $section_classes = trim(
     'relative overflow-hidden font-montserrat '
-    . ($use_white_text ? 'pace-subhero--light-text ' : '')
+    . ($use_white_text ? 'subhero--light-text ' : '')
     . $section_extra . ' '
     . implode(' ', $padding_classes)
 );
@@ -168,7 +168,7 @@ $section_classes = trim(
     <?php echo $title_html !== '' ? 'aria-labelledby="' . esc_attr($title_id) . '"' : 'role="region"'; ?>
 >
     <?php if ($show_decoration) : ?>
-        <?php matrix_pace_subhero_render_decoration((string) $decoration_style, $decoration_fill, $custom_decoration); ?>
+        <?php matrix_subhero_render_decoration((string) $decoration_style, $decoration_fill, $custom_decoration); ?>
     <?php endif; ?>
 
     <div class="relative z-[2] mx-auto w-full max-w-[1280px] px-5 lg:px-10 xl:px-[120px]">
@@ -220,10 +220,10 @@ $section_classes = trim(
     margin-bottom: 0;
 }
 <?php if ($use_white_text) : ?>
-#<?php echo esc_attr($section_id); ?>.pace-subhero--light-text h1,
-#<?php echo esc_attr($section_id); ?>.pace-subhero--light-text h1 *,
-#<?php echo esc_attr($section_id); ?>.pace-subhero--light-text h2,
-#<?php echo esc_attr($section_id); ?>.pace-subhero--light-text h2 * {
+#<?php echo esc_attr($section_id); ?>.subhero--light-text h1,
+#<?php echo esc_attr($section_id); ?>.subhero--light-text h1 *,
+#<?php echo esc_attr($section_id); ?>.subhero--light-text h2,
+#<?php echo esc_attr($section_id); ?>.subhero--light-text h2 * {
     color: #fff !important;
 }
 <?php endif; ?>

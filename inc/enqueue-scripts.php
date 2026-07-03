@@ -79,21 +79,15 @@ function matrix_starter_enqueue_scripts() {
   wp_enqueue_script('alpine','https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',['alpine-intersect'],null,true);
   wp_add_inline_script('alpine', "document.addEventListener('alpine:init',()=>{ if(window.Alpine&&window.AlpineIntersect) Alpine.plugin(window.AlpineIntersect); });");
   wp_add_inline_style('matrix-starter', '[x-cloak]{display:none !important;}');
-  wp_add_inline_style('matrix-starter', '
-    .sr-person-card__imgwrap{height:320px;}
-    @media (max-width:575px){.sr-person-card__imgwrap{height:250px;}}
-    @media (max-width:320px){.sr-people-grid{grid-template-columns:1fr !important;}}
-    .sr-person-card__img{object-fit:cover;}
-  ');
 
-  // PACE stat counters (IntersectionObserver — no Alpine dependency)
-  $pace_counters_js = get_template_directory() . '/assets/js/pace-counters.js';
-  if (file_exists($pace_counters_js)) {
+  // Stat counters (IntersectionObserver — no Alpine dependency)
+  $stat_counters_js = get_template_directory() . '/assets/js/stat-counters.js';
+  if (file_exists($stat_counters_js)) {
     wp_enqueue_script(
-      'pace-counters',
-      $base . '/assets/js/pace-counters.js',
+      'stat-counters',
+      $base . '/assets/js/stat-counters.js',
       [],
-      (string) filemtime($pace_counters_js),
+      (string) filemtime($stat_counters_js),
       true
     );
   }

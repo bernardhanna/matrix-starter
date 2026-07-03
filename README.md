@@ -109,7 +109,7 @@ Ensure you have the following installed on your system:
 
    This bootstrap script will:
 
-   * Clone **Matrix Component Importer**, **Matrix Sitemap Generator**, and **[Matrix Content Gathering](https://github.com/bernardhanna/matrix-content-gathering)** (client content form + flexi CSV import/export)
+   * Clone **Matrix-Internet** private plugins (ACF Pro, Component Importer, Sitemap Generator, Content Gathering, QC Snag, Go-Live Preflight Checks) — run `gh auth login` first
    * Install common plugins from WordPress.org (Classic Editor, Duplicate Page, Password Protected, Prevent Browser Caching, Rank Math SEO, WP Mail SMTP)
    * Attempt to **activate** the theme and all plugins (best-effort if the DB is reachable)
 
@@ -117,7 +117,9 @@ Ensure you have the following installed on your system:
 
    * Component importer: `/wp-admin/admin.php?page=matrix-ci-admin-page`
    * Content gathering: **Tools → Content Gathering**
-   * Still required separately: **ACF Pro**, then `npm run build`
+   * QC snagging: front-end admin toolbar → **QC Mode**
+   * Go-live preflight: **Matrix Go-Live Preflight Checks** in wp-admin (or `wp matrix-preflight run`)
+   * Still required separately: **ACF Pro license** (WP Admin → ACF), **UpdraftPlus license** (Settings → UpdraftPlus), then `npm run build`
 
 ### Troubleshooting
 
@@ -256,7 +258,7 @@ To re-skin this theme quickly for a new client/site, update semantic tokens in `
 
 These tokens are additive and mapped to existing values by default, so current styles stay visually consistent.
 
-#### Font utilities (PACE)
+#### Font utilities
 
 - `font-primary` — Public Sans (default)
 - `font-montserrat` — Montserrat (headings, kicker, CTAs)
@@ -290,7 +292,6 @@ See **[docs/accessibility-basics.md](docs/accessibility-basics.md)** for WCAG 2.
 - **[ACF WordPress conversion](docs/acf-wordpress-conversion.md)** — convert static HTML to dynamic ACF sections (general)
 - **[Flexi blocks basics](docs/flexi-blocks-basics.md)** — ACF Builder flexi blocks, section structure, padding repeater, CTAs, templates
 - **[Examples folder basics](docs/examples-folder-basics.md)** — `examples/` layout, naming, code style, copy-to-production paths
-- **[PACE Hero spec](docs/superpowers/specs/pace-hero.md)** — Figma hero block (`3:5` / `3:299`), ACF + template contract
 
 ### Getting Started
 
