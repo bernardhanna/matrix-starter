@@ -22,7 +22,7 @@ MATRIX_GITHUB_FALLBACK_ORG="${MATRIX_GITHUB_FALLBACK_ORG:-bernardhanna}"
 MATRIX_CUSTOM_PLUGINS=(
   "advanced-custom-fields-pro|acf|ACF Pro"
   "updraftplus|updraft-plus|UpdraftPlus"
-  "matrix-component-importer|matrix-component-importer|Matrix Component Importer"
+  "matrix-component-importer|matrix-component-importer|Matrix Component Importer|matrix-component-importer"
   "matrix-sitemap-generator|matrix-sitemap-generator-plugin|Matrix Sitemap Generator|matrix-sitemap-generator"
   "matrix-content-gathering|matrix-content-gathering-plugin|Matrix Content Gathering|matrix-content-gathering"
   "matrix-qc-snags|matrix-qc-snags-plugin|Matrix QC Snag|matrix-qc-snags"

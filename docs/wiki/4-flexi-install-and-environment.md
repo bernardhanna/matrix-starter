@@ -41,7 +41,7 @@ Registry: `scripts/matrix-plugins.sh`. Authenticate with `gh auth login` before 
 |--------|------|---------|
 | `advanced-custom-fields-pro` | `acf` | ACF Pro |
 | `updraftplus` | `updraft-plus` | UpdraftPlus Premium backups |
-| `matrix-component-importer` | `matrix-component-importer` | Import flexi components |
+| `matrix-component-importer` | `matrix-component-importer` | Import flexi components (installs from `bernardhanna` until org repo exists) |
 | `matrix-sitemap-generator` | `matrix-sitemap-generator-plugin` | Slickplan sitemap → WP pages/CPTs/menu (fallback repo: `matrix-sitemap-generator` on bernardhanna) |
 | `matrix-content-gathering` | `matrix-content-gathering-plugin` | Client content form + CSV flexi import/export (fallback repo: `matrix-content-gathering` on bernardhanna) |
 | `matrix-qc-snags` | `matrix-qc-snags-plugin` | QC snagging overlay + agent bridge (fallback repo: `matrix-qc-snags` on bernardhanna) |
