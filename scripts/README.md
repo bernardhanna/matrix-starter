@@ -1,5 +1,19 @@
 # Theme scripts
 
+## Docker (containerized WordPress)
+
+Alternative to Local — full WP stack via Docker Compose. **See [docs/wiki/5-docker-environments.md](../docs/wiki/5-docker-environments.md)** for the complete guide.
+
+```bash
+npm run docker:up          # start MariaDB + WordPress (:8080)
+npm run docker:bootstrap   # GitHub auth prompt + WP install + flexi-install
+npm run docker:down        # stop (keep data)
+```
+
+Bootstrap runs `scripts/docker-ensure-github.sh` on the host first (uses `gh auth login` or prompts for a token). Same plugin stack as `flexi-install` below.
+
+---
+
 ## `flexi-install.sh` — project bootstrap installer
 
 **Run from the theme root** (or Local’s “Open Site Shell” with the site running):

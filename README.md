@@ -4,9 +4,33 @@ Matrix Starter is a modern and highly customizable WordPress theme that uses ACF
 
 ## Clone and Install
 
-Follow these steps to clone the repository and set up the project on your local machine. We recommend using **Local by Flywheel** and cloning straight to your theme folder for testing and development.
+Follow these steps to clone the repository and set up the project on your local machine.
 
-### Prerequisites
+**Two ways to run WordPress locally:**
+
+| Path | Best for |
+|------|----------|
+| **[Local by Flywheel](https://localwp.com/)** (below) | Designers, existing Local workflow |
+| **[Docker](docs/wiki/5-docker-environments.md)** | One-command spin-up, staging parity, CI |
+
+### Docker quick start
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+```bash
+composer install && npm install
+npm run docker:up
+npm run docker:bootstrap   # prompts for GitHub access if needed
+npm run dev                # asset watchers on host
+```
+
+Site: **http://localhost:8080/** — full guide: **[docs/wiki/5-docker-environments.md](docs/wiki/5-docker-environments.md)**
+
+---
+
+We also recommend using **Local by Flywheel** and cloning straight to your theme folder for testing and development.
+
+### Prerequisites (Local path)
 
 Ensure you have the following installed on your system:
 

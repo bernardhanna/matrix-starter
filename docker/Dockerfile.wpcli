@@ -1,0 +1,7 @@
+FROM wordpress:cli-php8.3
+
+USER root
+
+RUN apk add --no-cache bash git curl openssh-client
+
+USER xfs

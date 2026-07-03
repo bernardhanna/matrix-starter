@@ -123,6 +123,25 @@ ensure_wp_db_connection() {
     return 0
   fi
 
+  if [ "${MATRIX_RUNTIME:-}" = "docker" ]; then
+    echo "⚠️ Docker: could not reach the WordPress database."
+    echo "   • Ensure containers are running: npm run docker:up"
+    echo "   • Then bootstrap: npm run docker:bootstrap"
+    return 1
+  fi
+
+  if [ -n "${DB_HOST:-}" ]; then
+    echo "🔧 Using DB_HOST from environment: ${DB_HOST}"
+    set +e
+    run_wp config set DB_HOST "$DB_HOST" --type=constant >/dev/null 2>&1
+    set -e
+    if run_wp option get siteurl >/dev/null 2>&1; then
+      echo "✅ Database reachable."
+      return 0
+    fi
+    return 1
+  fi
+
   local db_host
   db_host="$(local_detect_db_host)" || return 1
 
@@ -253,7 +272,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 # --------------- Env ---------------------
-if [ -f .env ]; then
+if [ "${MATRIX_RUNTIME:-}" = "docker" ] && [ -f .env.docker ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env.docker
+  set +a
+elif [ -f .env ]; then
   set -a
   # shellcheck disable=SC1091
   source .env
@@ -301,7 +325,7 @@ ensure_matrix_github_access || true
 for entry in "${MATRIX_CUSTOM_PLUGINS[@]}"; do
   IFS='|' read -r slug repo_name label fallback_repo <<< "$entry"
   fallback_repo="${fallback_repo:-$repo_name}"
-  clone_plugin_repo "$PLUGINS_DIR/$slug" "$repo_name" "$label" "$fallback_repo"
+  clone_plugin_repo "$PLUGINS_DIR/$slug" "$repo_name" "$label" "$fallback_repo" || true
 done
 
 # --------------- WP-CLI detection -----------------
@@ -317,9 +341,13 @@ if command -v wp >/dev/null 2>&1; then
       CAN_ACTIVATE="yes"
     else
       echo "⚠️ Could not reach the WordPress database."
-      echo "   • Start the site in Local (green “Running”), then re-run:"
-      echo "     npm run flexi:install"
-      echo "   • Or use Local → Site → Open Site Shell, then run the same command."
+      if [ "${MATRIX_RUNTIME:-}" = "docker" ]; then
+        echo "   • Run: npm run docker:up && npm run docker:bootstrap"
+      else
+        echo "   • Start the site in Local (green “Running”), then re-run:"
+        echo "     npm run flexi:install"
+        echo "   • Or use Local → Site → Open Site Shell, then run the same command."
+      fi
       echo "   • Plugins are already cloned; only activation/config was skipped."
       if [ "$FORCE_ACTIVATE" = "yes" ]; then
         CAN_ACTIVATE="yes"
@@ -399,8 +427,11 @@ if [ "$CAN_ACTIVATE" != "no" ]; then
   echo ""
   echo "🔌 Matrix plugins (activate)"
   set +e
-  run_wp_install plugin activate "${MATRIX_CUSTOM_PLUGIN_ACTIVATE[@]}"
-  ACT_CUSTOM=$?
+  for plugin_slug in "${MATRIX_CUSTOM_PLUGIN_ACTIVATE[@]}"; do
+    run_wp_install plugin activate "$plugin_slug" >/dev/null 2>&1 || \
+      echo "   ⚠️ Could not activate: $plugin_slug"
+  done
+  ACT_CUSTOM=0
   set -e
 
   echo ""
@@ -433,6 +464,7 @@ if [ "$CAN_ACTIVATE" != "no" ]; then
 
   echo ""
   echo "📋 Plugin checklist"
+  set +e
   for PLUGIN_SLUG in "${PLUGINS_WP_ORG[@]}"; do
     if run_wp plugin is-installed "$PLUGIN_SLUG" >/dev/null 2>&1; then
       echo "   ✓ $PLUGIN_SLUG"
@@ -447,6 +479,7 @@ if [ "$CAN_ACTIVATE" != "no" ]; then
       echo "   ✗ $plugin_slug (missing)"
     fi
   done
+  set -e
 
 else
   echo ""
