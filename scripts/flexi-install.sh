@@ -16,14 +16,15 @@
 #   5. Configures Password Protected for staging (site lock, matrixYEAR password)
 #
 # CUSTOM PLUGINS (cloned)
+#   • advanced-custom-fields-pro — ACF Pro (private Matrix-Internet/acf mirror)
 #   • matrix-component-importer — flexi/component import UI
 #   • matrix-sitemap-generator  — sitemap
 #   • matrix-content-gathering  — client content form + CSV flexi import/export
-#     https://github.com/bernardhanna/matrix-content-gathering
+#   • matrix-qc-snags           — in-site QC snagging + agent bridge
 #
 # DOES NOT
 #   • Build theme CSS/JS (use npm run build)
-#   • Install ACF Pro (required separately)
+#   • Activate ACF Pro license (enter in WP Admin → ACF, or ACF_PRO_LICENSE in wp-config)
 #   • Run theme pace:* setup seeders (see package.json)
 #
 # FLAGS
@@ -38,7 +39,7 @@ echo "  Matrix Starter — flexi-install (project bootstrap)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "  Reminder: this script clones Matrix plugins + activates the"
-echo "  theme. It does NOT run npm build or install ACF Pro."
+echo "  theme. It does NOT run npm build or activate your ACF license."
 echo ""
 echo "  Docs: scripts/README.md"
 echo ""
@@ -299,9 +300,11 @@ mkdir -p "$PLUGINS_DIR"
 
 # Custom plugins: "directory_name|git_url|human_label"
 CUSTOM_PLUGINS=(
+  "advanced-custom-fields-pro|https://github.com/Matrix-Internet/acf.git|ACF Pro"
   "matrix-component-importer|https://github.com/bernardhanna/matrix-component-importer.git|Matrix Component Importer"
   "matrix-sitemap-generator|https://github.com/bernardhanna/matrix-sitemap-generator.git|Matrix Sitemap Generator"
   "matrix-content-gathering|https://github.com/bernardhanna/matrix-content-gathering.git|Matrix Content Gathering"
+  "matrix-qc-snags|https://github.com/bernardhanna/matrix-qc-snags.git|Matrix QC Snag"
 )
 
 # WordPress.org slugs — installed via: wp plugin install <slug>
@@ -317,9 +320,11 @@ PLUGINS_WP_ORG=(
 
 # Plugin slugs for WP-CLI activate (folder/main-file.php)
 CUSTOM_PLUGIN_ACTIVATE=(
+  "advanced-custom-fields-pro/acf.php"
   "matrix-component-importer"
   "matrix-sitemap-generator"
   "matrix-content-gathering/matrix-content-export.php"
+  "matrix-qc-snags/matrix-qc-snag.php"
 )
 
 # --------------- Clone custom repos ---------------
@@ -498,10 +503,11 @@ for entry in "${CUSTOM_PLUGINS[@]}"; do
 done
 echo ""
 echo "  Next steps:"
-echo "    • Install + activate ACF Pro (required)"
+echo "    • ACF Pro license — WP Admin → ACF (repo: Matrix-Internet/acf, private)"
 echo "    • npm run build  (theme assets)"
 echo "    • Tools → Content Gathering  (matrix-content-gathering)"
 echo "    • matrix-ci-admin-page  (component importer)"
+echo "    • QC Mode in admin toolbar  (matrix-qc-snags)"
 if command -v date >/dev/null 2>&1; then
   echo ""
   echo "  Staging password (Password Protected): matrix$(date +%Y)"

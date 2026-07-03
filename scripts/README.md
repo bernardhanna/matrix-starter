@@ -66,9 +66,11 @@ MATRIX_SMTP_GOOGLE_CLIENT_SECRET=your-secret-here
 
 | Folder | Repository | Purpose |
 |--------|------------|---------|
+| `advanced-custom-fields-pro` | [Matrix-Internet/acf](https://github.com/Matrix-Internet/acf) (private) | ACF Pro — required by theme and content tools |
 | `matrix-component-importer` | [matrix-component-importer](https://github.com/bernardhanna/matrix-component-importer) | Import flexi blocks / components into the theme |
 | `matrix-sitemap-generator` | [matrix-sitemap-generator](https://github.com/bernardhanna/matrix-sitemap-generator) | XML sitemap generation |
 | `matrix-content-gathering` | [matrix-content-gathering](https://github.com/bernardhanna/matrix-content-gathering) | Client content editing form, CSV import/export for ACF flexi ([plugin docs](https://github.com/bernardhanna/matrix-content-gathering)) |
+| `matrix-qc-snags` | [matrix-qc-snags](https://github.com/bernardhanna/matrix-qc-snags) | In-site QC snagging overlay + Cursor agent PR bridge |
 
 **From WordPress.org** (via `wp plugin install`, not Packagist):
 
@@ -86,9 +88,10 @@ Packagist ([wpackagist.org](https://wpackagist.org)) can install WP plugins with
 ### Requirements
 
 - **Git** — to clone custom plugins
+- **GitHub access** — `Matrix-Internet/acf` is private; authenticate with `gh auth login` or SSH before running
 - **WP-CLI** — optional but recommended for install/activate (bundled in Local’s site shell)
 - **Site running** — start the site in Local (status **Running**) before running
-- **ACF Pro** — required by the theme and Matrix Content Gathering (install separately; not part of this script)
+- **ACF Pro license** — plugin files are cloned by this script; enter license in WP Admin → ACF (or `ACF_PRO_LICENSE` in `wp-config.php`)
 
 ### Local by Flywheel — database connection
 
