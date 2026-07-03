@@ -1,6 +1,6 @@
 # Wiki source (GitHub sync)
 
-Markdown copies of the [matrix-starter GitHub Wiki](https://github.com/bernardhanna/matrix-starter/wiki/). Edit here in the repo, then paste into GitHub when pages need updating.
+Markdown copies of the [matrix-starter-theme GitHub Wiki](https://github.com/Matrix-Internet/matrix-starter-theme/wiki/). Edit here in the repo, then paste into GitHub when pages need updating.
 
 ## Files → GitHub wiki pages
 
@@ -15,7 +15,7 @@ Markdown copies of the [matrix-starter GitHub Wiki](https://github.com/bernardha
 
 ## Publish steps
 
-1. Open https://github.com/bernardhanna/matrix-starter/wiki/
+1. Open https://github.com/Matrix-Internet/matrix-starter-theme/wiki/
 2. Edit the matching page (or **New Page** for page 4).
 3. Paste the file contents (everything below the title line is fine to paste as-is).
 4. Save.

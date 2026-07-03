@@ -2,7 +2,7 @@
 
 **Matrix Starter** is a WordPress theme for Matrix Internet projects: ACF Builder flexi blocks, Tailwind CSS, Alpine.js, and a standard plugin/tooling stack.
 
-**Repo:** https://github.com/bernardhanna/matrix-starter  
+**Repo:** https://github.com/Matrix-Internet/matrix-starter-theme  
 **Theme README:** see repo root `README.md`  
 **Scripts detail:** `scripts/README.md` in the repo
 
@@ -19,7 +19,7 @@
 | [5. Docker environments](5-docker-environments.md) | Containerized local, staging, CI, live-site import |
 | [6. Tests & quality checks](Tests.md) | Playwright, a11y, Lighthouse, link checker |
 
-> **Publishing to GitHub:** Copy each file’s body into the matching page at https://github.com/bernardhanna/matrix-starter/wiki/ (GitHub wiki titles/slugs may differ slightly from filenames here).
+> **Publishing to GitHub:** Copy each file’s body into the matching page at https://github.com/Matrix-Internet/matrix-starter-theme/wiki/ (GitHub wiki titles/slugs may differ slightly from filenames here).
 
 ---
 

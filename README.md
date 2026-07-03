@@ -45,7 +45,7 @@ Ensure you have the following installed on your system:
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/bernardhanna/matrix-starter.git
+   git clone https://github.com/Matrix-Internet/matrix-starter-theme.git
    ```
 
 2. **Navigate to the Project Directory**
@@ -309,7 +309,7 @@ See **[docs/accessibility-basics.md](docs/accessibility-basics.md)** for WCAG 2.
 
 ### Documentation
 
-- **[Wiki (GitHub sync source)](docs/wiki/)** — project setup, flexi-install, daily flow, tests ([publish to GitHub Wiki](https://github.com/bernardhanna/matrix-starter/wiki/))
+- **[Wiki (GitHub sync source)](docs/wiki/)** — project setup, flexi-install, daily flow, tests ([publish to GitHub Wiki](https://github.com/Matrix-Internet/matrix-starter-theme/wiki/))
 - **[Coding guidelines](docs/coding-guidelines.md)** — layout (Grid over Flex), section structure, buttons, classes to avoid, naming
 - **[Accessibility basics](docs/accessibility-basics.md)** — WCAG 2.1 AA, theme focus classes, testing checklist
 - **[Desktop menu basics](docs/desktop-menu-basics.md)** — Navi, `#site-nav` section shell, logo, dropdown/mobile partials, ACF options
@@ -324,7 +324,7 @@ See **[docs/accessibility-basics.md](docs/accessibility-basics.md)** for WCAG 2.
 ### Contact
 
 Bernard Hanna — [bernard@matrixinternet.ie](mailto:bernard@matrixinternet.ie)
-Project Link: [https://github.com/bernardhanna/matrix-starter](https://github.com/bernardhanna/matrix-starter)
+Project Link: [https://github.com/Matrix-Internet/matrix-starter-theme](https://github.com/Matrix-Internet/matrix-starter-theme)
 
 ## Acknowledgements
 
