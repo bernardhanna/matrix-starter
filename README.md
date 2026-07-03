@@ -119,7 +119,7 @@ Ensure you have the following installed on your system:
    * Content gathering: **Tools → Content Gathering**
    * QC snagging: front-end admin toolbar → **QC Mode**
    * Go-live preflight: **Matrix Go-Live Preflight Checks** in wp-admin (or `wp matrix-preflight run`)
-   * Still required separately: **ACF Pro license** (WP Admin → ACF), then `npm run build`
+   * Still required separately: **ACF Pro license** (WP Admin → ACF), **UpdraftPlus license** (Settings → UpdraftPlus), then `npm run build`
 
 ### Troubleshooting
 

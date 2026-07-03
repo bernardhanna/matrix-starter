@@ -20,6 +20,7 @@ MATRIX_GITHUB_FALLBACK_ORG="${MATRIX_GITHUB_FALLBACK_ORG:-bernardhanna}"
 # WordPress plugin folder | GitHub repo name (under MATRIX_GITHUB_ORG) | label
 MATRIX_CUSTOM_PLUGINS=(
   "advanced-custom-fields-pro|acf|ACF Pro"
+  "updraftplus|updraft-plus|UpdraftPlus"
   "matrix-component-importer|matrix-component-importer|Matrix Component Importer"
   "matrix-sitemap-generator|matrix-sitemap-generator|Matrix Sitemap Generator"
   "matrix-content-gathering|matrix-content-gathering|Matrix Content Gathering"
@@ -29,6 +30,7 @@ MATRIX_CUSTOM_PLUGINS=(
 
 MATRIX_CUSTOM_PLUGIN_ACTIVATE=(
   "advanced-custom-fields-pro/acf.php"
+  "updraftplus/updraftplus.php"
   "matrix-component-importer"
   "matrix-sitemap-generator"
   "matrix-content-gathering/matrix-content-export.php"

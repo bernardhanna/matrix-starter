@@ -471,6 +471,7 @@ done
 echo ""
 echo "  Next steps:"
 echo "    • ACF Pro license — WP Admin → ACF (repo: Matrix-Internet/acf, private)"
+echo "    • UpdraftPlus license — Settings → UpdraftPlus (repo: Matrix-Internet/updraft-plus)"
 echo "    • npm run build  (theme assets)"
 echo "    • Tools → Content Gathering  (matrix-content-gathering)"
 echo "    • matrix-ci-admin-page  (component importer)"

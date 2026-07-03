@@ -40,6 +40,7 @@ Registry: `scripts/matrix-plugins.sh`. Authenticate with `gh auth login` before 
 | Folder | Repo | Purpose |
 |--------|------|---------|
 | `advanced-custom-fields-pro` | `acf` | ACF Pro |
+| `updraftplus` | `updraft-plus` | UpdraftPlus Premium backups |
 | `matrix-component-importer` | `matrix-component-importer` | Import flexi components |
 | `matrix-sitemap-generator` | `matrix-sitemap-generator` | XML sitemap |
 | `matrix-content-gathering` | `matrix-content-gathering` | Client content form + CSV flexi import/export |
