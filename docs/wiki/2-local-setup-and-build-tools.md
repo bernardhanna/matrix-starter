@@ -74,7 +74,7 @@ npm run flexi:install
 
 This script:
 
-- Clones Matrix plugins: **matrix-component-importer**, **matrix-sitemap-generator**, **matrix-content-gathering**
+- Clones Matrix plugins: **matrix-component-importer**, **matrix-sitemap-generator**, **matrix-content-gathering**, **matrix-qc-snags**, **matrix-golive-preflight-checks**
 - Installs from WordPress.org: Classic Editor, Duplicate Page, Password Protected, Prevent Browser Caching, Rank Math SEO, WP Mail SMTP
 - Activates theme + plugins (when WP-CLI can reach the DB)
 - Configures **Password Protected** (staging lock, password `matrix` + year, admins allowed)

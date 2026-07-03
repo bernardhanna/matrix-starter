@@ -62,15 +62,33 @@ MATRIX_SMTP_GOOGLE_CLIENT_SECRET=your-secret-here
 
 ### Plugins installed
 
+All **Matrix custom plugins** are private repos under **[Matrix-Internet](https://github.com/Matrix-Internet/)**. The installer reads the registry in `scripts/matrix-plugins.sh`.
+
+**Before first run** (one-time per machine):
+
+```bash
+gh auth login
+```
+
+That gives `flexi-install` access to clone private org repos. SSH git credentials also work if your key has org access.
+
+Override in `.env` if needed:
+
+```dotenv
+MATRIX_GITHUB_ORG=Matrix-Internet
+MATRIX_GITHUB_FALLBACK_ORG=bernardhanna   # optional; used when a repo is not on the org yet
+```
+
 **From GitHub (cloned):**
 
 | Folder | Repository | Purpose |
 |--------|------------|---------|
-| `advanced-custom-fields-pro` | [Matrix-Internet/acf](https://github.com/Matrix-Internet/acf) (private) | ACF Pro — required by theme and content tools |
-| `matrix-component-importer` | [matrix-component-importer](https://github.com/bernardhanna/matrix-component-importer) | Import flexi blocks / components into the theme |
-| `matrix-sitemap-generator` | [matrix-sitemap-generator](https://github.com/bernardhanna/matrix-sitemap-generator) | XML sitemap generation |
-| `matrix-content-gathering` | [matrix-content-gathering](https://github.com/bernardhanna/matrix-content-gathering) | Client content editing form, CSV import/export for ACF flexi ([plugin docs](https://github.com/bernardhanna/matrix-content-gathering)) |
-| `matrix-qc-snags` | [matrix-qc-snags](https://github.com/bernardhanna/matrix-qc-snags) | In-site QC snagging overlay + Cursor agent PR bridge |
+| `advanced-custom-fields-pro` | [Matrix-Internet/acf](https://github.com/Matrix-Internet/acf) | ACF Pro — required by theme and content tools |
+| `matrix-component-importer` | [matrix-component-importer](https://github.com/Matrix-Internet/matrix-component-importer) | Import flexi blocks / components into the theme |
+| `matrix-sitemap-generator` | [matrix-sitemap-generator](https://github.com/Matrix-Internet/matrix-sitemap-generator) | XML sitemap generation |
+| `matrix-content-gathering` | [matrix-content-gathering](https://github.com/Matrix-Internet/matrix-content-gathering) | Client content editing form, CSV import/export for ACF flexi |
+| `matrix-qc-snags` | [matrix-qc-snags](https://github.com/Matrix-Internet/matrix-qc-snags) | In-site QC snagging overlay + Cursor agent PR bridge |
+| `matrix-golive-preflight-checks` | [Matrix-Go-Live-Preflight-Checks](https://github.com/Matrix-Internet/Matrix-Go-Live-Preflight-Checks) | Go-live preflight checks — admin dashboard + `wp matrix-preflight run` |
 
 **From WordPress.org** (via `wp plugin install`, not Packagist):
 
@@ -88,7 +106,7 @@ Packagist ([wpackagist.org](https://wpackagist.org)) can install WP plugins with
 ### Requirements
 
 - **Git** — to clone custom plugins
-- **GitHub access** — `Matrix-Internet/acf` is private; authenticate with `gh auth login` or SSH before running
+- **GitHub org access** — membership in [Matrix-Internet](https://github.com/Matrix-Internet/) plus `gh auth login` (recommended) or SSH/HTTPS credentials
 - **WP-CLI** — optional but recommended for install/activate (bundled in Local’s site shell)
 - **Site running** — start the site in Local (status **Running**) before running
 - **ACF Pro license** — plugin files are cloned by this script; enter license in WP Admin → ACF (or `ACF_PRO_LICENSE` in `wp-config.php`)
@@ -115,8 +133,29 @@ Plugin downloads use a longer timeout (`WP_TIMEOUT_INSTALL`, default 180s). If i
 
 - Matrix Component Importer: `/wp-admin/admin.php?page=matrix-ci-admin-page`
 - Matrix Content Gathering: **Tools → Content Gathering**
+- Matrix Go-Live Preflight Checks: **wp-admin → Matrix Go-Live Preflight Checks** (or `wp matrix-preflight run`)
 - If content-gathering needs PHP deps: `cd wp-content/plugins/matrix-content-gathering && composer install`
 
 ### Related npm scripts
 
 Use `npm run dev` and `npm run build` for assets. Client-specific content seeders are not included in the default theme — add pages and flexi content via WP admin or project-specific tooling.
+
+---
+
+## `post-live-install.sh` — post go-live tooling
+
+**Not** part of `flexi:install`. Run on production or after go-live when you want ops/maintenance tools.
+
+```bash
+npm run post-live:install
+# or a single tool:
+bash scripts/post-live-install.sh --only=plugin-checker
+```
+
+| Tool | Repo | Install location | Usage |
+|------|------|------------------|--------|
+| Matrix Plugin Checker | [matrix-plugin-checker](https://github.com/Matrix-Internet/matrix-plugin-checker) | `wp-content/mu-plugins/matrix-plugin-checker.php` | **Tools → Plugin Checker** → **Run Checker** |
+
+The script creates `wp-content/mu-plugins/` if needed, clones the private repo via `gh`, and copies the MU plugin file. Registry: `MATRIX_POST_LIVE_MU_PLUGINS` in `scripts/matrix-plugins.sh`.
+
+Requires `gh auth login` (or git access to [Matrix-Internet](https://github.com/Matrix-Internet/)).

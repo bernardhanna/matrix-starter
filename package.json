@@ -16,6 +16,7 @@
     "watch:js": "node ./node_modules/nodemon/bin/nodemon.js --watch assets/js --exec \"webpack --config webpack.config.js\"",
     "dev": "concurrently \"npm run watch:css:app\" \"npm run watch:css:editor\" \"npm run watch:css:woo\" \"webpack serve --config webpack.config.js\"",
     "flexi:install": "bash scripts/flexi-install.sh",
+    "post-live:install": "bash scripts/post-live-install.sh",
     "test:php": "vendor/bin/pest",
     "test:e2e": "playwright test -c playwright.config.cjs",
     "test:e2e:network": "playwright test -c playwright.config.cjs tests/e2e/network-smoke.spec.js",

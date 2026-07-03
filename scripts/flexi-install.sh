@@ -15,12 +15,9 @@
 #   4. Activates theme + plugins when WP-CLI can reach the database
 #   5. Configures Password Protected for staging (site lock, matrixYEAR password)
 #
-# CUSTOM PLUGINS (cloned)
-#   • advanced-custom-fields-pro — ACF Pro (private Matrix-Internet/acf mirror)
-#   • matrix-component-importer — flexi/component import UI
-#   • matrix-sitemap-generator  — sitemap
-#   • matrix-content-gathering  — client content form + CSV flexi import/export
-#   • matrix-qc-snags           — in-site QC snagging + agent bridge
+# CUSTOM PLUGINS (cloned from Matrix-Internet GitHub org — private)
+#   Registry: scripts/matrix-plugins.sh
+#   Auth:     gh auth login  (recommended)
 #
 # DOES NOT
 #   • Build theme CSS/JS (use npm run build)
@@ -38,8 +35,9 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  Matrix Starter — flexi-install (project bootstrap)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "  Reminder: this script clones Matrix plugins + activates the"
-echo "  theme. It does NOT run npm build or activate your ACF license."
+echo "  Reminder: this script clones Matrix-Internet private plugins + activates the"
+echo "  theme. Run gh auth login once if you have not already."
+echo "  It does NOT run npm build, post-live tools, or activate your ACF license."
 echo ""
 echo "  Docs: scripts/README.md"
 echo ""
@@ -235,24 +233,7 @@ configure_wp_mail_smtp() {
 }
 
 clone_plugin_repo() {
-  local dir="$1"
-  local repo="$2"
-  local label="$3"
-
-  if [ ! -d "$dir" ]; then
-    echo "📦 Cloning ${label}..."
-    git clone "$repo" "$dir"
-  else
-    echo "✅ ${label} already exists ($(basename "$dir"))."
-  fi
-
-  if [ -f "$dir/composer.json" ] && command -v composer >/dev/null 2>&1; then
-    if [ ! -d "$dir/vendor" ]; then
-      echo "📦 Running composer install in $(basename "$dir")..."
-      (cd "$dir" && composer install --no-interaction --prefer-dist 2>/dev/null) || \
-        echo "⚠️ composer install failed for $(basename "$dir") (optional; continue)."
-    fi
-  fi
+  clone_matrix_plugin_with_deps "$@"
 }
 
 # --------------- Flags -------------------
@@ -285,6 +266,9 @@ WP_TIMEOUT="${WP_TIMEOUT:-15}"       # quick probes (option get, is-installed)
 WP_TIMEOUT_INSTALL="${WP_TIMEOUT_INSTALL:-180}"  # plugin downloads can be slow
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=matrix-plugins.sh
+source "$SCRIPT_DIR/matrix-plugins.sh"
+
 if [ -n "${WP_PATH:-}" ]; then
   WP_ROOT="$(realpath "$WP_PATH")"
 else
@@ -298,15 +282,6 @@ THEME_SLUG="$(basename "$THEME_DIR")"
 PLUGINS_DIR="$WP_ROOT/wp-content/plugins"
 mkdir -p "$PLUGINS_DIR"
 
-# Custom plugins: "directory_name|git_url|human_label"
-CUSTOM_PLUGINS=(
-  "advanced-custom-fields-pro|https://github.com/Matrix-Internet/acf.git|ACF Pro"
-  "matrix-component-importer|https://github.com/bernardhanna/matrix-component-importer.git|Matrix Component Importer"
-  "matrix-sitemap-generator|https://github.com/bernardhanna/matrix-sitemap-generator.git|Matrix Sitemap Generator"
-  "matrix-content-gathering|https://github.com/bernardhanna/matrix-content-gathering.git|Matrix Content Gathering"
-  "matrix-qc-snags|https://github.com/bernardhanna/matrix-qc-snags.git|Matrix QC Snag"
-)
-
 # WordPress.org slugs — installed via: wp plugin install <slug>
 # (Packagist/wpackagist is possible with Composer, but WP-CLI is simpler here.)
 PLUGINS_WP_ORG=(
@@ -318,22 +293,14 @@ PLUGINS_WP_ORG=(
   "wp-mail-smtp"                # WP Mail SMTP
 )
 
-# Plugin slugs for WP-CLI activate (folder/main-file.php)
-CUSTOM_PLUGIN_ACTIVATE=(
-  "advanced-custom-fields-pro/acf.php"
-  "matrix-component-importer"
-  "matrix-sitemap-generator"
-  "matrix-content-gathering/matrix-content-export.php"
-  "matrix-qc-snags/matrix-qc-snag.php"
-)
-
 # --------------- Clone custom repos ---------------
 echo ""
-echo "📦 Custom Matrix plugins"
+echo "📦 Custom Matrix plugins (${MATRIX_GITHUB_ORG})"
 echo "------------------------"
-for entry in "${CUSTOM_PLUGINS[@]}"; do
-  IFS='|' read -r slug repo label <<< "$entry"
-  clone_plugin_repo "$PLUGINS_DIR/$slug" "$repo" "$label"
+ensure_matrix_github_access || true
+for entry in "${MATRIX_MATRIX_CUSTOM_PLUGINS[@]}"; do
+  IFS='|' read -r slug repo_name label <<< "$entry"
+  clone_plugin_repo "$PLUGINS_DIR/$slug" "$repo_name" "$label"
 done
 
 # --------------- WP-CLI detection -----------------
@@ -431,7 +398,7 @@ if [ "$CAN_ACTIVATE" != "no" ]; then
   echo ""
   echo "🔌 Matrix plugins (activate)"
   set +e
-  run_wp_install plugin activate "${CUSTOM_PLUGIN_ACTIVATE[@]}"
+  run_wp_install plugin activate "${MATRIX_CUSTOM_PLUGIN_ACTIVATE[@]}"
   ACT_CUSTOM=$?
   set -e
 
@@ -439,7 +406,7 @@ if [ "$CAN_ACTIVATE" != "no" ]; then
   echo "🔎 Status"
   set +e
   run_wp theme status "$THEME_SLUG" 2>/dev/null | sed -n '1,8p' || true
-  for plugin_slug in "${CUSTOM_PLUGIN_ACTIVATE[@]}" "${PLUGINS_WP_ORG[@]}"; do
+  for plugin_slug in "${MATRIX_CUSTOM_PLUGIN_ACTIVATE[@]}" "${PLUGINS_WP_ORG[@]}"; do
     run_wp plugin status "$plugin_slug" 2>/dev/null | sed -n '1,6p' || true
   done
   set -e
@@ -452,7 +419,7 @@ if [ "$CAN_ACTIVATE" != "no" ]; then
     fi
     echo "   Manual retry:"
     echo "   wp --path=\"$WP_ROOT\" theme activate \"$THEME_SLUG\" --skip-plugins --skip-themes"
-    echo "   wp --path=\"$WP_ROOT\" plugin activate ${CUSTOM_PLUGIN_ACTIVATE[*]} --skip-plugins --skip-themes"
+    echo "   wp --path=\"$WP_ROOT\" plugin activate ${MATRIX_CUSTOM_PLUGIN_ACTIVATE[*]} --skip-plugins --skip-themes"
     echo "   wp --path=\"$WP_ROOT\" plugin activate ${PLUGINS_WP_ORG[*]} --skip-plugins --skip-themes"
   else
     echo "✅ Theme and plugins activated."
@@ -472,7 +439,7 @@ if [ "$CAN_ACTIVATE" != "no" ]; then
       echo "   ✗ $PLUGIN_SLUG (missing — re-run install or: wp plugin install $PLUGIN_SLUG --activate)"
     fi
   done
-  for plugin_slug in "${CUSTOM_PLUGIN_ACTIVATE[@]}"; do
+  for plugin_slug in "${MATRIX_CUSTOM_PLUGIN_ACTIVATE[@]}"; do
     if run_wp plugin is-installed "$plugin_slug" >/dev/null 2>&1; then
       echo "   ✓ $plugin_slug"
     else
@@ -485,7 +452,7 @@ else
   echo "ℹ️ Activation skipped (no WP-CLI or WordPress not detected)."
   echo "   Plugins are cloned under wp-content/plugins/. When ready:"
   echo "   wp --path=\"$WP_ROOT\" theme activate \"$THEME_SLUG\" --skip-plugins --skip-themes"
-  echo "   wp --path=\"$WP_ROOT\" plugin activate ${CUSTOM_PLUGIN_ACTIVATE[*]} --skip-plugins --skip-themes"
+  echo "   wp --path=\"$WP_ROOT\" plugin activate ${MATRIX_CUSTOM_PLUGIN_ACTIVATE[*]} --skip-plugins --skip-themes"
   echo "   wp --path=\"$WP_ROOT\" plugin install ${PLUGINS_WP_ORG[*]}"
   echo "   wp --path=\"$WP_ROOT\" plugin activate ${PLUGINS_WP_ORG[*]} --skip-plugins --skip-themes"
 fi
@@ -497,7 +464,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo "  Theme:    $THEME_DIR"
 echo "  Plugins:  $PLUGINS_DIR"
-for entry in "${CUSTOM_PLUGINS[@]}"; do
+for entry in "${MATRIX_CUSTOM_PLUGINS[@]}"; do
   IFS='|' read -r slug _ _ <<< "$entry"
   echo "            • $slug"
 done
@@ -508,6 +475,7 @@ echo "    • npm run build  (theme assets)"
 echo "    • Tools → Content Gathering  (matrix-content-gathering)"
 echo "    • matrix-ci-admin-page  (component importer)"
 echo "    • QC Mode in admin toolbar  (matrix-qc-snags)"
+echo "    • Matrix Go-Live Preflight Checks  (wp-admin menu or: wp matrix-preflight run)"
 if command -v date >/dev/null 2>&1; then
   echo ""
   echo "  Staging password (Password Protected): matrix$(date +%Y)"

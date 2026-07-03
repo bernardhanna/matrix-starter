@@ -33,13 +33,18 @@ Run from the **theme root**. Site must be **Running** in Local.
 
 ## Plugins
 
-### Cloned from GitHub
+### Cloned from GitHub ([Matrix-Internet](https://github.com/Matrix-Internet/) — private)
+
+Registry: `scripts/matrix-plugins.sh`. Authenticate with `gh auth login` before first install.
 
 | Folder | Repo | Purpose |
 |--------|------|---------|
-| `matrix-component-importer` | [matrix-component-importer](https://github.com/bernardhanna/matrix-component-importer) | Import flexi components |
-| `matrix-sitemap-generator` | [matrix-sitemap-generator](https://github.com/bernardhanna/matrix-sitemap-generator) | XML sitemap |
-| `matrix-content-gathering` | [matrix-content-gathering](https://github.com/bernardhanna/matrix-content-gathering) | Client content form + CSV flexi import/export |
+| `advanced-custom-fields-pro` | `acf` | ACF Pro |
+| `matrix-component-importer` | `matrix-component-importer` | Import flexi components |
+| `matrix-sitemap-generator` | `matrix-sitemap-generator` | XML sitemap |
+| `matrix-content-gathering` | `matrix-content-gathering` | Client content form + CSV flexi import/export |
+| `matrix-qc-snags` | `matrix-qc-snags` | QC snagging overlay + agent bridge |
+| `matrix-golive-preflight-checks` | `Matrix-Go-Live-Preflight-Checks` | Go-live preflight checks (admin + WP-CLI) |
 
 ### WordPress.org
 

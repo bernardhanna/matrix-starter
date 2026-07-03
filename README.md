@@ -109,7 +109,7 @@ Ensure you have the following installed on your system:
 
    This bootstrap script will:
 
-   * Clone **ACF Pro** ([Matrix-Internet/acf](https://github.com/Matrix-Internet/acf), private), **Matrix Component Importer**, **Matrix Sitemap Generator**, **[Matrix Content Gathering](https://github.com/bernardhanna/matrix-content-gathering)**, and **[Matrix QC Snag](https://github.com/bernardhanna/matrix-qc-snags)**
+   * Clone **Matrix-Internet** private plugins (ACF Pro, Component Importer, Sitemap Generator, Content Gathering, QC Snag, Go-Live Preflight Checks) — run `gh auth login` first
    * Install common plugins from WordPress.org (Classic Editor, Duplicate Page, Password Protected, Prevent Browser Caching, Rank Math SEO, WP Mail SMTP)
    * Attempt to **activate** the theme and all plugins (best-effort if the DB is reachable)
 
@@ -118,6 +118,7 @@ Ensure you have the following installed on your system:
    * Component importer: `/wp-admin/admin.php?page=matrix-ci-admin-page`
    * Content gathering: **Tools → Content Gathering**
    * QC snagging: front-end admin toolbar → **QC Mode**
+   * Go-live preflight: **Matrix Go-Live Preflight Checks** in wp-admin (or `wp matrix-preflight run`)
    * Still required separately: **ACF Pro license** (WP Admin → ACF), then `npm run build`
 
 ### Troubleshooting
