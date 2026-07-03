@@ -298,9 +298,10 @@ echo ""
 echo "📦 Custom Matrix plugins (${MATRIX_GITHUB_ORG})"
 echo "------------------------"
 ensure_matrix_github_access || true
-for entry in "${MATRIX_MATRIX_CUSTOM_PLUGINS[@]}"; do
-  IFS='|' read -r slug repo_name label <<< "$entry"
-  clone_plugin_repo "$PLUGINS_DIR/$slug" "$repo_name" "$label"
+for entry in "${MATRIX_CUSTOM_PLUGINS[@]}"; do
+  IFS='|' read -r slug repo_name label fallback_repo <<< "$entry"
+  fallback_repo="${fallback_repo:-$repo_name}"
+  clone_plugin_repo "$PLUGINS_DIR/$slug" "$repo_name" "$label" "$fallback_repo"
 done
 
 # --------------- WP-CLI detection -----------------

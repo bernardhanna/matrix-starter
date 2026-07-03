@@ -17,14 +17,15 @@
 MATRIX_GITHUB_ORG="${MATRIX_GITHUB_ORG:-Matrix-Internet}"
 MATRIX_GITHUB_FALLBACK_ORG="${MATRIX_GITHUB_FALLBACK_ORG:-bernardhanna}"
 
-# WordPress plugin folder | GitHub repo name (under MATRIX_GITHUB_ORG) | label
+# WordPress plugin folder | primary repo (MATRIX_GITHUB_ORG) | label | fallback repo (optional)
+# On fallback org (MATRIX_GITHUB_FALLBACK_ORG), the 4th field is used when set; otherwise the primary repo name.
 MATRIX_CUSTOM_PLUGINS=(
   "advanced-custom-fields-pro|acf|ACF Pro"
   "updraftplus|updraft-plus|UpdraftPlus"
   "matrix-component-importer|matrix-component-importer|Matrix Component Importer"
   "matrix-sitemap-generator|matrix-sitemap-generator|Matrix Sitemap Generator"
   "matrix-content-gathering|matrix-content-gathering|Matrix Content Gathering"
-  "matrix-qc-snags|matrix-qc-snags|Matrix QC Snag"
+  "matrix-qc-snags|matrix-qc-snags-plugin|Matrix QC Snag|matrix-qc-snags"
   "matrix-golive-preflight-checks|Matrix-Go-Live-Preflight-Checks|Matrix Go-Live Preflight Checks"
 )
 
@@ -106,28 +107,32 @@ clone_matrix_plugin() {
   local dir="$1"
   local repo_name="$2"
   local label="$3"
+  local fallback_repo_name="${4:-$repo_name}"
 
   if [ -d "$dir/.git" ] || [ -d "$dir" ]; then
     echo "✅ ${label} already exists ($(basename "$dir"))."
     return 0
   fi
 
-  local org tried_fallback=0
+  local org tried_fallback=0 current_repo
 
   for org in "$MATRIX_GITHUB_ORG" "$MATRIX_GITHUB_FALLBACK_ORG"; do
     [ -n "$org" ] || continue
-    if [ "$org" != "$MATRIX_GITHUB_ORG" ]; then
+    if [ "$org" = "$MATRIX_GITHUB_ORG" ]; then
+      current_repo="$repo_name"
+    else
       tried_fallback=1
+      current_repo="$fallback_repo_name"
     fi
 
-    if ! _matrix_repo_exists "$org" "$repo_name"; then
+    if ! _matrix_repo_exists "$org" "$current_repo"; then
       continue
     fi
 
-    echo "📦 Cloning ${label} from ${org}/${repo_name}..."
-    if _matrix_clone_from_org "$org" "$repo_name" "$dir"; then
+    echo "📦 Cloning ${label} from ${org}/${current_repo}..."
+    if _matrix_clone_from_org "$org" "$current_repo" "$dir"; then
       if [ "$tried_fallback" -eq 1 ] && [ "$org" = "$MATRIX_GITHUB_FALLBACK_ORG" ]; then
-        echo "ℹ️  Cloned from fallback org ${org} — migrate repo to ${MATRIX_GITHUB_ORG} when ready."
+        echo "ℹ️  Cloned from fallback org ${org}/${current_repo}."
       fi
       return 0
     fi
@@ -142,8 +147,9 @@ clone_matrix_plugin_with_deps() {
   local dir="$1"
   local repo_name="$2"
   local label="$3"
+  local fallback_repo_name="${4:-$repo_name}"
 
-  clone_matrix_plugin "$dir" "$repo_name" "$label"
+  clone_matrix_plugin "$dir" "$repo_name" "$label" "$fallback_repo_name"
 
   if [ -f "$dir/composer.json" ] && command -v composer >/dev/null 2>&1; then
     if [ ! -d "$dir/vendor" ]; then

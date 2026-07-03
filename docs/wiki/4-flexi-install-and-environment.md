@@ -44,7 +44,7 @@ Registry: `scripts/matrix-plugins.sh`. Authenticate with `gh auth login` before 
 | `matrix-component-importer` | `matrix-component-importer` | Import flexi components |
 | `matrix-sitemap-generator` | `matrix-sitemap-generator` | XML sitemap |
 | `matrix-content-gathering` | `matrix-content-gathering` | Client content form + CSV flexi import/export |
-| `matrix-qc-snags` | `matrix-qc-snags` | QC snagging overlay + agent bridge |
+| `matrix-qc-snags` | `matrix-qc-snags-plugin` | QC snagging overlay + agent bridge (fallback repo: `matrix-qc-snags` on bernardhanna) |
 | `matrix-golive-preflight-checks` | `Matrix-Go-Live-Preflight-Checks` | Go-live preflight checks (admin + WP-CLI) |
 
 ### WordPress.org
