@@ -36,7 +36,7 @@ $title_id   = $section_id . '-title';
 $has_body   = trim((string) get_the_content()) !== '';
 ?>
 
-<article class="pace-partner-single font-montserrat">
+<article class="partner-single font-montserrat">
     <header class="bg-[#003b65] text-white">
         <div class="mx-auto w-full max-w-[1280px] px-5 py-12 lg:px-10 lg:py-[72px] xl:px-[120px]">
             <div class="flex max-w-[720px] flex-col gap-3">
@@ -68,7 +68,7 @@ $has_body   = trim((string) get_the_content()) !== '';
                 <?php endif; ?>
 
                 <?php if ($has_body) : ?>
-                    <div class="pace-partner-body font-comfortaa text-[16px] leading-[26.4px] text-[#1d1d1d]">
+                    <div class="partner-body font-comfortaa text-[16px] leading-[26.4px] text-[#1d1d1d]">
                         <?php the_content(); ?>
                     </div>
                 <?php endif; ?>
@@ -183,10 +183,10 @@ $has_body   = trim((string) get_the_content()) !== '';
 </article>
 
 <style>
-.pace-partner-body p {
+.partner-body p {
     margin: 0 0 0.65em;
 }
-.pace-partner-body p:last-child {
+.partner-body p:last-child {
     margin-bottom: 0;
 }
 </style>

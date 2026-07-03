@@ -25,7 +25,7 @@
 # DOES NOT
 #   • Build theme CSS/JS (use npm run build)
 #   • Activate ACF Pro license (enter in WP Admin → ACF, or ACF_PRO_LICENSE in wp-config)
-#   • Run theme pace:* setup seeders (see package.json)
+#   • Run client-specific content seeders (removed from default theme)
 #
 # FLAGS
 #   --force-activate  Attempt activation even if DB probe fails

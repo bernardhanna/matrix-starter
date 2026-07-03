@@ -16,8 +16,8 @@ $is_post_archive   = is_category() || is_tag() || is_author() || is_date() || is
 
 if ($is_post_archive) {
     $term = $queried_object instanceof WP_Term ? $queried_object : null;
-    get_template_part('template-parts/hero/subhero', null, matrix_pace_blog_subhero_args($term));
-    get_template_part('template-parts/blog/pace-listing');
+    get_template_part('template-parts/hero/subhero', null, matrix_blog_subhero_args($term));
+    get_template_part('template-parts/blog/index');
     get_template_part('template-parts/flexi/newsletter_001');
 } else {
     $archive_title = is_category()
@@ -27,11 +27,11 @@ if ($is_post_archive) {
     $archive_desc  = trim((string) get_the_archive_description());
     if ($archive_desc === '') {
         if ($is_people_archive) {
-            $archive_desc = 'Meet the Sanctuary Runners team.';
+            $archive_desc = 'Meet our team.';
         } elseif ($is_faq_archive) {
             $archive_desc = 'Browse all frequently asked questions.';
         } else {
-            $archive_desc = 'Browse updates, stories, and announcements from Sanctuary Runners.';
+            $archive_desc = 'Browse updates, stories, and announcements.';
         }
     }
     $posts_page_id   = (int) get_option('page_for_posts');

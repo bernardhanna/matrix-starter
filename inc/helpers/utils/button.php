@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Utility classes for theme buttons (.btn-pace-* in assets/css/app.css).
+ * Utility classes for theme buttons (.btn-theme-* in assets/css/app.css).
  *
  * @param string               $variant primary|secondary|secondary-dark|ghost|soft|icon|share|submit|custom
  * @param array<string, mixed> $options   full_mobile (bool) — full width on mobile
@@ -13,21 +13,21 @@ if (!defined('ABSPATH')) {
 function matrix_btn_classes(string $variant = 'primary', array $options = []): string
 {
     $map = [
-        'primary'        => 'btn btn-pace-primary',
-        'secondary'      => 'btn btn-pace-secondary',
-        'secondary-dark' => 'btn btn-pace-secondary-dark',
-        'ghost'          => 'btn btn-pace-ghost',
-        'soft'           => 'btn btn-pace-soft',
-        'icon'           => 'btn btn-pace-icon',
-        'share'          => 'btn btn-pace-share',
-        'submit'         => 'btn btn-pace-primary btn-pace-submit',
-        'custom'         => 'btn btn-pace-custom',
+        'primary'        => 'btn btn-theme-primary',
+        'secondary'      => 'btn btn-theme-secondary',
+        'secondary-dark' => 'btn btn-theme-secondary-dark',
+        'ghost'          => 'btn btn-theme-ghost',
+        'soft'           => 'btn btn-theme-soft',
+        'icon'           => 'btn btn-theme-icon',
+        'share'          => 'btn btn-theme-share',
+        'submit'         => 'btn btn-theme-primary btn-theme-submit',
+        'custom'         => 'btn btn-theme-custom',
     ];
 
     $classes = $map[$variant] ?? $map['primary'];
 
     if (!empty($options['full_mobile'])) {
-        $classes .= ' btn-pace-full-mobile';
+        $classes .= ' btn-theme-full-mobile';
     }
 
     return $classes;

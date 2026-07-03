@@ -45,12 +45,12 @@ $not_found
   ->addColorPicker('background_color', [
     'label' => 'Background Color',
     'default_value' => '#f1f5f8',
-    'instructions' => 'Legacy field — the PACE template uses the standard listing background (#f1f5f8).',
+    'instructions' => 'Page background colour.',
   ])
   ->addColorPicker('text_color', [
     'label' => 'Text Color',
     'default_value' => '#003b65',
-    'instructions' => 'Legacy field — typography colours are set by the PACE template.',
+    'instructions' => 'Legacy field — typography colours are set by the theme template.',
   ])
   ->addTab('Options', ['placement' => 'left'])
   ->addTrueFalse('enable_custom_404', [

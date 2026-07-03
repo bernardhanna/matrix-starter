@@ -80,7 +80,7 @@ This script:
 - Configures **Password Protected** (staging lock, password `matrix` + year, admins allowed)
 - Configures **WP Mail SMTP** when `MATRIX_SMTP_GOOGLE_CLIENT_SECRET` is set in `.env`
 
-**Does not:** run `npm run build`, install ACF Pro, or run `pace:*` content seeders.
+**Does not:** run `npm run build` or install ACF Pro (plugin files are cloned by flexi-install; license is manual).
 
 **Still required manually:** [ACF Pro](https://www.advancedcustomfields.com/pro/)
 
@@ -117,16 +117,9 @@ Commit `dist/` according to your project policy (many Matrix projects commit bui
 
 ---
 
-## 2.7 Optional: PACE / flexi content seeders
+## 2.7 Flexi review page
 
-After ACF field groups exist, project-specific seeders may be available, e.g.:
-
-```bash
-npm run pace:home-setup
-npm run pace:flexi-setup
-```
-
-See `package.json` for the full list (`pace:*` scripts).
+Use the **Flexi blocks review** page (`/flexi/`) to preview blocks. Populate it manually in WP admin or add project-specific seed scripts in your client repo — the default theme does not ship content seeders.
 
 ---
 

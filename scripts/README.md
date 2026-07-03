@@ -119,4 +119,4 @@ Plugin downloads use a longer timeout (`WP_TIMEOUT_INSTALL`, default 180s). If i
 
 ### Related npm scripts
 
-Theme-specific ACF seeders (run **after** flexi install + ACF setup), e.g. `npm run pace:home-setup` — see root `package.json`.
+Use `npm run dev` and `npm run build` for assets. Client-specific content seeders are not included in the default theme — add pages and flexi content via WP admin or project-specific tooling.

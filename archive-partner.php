@@ -18,7 +18,7 @@ require_once get_template_directory() . '/inc/helpers/partners.php';
     <header class="bg-[#003b65] text-white">
         <div class="mx-auto w-full max-w-[1280px] px-5 py-12 lg:px-10 lg:py-16 xl:px-[120px]">
             <p class="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#f4bd0b]"><?php esc_html_e('Our partners', 'matrix-starter'); ?></p>
-            <h1 class="mt-3 text-[36px] font-extrabold leading-tight lg:text-[56px]"><?php esc_html_e('PACE Consortium', 'matrix-starter'); ?></h1>
+            <h1 class="mt-3 text-[36px] font-extrabold leading-tight lg:text-[56px]"><?php esc_html_e('Our partners', 'matrix-starter'); ?></h1>
         </div>
     </header>
 

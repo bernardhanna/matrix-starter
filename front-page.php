@@ -1,6 +1,6 @@
 <?php
 /**
- * Front page — PACE hero + flexi blocks (no breadcrumbs / empty content wrapper).
+ * Front page — hero + flexi blocks (no breadcrumbs / empty content wrapper).
  *
  * @package Matrix_Starter
  */

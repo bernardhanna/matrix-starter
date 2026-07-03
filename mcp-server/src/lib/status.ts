@@ -43,7 +43,7 @@ export async function getThemeStatus(): Promise<ThemeStatus> {
   const notes = [
     "Phase 1 MCP covers repo tooling only (flexi scaffolding, tokens, build, tests).",
     "WordPress runtime operations (Theme Options, page seeding) are Phase 2 via WP-CLI.",
-    "Legacy pace:* npm scripts are not exposed — use flexi:install for bootstrap.",
+    "Use npm run flexi:install for project bootstrap.",
   ];
 
   return {

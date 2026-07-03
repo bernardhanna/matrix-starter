@@ -257,7 +257,7 @@ To re-skin this theme quickly for a new client/site, update semantic tokens in `
 
 These tokens are additive and mapped to existing values by default, so current styles stay visually consistent.
 
-#### Font utilities (PACE)
+#### Font utilities
 
 - `font-primary` — Public Sans (default)
 - `font-montserrat` — Montserrat (headings, kicker, CTAs)
@@ -291,7 +291,6 @@ See **[docs/accessibility-basics.md](docs/accessibility-basics.md)** for WCAG 2.
 - **[ACF WordPress conversion](docs/acf-wordpress-conversion.md)** — convert static HTML to dynamic ACF sections (general)
 - **[Flexi blocks basics](docs/flexi-blocks-basics.md)** — ACF Builder flexi blocks, section structure, padding repeater, CTAs, templates
 - **[Examples folder basics](docs/examples-folder-basics.md)** — `examples/` layout, naming, code style, copy-to-production paths
-- **[PACE Hero spec](docs/superpowers/specs/pace-hero.md)** — Figma hero block (`3:5` / `3:299`), ACF + template contract
 
 ### Getting Started
 

@@ -6,9 +6,9 @@ use StoutLogic\AcfBuilder\FieldsBuilder;
 $blogFields = new FieldsBuilder('blog_fields');
 
 $blogFields
-  ->addGroup('pace_blog_settings', [
-    'label' => 'PACE — News index',
-    'instructions' => 'Blog home and category archives (Figma 3:1233 / 3:1412).',
+  ->addGroup('blog_settings', [
+    'label' => 'Blog index',
+    'instructions' => 'Blog home and category archives.',
   ])
     ->addText('hero_kicker', [
       'label' => 'Hero kicker',
@@ -21,7 +21,7 @@ $blogFields
     ->addTextarea('hero_intro', [
       'label' => 'Hero intro (blog home)',
       'rows' => 3,
-      'default_value' => 'Latest milestones, updates, and announcements from across the consortium.',
+      'default_value' => 'Latest news, events, and updates from our team.',
     ])
     ->addColorPicker('hero_background', [
       'label' => 'Hero background',

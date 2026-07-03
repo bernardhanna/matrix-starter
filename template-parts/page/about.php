@@ -25,38 +25,20 @@ $glance_items           = get_field('glance_items', $post_id) ?: [];
 $values_card_background = get_field('values_card_background', $post_id) ?: '#fffae8';
 $section_background     = get_field('section_background', $post_id) ?: '#ffffff';
 
-$banner_id   = matrix_pace_about_image_id(
-    'banner_image',
-    'assets/images/about/banner-classroom.jpg',
-    'PACE About — classroom banner',
-    'matrix_pace_media_about_banner',
-    $banner_caption !== '' ? $banner_caption : __('PACE peer-learning session', 'matrix-starter')
-);
-$inline_id   = matrix_pace_about_image_id(
-    'inline_image',
-    'assets/images/about/inline-peer-study.jpg',
-    'PACE About — students studying',
-    'matrix_pace_media_about_inline',
-    $inline_caption !== '' ? $inline_caption : __('Students in Resources Hub module', 'matrix-starter')
-);
-$portrait_id = matrix_pace_about_image_id(
-    'portrait_image',
-    'assets/images/about/aside-portrait.jpg',
-    'PACE About — portrait',
-    'matrix_pace_media_about_portrait',
-    __('PACE programme participant', 'matrix-starter')
-);
+$banner_id   = matrix_page_image_id('banner_image', $post_id);
+$inline_id   = matrix_page_image_id('inline_image', $post_id);
+$portrait_id = matrix_page_image_id('portrait_image', $post_id);
 
-$section_id = 'pace-about-' . wp_generate_uuid4();
+$section_id = 'page-about-' . wp_generate_uuid4();
 ?>
 
 <article
     id="<?php echo esc_attr($section_id); ?>"
-    class="pace-about font-montserrat"
+    class="page-about font-montserrat"
     style="background-color: <?php echo esc_attr($section_background); ?>;"
 >
     <?php if ($banner_id > 0) : ?>
-        <figure class="pace-about-banner relative h-[240px] w-full overflow-hidden lg:h-[360px]">
+        <figure class="page-about-banner relative h-[240px] w-full overflow-hidden lg:h-[360px]">
             <?php
             echo wp_get_attachment_image(
                 $banner_id,
@@ -77,17 +59,17 @@ $section_id = 'pace-about-' . wp_generate_uuid4();
     <?php endif; ?>
 
     <div class="mx-auto w-full max-w-[1280px] px-5 py-10 lg:px-10 lg:py-16 xl:px-[120px]">
-        <div class="pace-about-layout grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-16">
-            <div class="pace-about-main flex flex-col gap-[11px]">
+        <div class="page-about-layout grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-16">
+            <div class="page-about-main flex flex-col gap-[11px]">
                 <?php if ($challenge_heading !== '' || $challenge_body !== '') : ?>
-                    <section class="pace-about-section">
+                    <section class="page-about-section">
                         <?php if ($challenge_heading !== '') : ?>
                             <h2 class="text-[26px] font-bold leading-[31.2px] text-[#003b65]">
                                 <?php echo esc_html($challenge_heading); ?>
                             </h2>
                         <?php endif; ?>
                         <?php if ($challenge_body !== '') : ?>
-                            <div class="pace-about-body mt-1 font-comfortaa text-[16px] leading-[26.4px] text-[#1d1d1d]">
+                            <div class="page-about-body mt-1 font-comfortaa text-[16px] leading-[26.4px] text-[#1d1d1d]">
                                 <?php echo wp_kses_post($challenge_body); ?>
                             </div>
                         <?php endif; ?>
@@ -95,14 +77,14 @@ $section_id = 'pace-about-' . wp_generate_uuid4();
                 <?php endif; ?>
 
                 <?php if ($approach_heading !== '' || $approach_body !== '') : ?>
-                    <section class="pace-about-section pt-5">
+                    <section class="page-about-section pt-5">
                         <?php if ($approach_heading !== '') : ?>
                             <h2 class="text-[26px] font-bold leading-[31.2px] text-[#003b65]">
                                 <?php echo esc_html($approach_heading); ?>
                             </h2>
                         <?php endif; ?>
                         <?php if ($approach_body !== '') : ?>
-                            <div class="pace-about-body mt-1 font-comfortaa text-[16px] leading-[26.4px] text-[#1d1d1d]">
+                            <div class="page-about-body mt-1 font-comfortaa text-[16px] leading-[26.4px] text-[#1d1d1d]">
                                 <?php echo wp_kses_post($approach_body); ?>
                             </div>
                         <?php endif; ?>
@@ -167,7 +149,7 @@ $section_id = 'pace-about-' . wp_generate_uuid4();
                 <?php endif; ?>
             </div>
 
-            <div class="pace-about-sidebar flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
+            <div class="page-about-sidebar flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
                 <?php if ($portrait_id > 0) : ?>
                     <figure class="overflow-hidden rounded-2xl shadow-[0px_14px_36px_0px_rgba(0,59,101,0.14)]">
                         <?php
@@ -224,14 +206,14 @@ $section_id = 'pace-about-' . wp_generate_uuid4();
 </article>
 
 <style>
-#<?php echo esc_attr($section_id); ?> .pace-about-body p {
+#<?php echo esc_attr($section_id); ?> .page-about-body p {
     margin: 0 0 0.65em;
 }
-#<?php echo esc_attr($section_id); ?> .pace-about-body p:last-child {
+#<?php echo esc_attr($section_id); ?> .page-about-body p:last-child {
     margin-bottom: 0;
 }
 @media (min-width: 1024px) {
-    #<?php echo esc_attr($section_id); ?> .pace-about-layout {
+    #<?php echo esc_attr($section_id); ?> .page-about-layout {
         grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
         column-gap: 64px;
     }

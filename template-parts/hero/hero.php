@@ -1,6 +1,6 @@
 <?php
 /**
- * PACE homepage hero — Figma 3:5 / 3:268
+ * Homepage hero flexi block
  *
  * @package Matrix_Starter
  */
@@ -23,14 +23,14 @@ $show_arrow      = (bool) get_sub_field('show_primary_arrow');
 $bg_color        = (string) (get_sub_field('background_color') ?: '#003b65');
 $padding_rows    = get_sub_field('padding_settings');
 
-$padding_classes = matrix_pace_flexi_padding_classes(is_array($padding_rows) ? $padding_rows : null, [
+$padding_classes = matrix_flexi_padding_classes(is_array($padding_rows) ? $padding_rows : null, [
     'pt-16',
     'pb-[4.85rem]',
     'lg:pt-24',
     'lg:pb-28',
 ]);
 
-$title_html = matrix_pace_flexi_heading_html($title_raw, $heading_tag);
+$title_html = matrix_flexi_heading_html($title_raw, $heading_tag);
 
 if (!in_array($heading_tag, ['h1', 'h2'], true)) {
     $heading_tag = 'h1';

@@ -15,8 +15,8 @@ if (have_rows('padding_settings')) {
 ?>
 
 <section class="flex overflow-hidden relative bg-white font-montserrat">
-  <div class="<?php echo esc_attr(matrix_pace_content_container_classes()); ?>">
-    <div class="pace-prose wp_editor">
+  <div class="<?php echo esc_attr(matrix_content_container_classes()); ?>">
+    <div class="theme-prose wp_editor">
       <div class="entry-content">
         <?php if ($text_content) : ?>
           <?php echo wp_kses_post($text_content); ?>

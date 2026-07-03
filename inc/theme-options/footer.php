@@ -12,7 +12,7 @@ $fields
     ])
         ->addImage('footer_logo', [
             'label' => 'Footer logo',
-            'instructions' => 'PACE logo for footer (recommended ~77×36px). Falls back to site logo if empty.',
+            'instructions' => 'Footer logo (recommended ~77×36px). Falls back to site logo if empty.',
             'return_format' => 'id',
             'preview_size' => 'medium',
         ])
@@ -21,11 +21,11 @@ $fields
             'instructions' => 'Shown below the logo in yellow. Use a line break for two lines on desktop.',
             'rows' => 2,
             'new_lines' => 'br',
-            'default_value' => "Supporting Youth.\nStrengthening Ukraine.",
+            'default_value' => '',
         ])
         ->addImage('footer_eu_logo', [
             'label' => 'EU co-funded logo',
-            'instructions' => '“Co-funded by the European Union” badge below the tagline (desktop and mobile).',
+            'instructions' => 'Optional badge image below the tagline.',
             'return_format' => 'id',
             'preview_size' => 'medium',
         ])
@@ -36,17 +36,17 @@ $fields
     ])
         ->addText('footer_col1_heading', [
             'label' => 'Column 1 heading',
-            'default_value' => 'PROJECT',
+            'default_value' => 'EXPLORE',
             'instructions' => 'Menu: Footer — Project (footer_one)',
         ])
         ->addText('footer_col2_heading', [
             'label' => 'Column 2 heading',
-            'default_value' => "WHAT'S NEW",
+            'default_value' => 'NEWS',
             'instructions' => 'Menu: Footer — What\'s New (footer_two)',
         ])
         ->addText('footer_col3_heading', [
             'label' => 'Column 3 heading',
-            'default_value' => 'RESOURCES HUB',
+            'default_value' => 'RESOURCES',
             'instructions' => 'Menu: Footer — Resources Hub (footer_three)',
         ])
         ->addText('footer_col4_heading', [
@@ -55,7 +55,7 @@ $fields
         ])
         ->addTaxonomy('footer_whats_new_categories', [
             'label' => "What's New categories",
-            'instructions' => 'Post categories for the footer What\'s New column. Re-save or run wp pace-footer setup --force to rebuild the menu.',
+            'instructions' => 'Post categories for the footer news column.',
             'taxonomy' => 'category',
             'field_type' => 'multi_select',
             'return_format' => 'id',
@@ -65,8 +65,8 @@ $fields
             'allow_null' => 1,
         ])
         ->addTaxonomy('footer_resources_categories', [
-            'label' => 'Resources Hub categories',
-            'instructions' => 'Post categories for the Resources Hub column.',
+            'label' => 'Resources categories',
+            'instructions' => 'Post categories for the resources column.',
             'taxonomy' => 'category',
             'field_type' => 'multi_select',
             'return_format' => 'id',
@@ -77,7 +77,7 @@ $fields
         ])
         ->addEmail('footer_contact_email', [
             'label' => 'Contact email',
-            'default_value' => 'info@pace-project.eu',
+            'default_value' => '',
         ])
         ->addRepeater('footer_social_links', [
             'label' => 'Social links',
@@ -118,25 +118,25 @@ $fields
             'label' => 'EU funding disclaimer',
             'rows' => 5,
             'new_lines' => 'wpautop',
-            'default_value' => 'Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Education and Culture Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.',
+            'default_value' => '',
         ])
         ->addText('footer_project_number', [
             'label' => 'Project number',
-            'default_value' => 'Project Number: 2025-1-HR01-KA220-SCH-000360813',
+            'default_value' => '',
         ])
         ->addText('footer_copyright_left', [
             'label' => 'Copyright text',
             'instructions' => 'Use {year} for the current year.',
-            'default_value' => '© {year} PACE Project Consortium',
+            'default_value' => '© {year}',
         ])
         ->addLink('footer_privacy_link', [
             'label' => 'Privacy policy link',
-            'instructions' => 'Leave empty to use links from the “PACE Footer — Legal” menu (copyright location).',
+            'instructions' => 'Leave empty to use links from the Footer Legal menu (copyright location).',
             'return_format' => 'array',
         ])
         ->addLink('footer_cookie_link', [
             'label' => 'Cookie policy link',
-            'instructions' => 'Leave empty to use links from the “PACE Footer — Legal” menu (copyright location).',
+            'instructions' => 'Leave empty to use links from the Footer Legal menu (copyright location).',
             'return_format' => 'array',
         ])
         ->addText('footer_credit_prefix', [
@@ -156,7 +156,7 @@ $fields
         ->addColorPicker('footer_main_bg', [
             'label' => 'Main background',
             'default_value' => '#003b65',
-            'instructions' => 'PACE navy behind the link columns.',
+            'instructions' => 'Main background behind the link columns.',
         ])
         ->addColorPicker('footer_disclaimer_bg', [
             'label' => 'Disclaimer bar overlay (optional)',

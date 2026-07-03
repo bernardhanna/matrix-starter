@@ -2,7 +2,7 @@
 
 Dev tooling MCP server for the Matrix Starter WordPress theme. Exposes filesystem and npm workflows to Cursor agents — **not** WordPress runtime admin.
 
-Legacy `pace:*` setup scripts are intentionally excluded. Use `npm run flexi:install` for project bootstrap.
+Content seeders are not part of the default theme. Use `npm run flexi:install` for project bootstrap.
 
 ## Tools
 
@@ -50,4 +50,4 @@ Add to your MCP settings (adjust the theme path):
 
 ## Phase 2 (planned)
 
-WP-CLI tools for Theme Options reads, plugin checks, and generic page seeding — without reviving client-specific `pace:*` seeders.
+WP-CLI tools for Theme Options reads, plugin checks, and generic page seeding.
