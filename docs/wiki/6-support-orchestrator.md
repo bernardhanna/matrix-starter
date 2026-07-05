@@ -78,14 +78,24 @@ Scripts delegate to `scripts/matrix-support.sh` → standalone orchestrator repo
    - GitHub MCP: Docker MCP Toolkit → connect Cursor, or use job `cursor-mcp.json`
 5. `matrix-support agent pr <job-id>` → PR opens → **QC PR Gate** runs on GitHub.
 
-**Staging clone (QC snags):** enable **Auto clone staging** in QC Snags → Support pipeline. Orchestrator imports `staging_db_dump` + page media from `clients.json`, then optionally runs agent prepare in the background.
-6. Human reviews PR, merges, deploys via Plesk.
+**Staging clone (QC snags):** enable **Auto clone staging** in QC Snags → Support pipeline. Orchestrator clones from `environments.staging` (or legacy `staging_db_dump`) + page media, then optionally runs agent prepare in the background.
+
+**Live support:** webhook `source: live_support` defaults to `environments.production` clone (SSH `wp db export`). Override with `clone_source` in the payload.
+
+```bash
+matrix-support sandbox clone <job-id> --source production --media page
+matrix-support watch <job-id>
+```
+
+**Hosted HTTPS (VPS):** set `MATRIX_SUPPORT_SANDBOX_EXPOSURE=hosted` in orchestrator `.env.local`, run Caddy (`docker/caddy-compose.yml`). Each job gets `https://<job-id>.your-domain/`. Sandboxes load `docker/mu-plugins/matrix-support-sandbox-guard.php` (noindex, robots block).
+
+6. Human reviews PR, merges, `matrix-support deploy run <job-id>` (when `deploy.method` is `ssh_git_pull`).
 
 ### B — Manual CLI ticket
 
 ```bash
 matrix-support submit --client acme-corp --title "Footer link 404" --body "..." --allow code
-matrix-support sandbox up <job-id>
+matrix-support sandbox clone <job-id> --source staging
 matrix-support agent prepare <job-id>
 matrix-support agent open <job-id>
 # … fix …
@@ -115,7 +125,12 @@ Per client entry in the orchestrator repo (gitignored locally):
   "github_repo": "Matrix-Internet/client-theme",
   "base_branch": "main",
   "theme_slug": "client-theme",
-  "production_url": "https://www.client.com"
+  "production_url": "https://www.client.com",
+  "environments": {
+    "staging": { "url": "...", "ssh": "user@host", "wp_path": "...", "db_dump_path": "...", "uploads_path": "..." },
+    "production": { "url": "...", "ssh": "user@host", "wp_path": "..." }
+  },
+  "deploy": { "method": "manual", "host": "", "path": "", "branch": "main" }
 }
 ```
 
