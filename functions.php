@@ -65,6 +65,7 @@ if (file_exists(get_template_directory() . '/vendor/autoload.php')) {
  */
 require_once get_template_directory() . '/inc/enqueue-fonts.php';
 require_once get_template_directory() . '/inc/enqueue-scripts.php';
+require_once get_template_directory() . '/inc/block-editor.php';
 require_once get_template_directory() . '/inc/archive-hero-functions.php';
 require_once get_template_directory() . '/inc/hero-functions.php';
 require_once get_template_directory() . '/inc/flexible-content-functions.php';
