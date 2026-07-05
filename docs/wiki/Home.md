@@ -17,7 +17,8 @@
 | [3. Daily development flow](3-daily-flow-for-development.md) | Branches, PRs, rebase, checklist |
 | [4. flexi-install & environment](4-flexi-install-and-environment.md) | Bootstrap script, plugins, Password Protected, WP Mail SMTP, `.env` reference |
 | [5. Docker environments](5-docker-environments.md) | Containerized local, staging, CI, live-site import |
-| [6. Tests & quality checks](Tests.md) | Playwright, a11y, Lighthouse, link checker |
+| [6. Support orchestrator](6-support-orchestrator.md) | AI support pipeline, Docker sandboxes, Cursor agent handoff |
+| [7. Tests & quality checks](Tests.md) | Playwright, a11y, Lighthouse, link checker |
 
 > **Publishing to GitHub:** Copy each file’s body into the matching page at https://github.com/Matrix-Internet/matrix-starter-theme/wiki/ (GitHub wiki titles/slugs may differ slightly from filenames here).
 

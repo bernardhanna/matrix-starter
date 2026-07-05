@@ -11,6 +11,8 @@ Markdown copies of the [matrix-starter-theme GitHub Wiki](https://github.com/Mat
 | `2-local-setup-and-build-tools.md` | **2. Local Setup & Build Tools for Matrix Starter Projects** |
 | `3-daily-flow-for-development.md` | **3. Daily Flow for Development on Matrix Test** |
 | `4-flexi-install-and-environment.md` | **4. flexi-install and environment** *(create this page on GitHub if missing)* |
+| `5-docker-environments.md` | **5. Docker environments** |
+| `6-support-orchestrator.md` | **6. Support orchestrator** |
 | `Tests.md` | **Tests** |
 
 ## Publish steps
