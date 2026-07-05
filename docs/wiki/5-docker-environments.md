@@ -206,7 +206,8 @@ Use this to debug production content locally or spin up a staging mirror.
 | Port 8080 in use | Set `WP_PORT=8081` in `.env.docker` and update `WP_HOME` |
 | Bootstrap times out | `npm run docker:logs` — first WP image download is slow |
 | HTTP 500 on homepage | ACF Pro not cloned — fix GitHub auth, re-run bootstrap |
-| Plugin clone fails | `GH_TOKEN` in `.env.docker` or `gh auth login` |
+| Plugin clone fails | `GH_TOKEN` in `.env.docker` or `gh auth login` (HTTPS) |
+| ACF fields missing / license warnings | Add `ACF_PRO_LICENSE=...` to `.env.docker`, re-run bootstrap |
 | Wrong URLs after import | Re-run `docker:import` with explicit live and local URLs |
 | Start fresh | `npm run docker:down:clean` then `docker:up` + `docker:bootstrap` |
 

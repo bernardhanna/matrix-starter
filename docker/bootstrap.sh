@@ -27,7 +27,10 @@ configure_github_auth() {
   if [ -z "$token" ]; then
     return 0
   fi
+  export GH_TOKEN="$token"
   export GITHUB_TOKEN="$token"
+  export HOME="${HOME:-/tmp/gh-home}"
+  mkdir -p "$HOME"
   git config --global url."https://x-access-token:${token}@github.com/".insteadOf "https://github.com/" 2>/dev/null || true
   echo "✅ GitHub token configured for private plugin clones."
 }
@@ -92,6 +95,25 @@ activate_theme() {
   echo "✅ Theme activated: $slug"
 }
 
+configure_acf_license() {
+  local license="${ACF_PRO_LICENSE:-}"
+  if [ -z "$license" ]; then
+    return 0
+  fi
+
+  if ! wp --path="$WP_ROOT" --skip-plugins --skip-themes plugin is-installed advanced-custom-fields-pro >/dev/null 2>&1; then
+    echo "ℹ️  ACF Pro not installed yet — license will apply after flexi-install."
+    return 0
+  fi
+
+  if wp --path="$WP_ROOT" config get ACF_PRO_LICENSE --type=constant >/dev/null 2>&1; then
+    echo "✅ ACF Pro license constant already in wp-config."
+  else
+    wp --path="$WP_ROOT" config set ACF_PRO_LICENSE "$license" --raw --type=constant
+    echo "✅ ACF Pro license written to wp-config."
+  fi
+}
+
 run_flexi_install() {
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -124,4 +146,5 @@ wait_for_wordpress
 install_wordpress_if_needed
 activate_theme
 run_flexi_install
+configure_acf_license
 print_summary

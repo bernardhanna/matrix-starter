@@ -51,6 +51,22 @@ matrix_plugin_repo_url() {
   printf 'https://github.com/%s/%s.git' "$org" "$repo_name"
 }
 
+_matrix_github_token() {
+  printf '%s' "${GH_TOKEN:-${GITHUB_TOKEN:-}}"
+}
+
+_matrix_authenticated_repo_url() {
+  local org="$1"
+  local repo_name="$2"
+  local token
+  token="$(_matrix_github_token)"
+  if [ -n "$token" ]; then
+    printf 'https://x-access-token:%s@github.com/%s/%s.git' "$token" "$org" "$repo_name"
+    return 0
+  fi
+  matrix_plugin_repo_url "$org" "$repo_name"
+}
+
 matrix_github_auth_hint() {
   echo ""
   echo "  Private plugins are hosted under: https://github.com/${MATRIX_GITHUB_ORG}/"
@@ -62,6 +78,11 @@ matrix_github_auth_hint() {
 }
 
 ensure_matrix_github_access() {
+  if [ -n "$(_matrix_github_token)" ]; then
+    echo "✅ GitHub token configured — can clone ${MATRIX_GITHUB_ORG} private repos."
+    return 0
+  fi
+
   if command -v gh >/dev/null 2>&1; then
     if gh auth status >/dev/null 2>&1; then
       echo "✅ GitHub CLI authenticated — can clone ${MATRIX_GITHUB_ORG} private repos."
@@ -72,21 +93,29 @@ ensure_matrix_github_access() {
     return 1
   fi
 
-  echo "ℹ️  GitHub CLI (gh) not found — using git clone over HTTPS/SSH."
-  echo "   For private Matrix-Internet repos, install gh and run: gh auth login"
+  echo "ℹ️  No GitHub token — private Matrix-Internet plugins will not clone."
+  echo "   Set GH_TOKEN in .env.docker or run: gh auth login"
   return 0
 }
 
 _matrix_repo_exists() {
   local org="$1"
   local repo_name="$2"
+  local token
+  token="$(_matrix_github_token)"
 
-  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-    gh repo view "${org}/${repo_name}" >/dev/null 2>&1
-    return $?
+  if command -v gh >/dev/null 2>&1; then
+    if [ -n "$token" ]; then
+      GH_TOKEN="$token" GITHUB_TOKEN="$token" gh repo view "${org}/${repo_name}" >/dev/null 2>&1
+      return $?
+    fi
+    if gh auth status >/dev/null 2>&1; then
+      gh repo view "${org}/${repo_name}" >/dev/null 2>&1
+      return $?
+    fi
   fi
 
-  git ls-remote "$(matrix_plugin_repo_url "$org" "$repo_name")" HEAD >/dev/null 2>&1
+  git ls-remote "$(_matrix_authenticated_repo_url "$org" "$repo_name")" HEAD >/dev/null 2>&1
 }
 
 _matrix_clone_from_org() {
@@ -94,13 +123,21 @@ _matrix_clone_from_org() {
   local repo_name="$2"
   local dir="$3"
   local spec="${org}/${repo_name}"
+  local token
+  token="$(_matrix_github_token)"
 
-  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-    gh repo clone "$spec" "$dir"
-    return $?
+  if command -v gh >/dev/null 2>&1; then
+    if [ -n "$token" ]; then
+      GH_TOKEN="$token" GITHUB_TOKEN="$token" gh repo clone "$spec" "$dir"
+      return $?
+    fi
+    if gh auth status >/dev/null 2>&1; then
+      gh repo clone "$spec" "$dir"
+      return $?
+    fi
   fi
 
-  git clone "$(matrix_plugin_repo_url "$org" "$repo_name")" "$dir"
+  git clone "$(_matrix_authenticated_repo_url "$org" "$repo_name")" "$dir"
 }
 
 clone_matrix_plugin() {

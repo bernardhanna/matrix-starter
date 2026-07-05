@@ -74,6 +74,8 @@ Scripts delegate to `scripts/matrix-support.sh` → standalone orchestrator repo
 2. **Send to support pipeline** (snag edit or list row action).
 3. On orchestrator host: `matrix-support agent status <job-id>`
 4. `matrix-support agent open <job-id>` → fix in Cursor using sandbox URL from `AGENT_BRIEF.md`.
+   - Theme MCP: `mcp-server/` tools for flexi blocks, build, tests
+   - GitHub MCP: Docker MCP Toolkit → connect Cursor, or use job `cursor-mcp.json`
 5. `matrix-support agent pr <job-id>` → PR opens → **QC PR Gate** runs on GitHub.
 6. Human reviews PR, merges, deploys via Plesk.
 
