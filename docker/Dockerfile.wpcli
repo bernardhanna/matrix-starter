@@ -4,9 +4,9 @@ USER root
 
 RUN apk add --no-cache bash git curl openssh-client \
   && mkdir -p /tmp/gh-home \
-  && chown xfs:xfs /tmp/gh-home
+  && chown www-data:www-data /tmp/gh-home
 
-# wp-cli image sets USER xfs without a writable HOME — git config --global fails otherwise.
+# wp-cli image runs as www-data without a writable HOME — git config --global fails otherwise.
 ENV HOME=/tmp/gh-home
 
-USER xfs
+USER www-data

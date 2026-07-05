@@ -53,7 +53,7 @@ services:
     build:
       context: ./docker
       dockerfile: Dockerfile.wpcli
-    user: "33:33"
+    user: "82:82"
     working_dir: /var/www/html/wp-content/themes/${THEME_SLUG:-matrix-starter}
     environment:
       WORDPRESS_DB_HOST: db:3306

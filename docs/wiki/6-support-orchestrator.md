@@ -77,6 +77,8 @@ Scripts delegate to `scripts/matrix-support.sh` → standalone orchestrator repo
    - Theme MCP: `mcp-server/` tools for flexi blocks, build, tests
    - GitHub MCP: Docker MCP Toolkit → connect Cursor, or use job `cursor-mcp.json`
 5. `matrix-support agent pr <job-id>` → PR opens → **QC PR Gate** runs on GitHub.
+
+**Staging clone (QC snags):** enable **Auto clone staging** in QC Snags → Support pipeline. Orchestrator imports `staging_db_dump` + page media from `clients.json`, then optionally runs agent prepare in the background.
 6. Human reviews PR, merges, deploys via Plesk.
 
 ### B — Manual CLI ticket
