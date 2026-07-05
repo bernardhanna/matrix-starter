@@ -4,6 +4,8 @@ Internal Matrix tool for client support tickets — **not part of the theme**. L
 
 **https://github.com/Matrix-Internet/matrix-support-orchestrator**
 
+**Team setup guide (live clone, VPS, Windows/WSL):** orchestrator repo [`docs/TEAM-SETUP.md`](https://github.com/Matrix-Internet/matrix-support-orchestrator/blob/main/docs/TEAM-SETUP.md)
+
 Use it to: submit tickets, spin up **isolated Docker test sites**, hand off to **Cursor + MCP**, open **PRs** gated by **QC PR Gate**, and (later) run **DB change sets** with dry-run → test site → human approval.
 
 ---
@@ -18,7 +20,27 @@ Use it to: submit tickets, spin up **isolated Docker test sites**, hand off to *
 | Test sites | Per-job Docker (unique port + compose project) |
 | Production | Never touched by agent — human merge + Plesk deploy only |
 
-Full design: orchestrator repo `docs/ARCHITECTURE.md`.
+Full design: orchestrator repo `docs/ARCHITECTURE.md`.  
+**Rollout for the whole team:** `docs/TEAM-SETUP.md` (shared VPS, live production clone, Windows/WSL).
+
+---
+
+## Live site ticket (example)
+
+Ticket on **https://wpflexitheme.com** (checkout broken):
+
+1. Orchestrator clones **production** DB + page media into Docker (read-only SSH export from live).
+2. URLs in DB change from `wpflexitheme.com` → sandbox URL (see below).
+3. Agent fixes on git branch; PR merged; human deploys to live.
+
+**Sandbox URL (where devs test — not the live domain):**
+
+| Setup | URL |
+|-------|-----|
+| Local Mac/WSL | `http://localhost:8090/` (port varies per job) |
+| Shared VPS + Caddy | `https://<job-id>.support.yourdomain.com/` |
+
+Check: `matrix-support job show <job-id>`
 
 ---
 
@@ -151,6 +173,7 @@ Use the **support pipeline** when you need live DB clone, strict gates, or inter
 
 ## Related
 
+- [Team setup guide](https://github.com/Matrix-Internet/matrix-support-orchestrator/blob/main/docs/TEAM-SETUP.md) — VPS, Windows/WSL, per-client checklist
 - [5. Docker environments](5-docker-environments.md) — underlying Docker stack
 - [3. Daily development flow](3-daily-flow-for-development.md) — branches and PRs
 - [Tests](Tests.md) — QC PR gate in `.github/workflows/qc-pr.yml`
