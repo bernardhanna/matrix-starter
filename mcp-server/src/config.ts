@@ -14,6 +14,10 @@ export const PATHS = {
   docs: path.join(THEME_ROOT, "docs"),
   envExample: path.join(THEME_ROOT, ".env.example"),
   flexiInstallScript: path.join(THEME_ROOT, "scripts/flexi-install.sh"),
+  acfHeroBlocks: path.join(THEME_ROOT, "acf-fields/partials/hero"),
+  heroTemplates: path.join(THEME_ROOT, "template-parts/hero"),
+  referenceBlocksFlexi: path.join(THEME_ROOT, "reference-blocks/flexi"),
+  themeStructureDoc: path.join(THEME_ROOT, "docs/theme-structure.md"),
 } as const;
 
 export function layoutFromAcfFilename(filename: string): string | null {

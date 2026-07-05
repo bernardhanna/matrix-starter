@@ -18,6 +18,14 @@ import {
 import { formatCommandResult, runNpmScript } from "./lib/exec.js";
 import { getThemeStatus, readThemeDoc } from "./lib/status.js";
 import { readThemeTokens, updateThemeTokens } from "./lib/tokens.js";
+import {
+  getThemeInventory,
+  listReferenceBlockLayouts,
+  readReferenceBlock,
+  validateThemeStructure,
+} from "./lib/structure.js";
+import fs from "node:fs/promises";
+import { PATHS } from "./config.js";
 
 const server = new McpServer(
   {
@@ -86,6 +94,18 @@ const TOOLS = [
       required: ["layout"],
       additionalProperties: false,
     },
+  },
+  {
+    name: "validate_theme_structure",
+    description:
+      "Validate drop-in folder contract: flexi/hero parity, forbidden paths, suspicious functions.php requires.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "list_theme_inventory",
+    description:
+      "List flexi layouts, hero files, theme option tabs, CPTs, taxonomies, and helper utils.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
     name: "get_theme_tokens",
@@ -165,6 +185,12 @@ const RESOURCES = [
     uri: "theme://docs/daily-flow",
     name: "Daily development flow",
     description: "Branching, build, and PR workflow for theme development.",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "theme://structure",
+    name: "Theme drop-in structure",
+    description: "Canonical folder contract for flexi blocks and autoloaded paths.",
     mimeType: "text/markdown",
   },
 ] as const;
@@ -326,6 +352,28 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+
+      case "validate_theme_structure": {
+        const result = await validateThemeStructure();
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          isError: !result.valid,
+        };
+      }
+
+      case "list_theme_inventory": {
+        const inventory = await getThemeInventory();
+        const referenceBlocks = await listReferenceBlockLayouts();
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({ ...inventory, referenceBlocks }, null, 2),
+            },
+          ],
+        };
+      }
+
       default:
         return {
           content: [{ type: "text", text: `Unknown tool: ${name}` }],
@@ -341,14 +389,27 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-server.server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-  resources: RESOURCES.map(({ uri, name, description, mimeType }) => ({
-    uri,
-    name,
-    description,
-    mimeType,
-  })),
-}));
+server.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  const referenceLayouts = await listReferenceBlockLayouts();
+  const referenceResources = referenceLayouts.map((layout) => ({
+    uri: `theme://reference-blocks/${layout}`,
+    name: `Reference block: ${layout}`,
+    description: `Gold-standard ACF + template pair from reference-blocks/flexi/`,
+    mimeType: "application/json",
+  }));
+
+  return {
+    resources: [
+      ...RESOURCES.map(({ uri, name, description, mimeType }) => ({
+        uri,
+        name,
+        description,
+        mimeType,
+      })),
+      ...referenceResources,
+    ],
+  };
+});
 
 server.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
   const { uri } = request.params;
@@ -376,6 +437,18 @@ server.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         ],
       };
 
+
+    case "theme://structure":
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "text/markdown",
+            text: await fs.readFile(PATHS.themeStructureDoc, "utf8"),
+          },
+        ],
+      };
+
     case "theme://docs/daily-flow":
       return {
         contents: [
@@ -387,8 +460,22 @@ server.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         ],
       };
 
-    default:
+    default: {
+      const refMatch = /^theme:\/\/reference-blocks\/([a-z][a-z0-9_]*)$/.exec(uri);
+      if (refMatch) {
+        const block = await readReferenceBlock(refMatch[1]);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(block, null, 2),
+            },
+          ],
+        };
+      }
       throw new Error(`Unknown resource: ${uri}`);
+    }
   }
 });
 

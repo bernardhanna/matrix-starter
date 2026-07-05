@@ -5,13 +5,16 @@
   "description": "Phase 1 dev MCP server for Matrix Starter theme",
   "type": "module",
   "bin": {
-    "matrix-starter-mcp": "./dist/index.js"
+    "matrix-starter-mcp": "./dist/index.js",
+    "matrix-starter-mcp-cli": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "validate-structure": "node dist/cli.js validate-structure",
+    "validate-flexi": "node dist/cli.js validate-flexi"
   },
   "engines": {
     "node": ">=18"

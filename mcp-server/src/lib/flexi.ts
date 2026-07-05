@@ -104,6 +104,8 @@ export type ScaffoldFlexiBlockInput = {
 export type ScaffoldFlexiBlockResult = {
   created: string[];
   skipped: string[];
+  hint: string;
+  allowedPaths: string[];
 };
 
 function toLabel(layout: string): string {
@@ -113,16 +115,18 @@ function toLabel(layout: string): string {
     .join(" ");
 }
 
+
 function buildAcfPartial(layout: string, label: string): string {
+  const varName = layout.replace(/[^a-zA-Z0-9_]/g, "_");
   return `<?php
 
 use StoutLogic\\AcfBuilder\\FieldsBuilder;
 
-$${layout.replace(/[^a-zA-Z0-9_]/g, "_")} = new FieldsBuilder('${layout}', [
-    'label' => '${label}',
+$${varName} = new FieldsBuilder('${layout}', [
+    'label' => '${label.replace(/'/g, "\\'")}',
 ]);
 
-$${layout.replace(/[^a-zA-Z0-9_]/g, "_")}
+$${varName}
   ->addTab('Content', ['placement' => 'top'])
     ->addWysiwyg('text_content', [
         'label' => 'Content',
@@ -131,7 +135,13 @@ $${layout.replace(/[^a-zA-Z0-9_]/g, "_")}
         'toolbar' => 'full',
     ])
 
-  ->addTab('Layout')
+  ->addTab('Design', ['placement' => 'top'])
+    ->addColorPicker('background_color', [
+        'label' => 'Background colour',
+        'instructions' => 'Optional section background.',
+    ])
+
+  ->addTab('Layout', ['placement' => 'top'])
     ->addRepeater('padding_settings', [
         'label' => 'Padding Settings',
         'button_label' => 'Add Screen Size Padding',
@@ -150,29 +160,19 @@ $${layout.replace(/[^a-zA-Z0-9_]/g, "_")}
               'ultrawide' => 'ultrawide',
           ],
       ])
-      ->addNumber('padding_top', [
-          'label' => 'Padding Top',
-          'min' => 0,
-          'max' => 20,
-          'step' => 0.1,
-          'append' => 'rem',
-      ])
-      ->addNumber('padding_bottom', [
-          'label' => 'Padding Bottom',
-          'min' => 0,
-          'max' => 20,
-          'step' => 0.1,
-          'append' => 'rem',
-      ])
+      ->addNumber('padding_top', ['label' => 'Padding Top', 'min' => 0, 'max' => 20, 'step' => 0.1, 'append' => 'rem'])
+      ->addNumber('padding_bottom', ['label' => 'Padding Bottom', 'min' => 0, 'max' => 20, 'step' => 0.1, 'append' => 'rem'])
     ->endRepeater();
 
-return $${layout.replace(/[^a-zA-Z0-9_]/g, "_")};
+return $${varName};
 `;
 }
 
 function buildFlexiTemplate(layout: string): string {
   return `<?php
+$section_id = '${layout}-' . wp_generate_uuid4();
 $text_content = get_sub_field('text_content');
+$background_color = get_sub_field('background_color');
 
 $padding_classes = [];
 if (have_rows('padding_settings')) {
@@ -189,15 +189,25 @@ if (have_rows('padding_settings')) {
     }
   }
 }
+
+$section_style = $background_color ? 'background-color:' . esc_attr($background_color) . ';' : '';
 ?>
 
-<section class="overflow-hidden bg-white ${layout}">
-  <div class="container mx-auto px-4 <?php echo esc_attr(implode(' ', $padding_classes)); ?>">
-    <?php if ($text_content) : ?>
-      <div class="prose max-w-none entry-content">
-        <?php echo wp_kses_post($text_content); ?>
+<section
+  id="<?php echo esc_attr($section_id); ?>"
+  class="relative flex overflow-hidden bg-white font-montserrat"
+  role="region"
+  aria-labelledby="<?php echo esc_attr($section_id); ?>-heading"
+  <?php if ($section_style) : ?>style="<?php echo esc_attr($section_style); ?>"<?php endif; ?>
+>
+  <div class="flex flex-col items-center w-full mx-auto max-w-container max-lg:px-5 <?php echo esc_attr(implode(' ', $padding_classes)); ?>">
+    <div class="theme-prose wp_editor w-full">
+      <div class="entry-content">
+        <?php if ($text_content) : ?>
+          <?php echo wp_kses_post($text_content); ?>
+        <?php endif; ?>
       </div>
-    <?php endif; ?>
+    </div>
   </div>
 </section>
 `;
@@ -216,6 +226,10 @@ export async function scaffoldFlexiBlock(
   const label = input.label.trim() || toLabel(layout);
   const acfPath = path.join(PATHS.acfBlocks, `acf_${layout}.php`);
   const templatePath = path.join(PATHS.flexiTemplates, `${layout}.php`);
+  const allowedPaths = [
+    relativeThemePath(acfPath),
+    relativeThemePath(templatePath),
+  ];
   const created: string[] = [];
   const skipped: string[] = [];
 
@@ -226,19 +240,27 @@ export async function scaffoldFlexiBlock(
     [acfPath, buildAcfPartial(layout, label)],
     [templatePath, buildFlexiTemplate(layout)],
   ] as const) {
+    let exists = false;
     try {
       await fs.access(filePath);
-      if (!input.overwrite) {
-        skipped.push(relativeThemePath(filePath));
-        continue;
-      }
+      exists = true;
     } catch {
-      // file does not exist — create it
+      exists = false;
+    }
+
+    if (exists && !input.overwrite) {
+      skipped.push(relativeThemePath(filePath));
+      continue;
     }
 
     await fs.writeFile(filePath, contents, "utf8");
     created.push(relativeThemePath(filePath));
   }
 
-  return { created, skipped };
+  const hint =
+    skipped.length > 0 && created.length === 0
+      ? "Files already exist. Pass overwrite:true to replace. Do not create files outside allowedPaths."
+      : "Edit only the two files in allowedPaths. Do not add requires, inc/ partials, or loader scripts.";
+
+  return { created, skipped, hint, allowedPaths };
 }
