@@ -2,7 +2,7 @@
 
 Convert static HTML into dynamic WordPress **ACF Flexible Content** blocks. Every element must be editable in the admin, output must follow theme conventions, and all markup must meet **WCAG 2.1 AA** (see [accessibility-basics.md](accessibility-basics.md)).
 
-Related: [coding-guidelines.md](coding-guidelines.md), [desktop-menu-basics.md](desktop-menu-basics.md).
+Related: [theme-structure.md](theme-structure.md), [coding-guidelines.md](coding-guidelines.md), [desktop-menu-basics.md](desktop-menu-basics.md), [AGENTS.md](../AGENTS.md).
 
 ---
 
@@ -12,20 +12,18 @@ Related: [coding-guidelines.md](coding-guidelines.md), [desktop-menu-basics.md](
 
 ---
 
-## File structure
+## File structure — two files only
 
-Each flexi block is **two files**:
+Each flexi block is **exactly two drop-in files**. Do not create loaders, partials, or `require_once` entries.
 
 | File | Location | Purpose |
 |------|----------|---------|
-| ACF field definition | `acf-fields/…` or `examples/acf/flexi/acf_{layout}.php` | FieldsBuilder definition |
-| Frontend template | `template-parts/flexi/{layout}.php` | Rendered on the page |
+| ACF field definition | `acf-fields/partials/blocks/acf_{layout}.php` | Returns `FieldsBuilder` — auto-registered by `acf-fields/partials/flexi.php` |
+| Frontend template | `template-parts/flexi/{layout}.php` | Rendered by `load_flexible_content_templates()` |
 
-Reference implementations live under `examples/acf/flexi/` and `examples/flexi/` (e.g. `acf_content_002.php` + `content_002.php`).
+**Do not create additional files** for a flexi block (no `inc/` partials, no per-block requires in `functions.php`, no `template-parts/blocks/`).
 
-The flexible content loader resolves: `template-parts/flexi/{layout}.php` (see `inc/flexible-content-functions.php`).
-
-Production ACF definitions live in `acf-fields/partials/blocks/acf_{layout}.php` (auto-registered via `acf-fields/partials/flexi.php`).
+Reference implementations (copy into production paths above): [`reference-blocks/flexi/`](../reference-blocks/flexi/) — e.g. `acf_content_002.php` + `content_002.php`. Client-specific blocks may also live in gitignored `examples/`.
 
 ---
 
@@ -350,7 +348,7 @@ Always scope selectors with `#<?php echo esc_attr($section_id); ?>`.
 
 - *Convert static HTML to a Matrix Starter flexi block per `docs/flexi-blocks-basics.md`.*
 - *Use ACF Builder with Content/Design/Layout tabs; `get_sub_field` only; Link fields as arrays.*
-- *Match `examples/acf/flexi/acf_*` and `examples/flexi/*` output structure.*
+- *Match `reference-blocks/flexi/` pairs; copy to production paths in [theme-structure.md](theme-structure.md).*
 - *Section: `relative flex overflow-hidden`, inner `max-w-container`, padding repeater on wrapper div.*
 - *Full WCAG 2.1 AA; include `.btn`, aria-label, and scoped button focus styles.*
 
@@ -360,9 +358,9 @@ Always scope selectors with `#<?php echo esc_attr($section_id); ?>`.
 
 | Block | ACF | Template |
 |-------|-----|----------|
-| Content + media | `examples/acf/flexi/acf_content_002.php` | `examples/flexi/content_002.php` |
-| CTA large button | `examples/acf/flexi/acf_cta_large_button.php` | `examples/flexi/cta_large_button.php` |
-| FAQ accordion | `examples/acf/flexi/acf_faq.php` | `examples/flexi/faq.php` |
-| Contact form | `examples/acf/flexi/acf_contact_form_001.php` | `examples/flexi/contact_form_001.php` |
+| WYSIWYG | `reference-blocks/flexi/acf_wysiwyg.php` | `reference-blocks/flexi/wysiwyg.php` |
+| Content + media | `reference-blocks/flexi/acf_content_002.php` | `reference-blocks/flexi/content_002.php` |
+| CTA row | `reference-blocks/flexi/acf_cta_row.php` | `reference-blocks/flexi/cta_row.php` |
+| FAQ | `reference-blocks/flexi/acf_faq.php` | `reference-blocks/flexi/faq.php` |
 
 Copy patterns from these when building new blocks; ship production templates under `template-parts/flexi/` and register ACF in `acf-fields/`.

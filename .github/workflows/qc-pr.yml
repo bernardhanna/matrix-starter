@@ -59,3 +59,32 @@ jobs:
 
       - name: Build CSS + JS
         run: npm run build --if-present
+
+  theme-structure:
+    name: Theme structure validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: mcp-server/package-lock.json
+
+      - name: Install MCP dependencies
+        working-directory: mcp-server
+        run: npm ci --ignore-scripts
+
+      - name: Build MCP server
+        working-directory: mcp-server
+        run: npm run build
+
+      - name: Validate theme structure
+        working-directory: mcp-server
+        run: npm run validate-structure
+
+      - name: Validate flexi block parity
+        working-directory: mcp-server
+        run: npm run validate-flexi

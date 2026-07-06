@@ -11,6 +11,8 @@ Content seeders are not part of the default theme. Use `npm run flexi:install` f
 | `theme_status` | Repo health: `dist/`, dependencies, flexi parity |
 | `list_flexi_layouts` | Inventory of ACF + template pairs |
 | `validate_flexi_blocks` | Fail if any layout is missing its pair |
+| `validate_theme_structure` | Enforce drop-in folder contract (no extra partials/requires) |
+| `list_theme_inventory` | List flexi layouts, CPTs, theme options, reference blocks |
 | `scaffold_flexi_block` | Generate `acf_{layout}.php` + `{layout}.php` |
 | `get_theme_tokens` | Read `THEME_TOKENS` from `tailwind.config.js` |
 | `update_theme_tokens` | Patch semantic tokens (then run `theme_build`) |
@@ -24,6 +26,8 @@ Content seeders are not part of the default theme. Use `npm run flexi:install` f
 | `theme://architecture` | Folder map and bootstrap flow |
 | `theme://docs/flexi-blocks-basics` | Flexi block conventions |
 | `theme://docs/daily-flow` | Branch/build/PR workflow |
+| `theme://structure` | Drop-in folder contract ([docs/theme-structure.md](../docs/theme-structure.md)) |
+| `theme://reference-blocks/{layout}` | Gold-standard flexi block pair (read-only) |
 
 ## Install
 
@@ -51,3 +55,12 @@ Add to your MCP settings (adjust the theme path):
 ## Phase 2 (planned)
 
 WP-CLI tools for Theme Options reads, plugin checks, and generic page seeding.
+
+
+## CLI (CI)
+
+```bash
+cd mcp-server && npm run build
+npm run validate-structure
+npm run validate-flexi
+```
