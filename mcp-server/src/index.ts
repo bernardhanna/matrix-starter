@@ -20,11 +20,14 @@ import { getThemeStatus, readThemeDoc } from "./lib/status.js";
 import { readThemeTokens, updateThemeTokens } from "./lib/tokens.js";
 import { validateFlexiA11yConventions } from "./lib/a11y-conventions.js";
 import {
+  findLibraryComponents,
   listLibraryComponents,
+  readLibraryCatalog,
   readLibraryComponent,
   readLibraryExample,
   readLibraryReadme,
 } from "./lib/library.js";
+import { copyFromLibrary, getLibraryComponentDetail } from "./lib/library-copy.js";
 import {
   getThemeInventory,
   listReferenceBlockLayouts,
@@ -37,7 +40,7 @@ import { PATHS } from "./config.js";
 const server = new McpServer(
   {
     name: "matrix-starter",
-    version: "0.1.0",
+    version: "0.2.0",
   },
   {
     capabilities: {
@@ -48,6 +51,57 @@ const server = new McpServer(
 );
 
 const TOOLS = [
+  {
+    name: "find_library_component",
+    description:
+      "Search wp-content/matrix-component-library for reference patterns (type, folder, or path like content/031). Use results with get_library_component — do not wholesale-copy when building new flexi blocks.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Search term (e.g. map, hero, footer, content/031)." },
+        type: { type: "string", description: "Optional library category filter (e.g. content, hero)." },
+        limit: { type: "number", description: "Max results. Defaults to 20." },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_library_component",
+    description:
+      "Read a library component (ACF + template) as reference when building new blocks. Returns source code and theme drop-in paths. Prefer this over copy_from_library for new flexi layouts.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        type: { type: "string", description: "Library category (e.g. content, hero, theme-options)." },
+        folder: { type: "string", description: "Variant folder or slug (e.g. 031, footer, faqs)." },
+      },
+      required: ["type", "folder"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "copy_from_library",
+    description:
+      "Import a finished library component into theme drop-in paths (same as WP Admin Matrix Components). For new flexi blocks, use get_library_component as reference and scaffold_flexi_block instead — do not copy wholesale.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        type: { type: "string", description: "Library category." },
+        folder: { type: "string", description: "Variant folder or slug." },
+        dryRun: {
+          type: "boolean",
+          description: "Preview copy plan without writing files. Defaults to false.",
+        },
+        overwrite: {
+          type: "boolean",
+          description: "Replace existing theme files. Defaults to false.",
+        },
+      },
+      required: ["type", "folder"],
+      additionalProperties: false,
+    },
+  },
   {
     name: "theme_status",
     description:
@@ -231,6 +285,12 @@ const RESOURCES = [
     description: "wp-content/matrix-component-library reference (install via matrix-component-importer).",
     mimeType: "text/markdown",
   },
+  {
+    uri: "theme://library/catalog",
+    name: "Component library catalog",
+    description: "CATALOG.md inventory of all library components and theme destinations.",
+    mimeType: "text/markdown",
+  },
 ] as const;
 
 const architectureMarkdown = `# Matrix Starter architecture
@@ -276,6 +336,66 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
+      case "find_library_component": {
+        const input = z
+          .object({
+            query: z.string(),
+            type: z.string().optional(),
+            limit: z.number().optional(),
+          })
+          .parse(args ?? {});
+
+        const matches = await findLibraryComponents(input);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  query: input.query,
+                  count: matches.length,
+                  matches,
+                  hint: "Use get_library_component to read as reference. copy_from_library only for importing finished components (not new flexi blocks).",
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      }
+
+      case "get_library_component": {
+        const input = z
+          .object({
+            type: z.string(),
+            folder: z.string(),
+          })
+          .parse(args ?? {});
+
+        const detail = await getLibraryComponentDetail(input.type, input.folder);
+        return {
+          content: [{ type: "text", text: JSON.stringify(detail, null, 2) }],
+        };
+      }
+
+      case "copy_from_library": {
+        const input = z
+          .object({
+            type: z.string(),
+            folder: z.string(),
+            dryRun: z.boolean().optional(),
+            overwrite: z.boolean().optional(),
+          })
+          .parse(args ?? {});
+
+        const result = await copyFromLibrary(input);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          isError: !result.success,
+        };
+      }
+
       case "theme_status": {
         const status = await getThemeStatus();
         return {
@@ -457,13 +577,6 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 server.server.setRequestHandler(ListResourcesRequestSchema, async () => {
   const referenceLayouts = await listReferenceBlockLayouts();
-  const libraryComponents = await listLibraryComponents();
-  const libraryResources = libraryComponents.map(({ type, folder }) => ({
-    uri: `theme://library/${type}/${folder}`,
-    name: `Library: ${type}/${folder}`,
-    description: `ACF + template from wp-content/matrix-component-library/`,
-    mimeType: "application/json",
-  }));
   const referenceResources = referenceLayouts.map((layout) => ({
     uri: `theme://reference-blocks/${layout}`,
     name: `Reference block: ${layout}`,
@@ -480,7 +593,6 @@ server.server.setRequestHandler(ListResourcesRequestSchema, async () => {
         mimeType,
       })),
       ...referenceResources,
-      ...libraryResources,
     ],
   };
 });
@@ -530,6 +642,17 @@ server.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
             uri,
             mimeType: "text/markdown",
             text: await readLibraryReadme(),
+          },
+        ],
+      };
+
+    case "theme://library/catalog":
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "text/markdown",
+            text: await readLibraryCatalog(),
           },
         ],
       };

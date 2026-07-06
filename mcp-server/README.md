@@ -8,6 +8,9 @@ Content seeders are not part of the default theme. Use `npm run flexi:install` f
 
 | Tool | Purpose |
 |------|---------|
+| `find_library_component` | Search catalog for reference patterns |
+| `get_library_component` | Read library ACF + template as **reference** when building new blocks |
+| `copy_from_library` | Import finished component as-is (footer, CPT, hero) — not for new flexi layouts |
 | `theme_status` | Repo health: `dist/`, dependencies, flexi parity |
 | `list_flexi_layouts` | Inventory of ACF + template pairs |
 | `validate_flexi_blocks` | Fail if any layout is missing its pair |
@@ -31,7 +34,9 @@ Content seeders are not part of the default theme. Use `npm run flexi:install` f
 | `theme://structure` | Drop-in folder contract ([docs/theme-structure.md](../docs/theme-structure.md)) |
 | `theme://reference-blocks/{layout}` | Gold-standard flexi block pair (read-only) |
 | `theme://library` | Component library README |
-| `theme://library/{type}/{folder}` | ACF + template from wp-content/matrix-component-library/ |
+| `theme://library/catalog` | Full CATALOG.md inventory |
+
+Use `find_library_component` + `get_library_component` to **reference** patterns when building. `copy_from_library` is for importing finished components only (same as WP Admin import), not for creating new flexi blocks.
 
 ## Install
 

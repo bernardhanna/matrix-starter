@@ -10,16 +10,19 @@ Follow this workflow when building or modifying theme code. **Do not invent new 
 
 ## New flexi block (strict: two files only)
 
-1. Find the closest layout in [`reference-blocks/flexi/`](../reference-blocks/flexi/), then `wp-content/matrix-component-library/`, or run `scaffold_flexi_block`
-2. Edit **only** these two files:
+**Reference, do not copy wholesale.** The library and `reference-blocks/` are pattern catalogs — read them, then write a **new** layout adapted to the design. Do not `copy_from_library` into a new flexi slug.
+
+1. Find the closest pattern: `find_library_component` or `theme://library/catalog`
+2. **Read** the pattern: `get_library_component` or `theme://reference-blocks/{layout}` — study ACF fields, helpers, a11y markup
+3. Create the **new** block with `scaffold_flexi_block` (new layout slug), then adapt the reference into **only** these two files:
    - `acf-fields/partials/blocks/acf_{layout}.php`
    - `template-parts/flexi/{layout}.php`
-3. Use existing helpers: `matrix_btn_classes()`, `matrix_flexi_padding_classes()`, `matrix_flexi_heading_html()`, `matrix_content_container_classes()`
-4. Inside flexi templates: **`get_sub_field()` only** — never `get_field()`
-5. Run `validate_flexi_a11y_conventions` (static template checks)
-6. Add block row on `/flexi/` review page, then `validate_flexi_a11y` when site is running
-7. Run `validate_flexi_blocks`, `validate_theme_structure`, then `theme_build`
-8. PR: `npm run test:a11y:quick` (full site)
+4. Use existing helpers: `matrix_btn_classes()`, `matrix_flexi_padding_classes()`, `matrix_flexi_heading_html()`, `matrix_content_container_classes()`
+5. Inside flexi templates: **`get_sub_field()` only** — never `get_field()`
+6. Run `validate_flexi_a11y_conventions` (static template checks)
+7. Add block row on `/flexi/` review page, then `validate_flexi_a11y` when site is running
+8. Run `validate_flexi_blocks`, `validate_theme_structure`, then `theme_build`
+9. PR: `npm run test:a11y:quick` (full site)
 
 ## Never do this for a flexi block
 
@@ -43,6 +46,9 @@ Follow this workflow when building or modifying theme code. **Do not invent new 
 
 | Tool | When |
 |------|------|
+| `find_library_component` | Search catalog for a **reference** pattern before building |
+| `get_library_component` | **Read** library ACF + template as reference (primary tool for new blocks) |
+| `copy_from_library` | Import a finished component as-is (footer, CPT, etc.) — **not** for new flexi blocks |
 | `list_theme_inventory` | Discover layouts, CPTs, options tabs |
 | `scaffold_flexi_block` | Start a new block pair |
 | `validate_theme_structure` | Before commit / after changes |
@@ -58,11 +64,13 @@ Install: see `mcp-server/README.md`.
 
 The component library is **not flexi-only**. It includes flexi sections, **hero**, **footer**, **header/nav**, **blog/404 templates**, **CPTs**, **taxonomies**, and more. Use WP Admin → **Matrix Components** to import any type; the importer maps each library folder to the correct theme drop-in path.
 
-**Copy from (in order):**
+**Reference when building (do not wholesale-copy):**
 
-1. [`reference-blocks/flexi/`](../reference-blocks/flexi/) — primary gold standard for **flexi** blocks (always in theme git)
-2. `wp-content/matrix-component-library/{type}/{folder}/` — extended patterns (e.g. `hero/001`, `footer/001`, `custom-post-types/faqs.php`, `content/031` for maps)
-3. `scaffold_flexi_block` — new flexi block when nothing matches
+1. [`reference-blocks/flexi/`](../reference-blocks/flexi/) — primary gold standard for **flexi** patterns (always in theme git)
+2. `get_library_component` / `theme://library/catalog` — extended patterns (maps, forms, listings, etc.)
+3. `scaffold_flexi_block` — empty starting pair when nothing is close enough
+
+Use `copy_from_library` only to drop in a **finished** non-flexi component (e.g. footer template, CPT registration) — same as WP Admin → Matrix Components import. When building a **new** flexi layout, read references and write adapted code under a new slug.
 
 | Need | Library example | Theme destination |
 |------|-----------------|-------------------|
@@ -87,4 +95,4 @@ Full inventory: [CATALOG.md](https://github.com/Matrix-Internet/matrix-component
 
 CI on the component library repo **rejects** exports that fail gold standard. See [GOLD-STANDARD.md](https://github.com/Matrix-Internet/matrix-component-library/blob/main/GOLD-STANDARD.md).
 
-MCP: `theme://library/{type}/{folder}` · `theme://reference-blocks/{layout}`
+MCP: `theme://library/catalog` · `find_library_component` · `get_library_component` (reference) · `theme://reference-blocks/{layout}`

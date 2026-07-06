@@ -1,15 +1,21 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { COMPONENT_LIBRARY_ROOT } from "../config.js";
+import { describeThemeDestinations } from "./component-map.js";
 
 export type LibraryComponentRef = {
   type: string;
   folder: string;
+  themeDestination: string;
 };
 
-const SKIP_TOP_LEVEL = new Set([".git", "scripts", ".github", "README.md"]);
+const SKIP_TOP_LEVEL = new Set([".git", "scripts", ".github", "README.md", "CATALOG.md", "GOLD-STANDARD.md"]);
 
-const FLAT_TYPES = new Set(["custom-post-types", "taxonomies", "theme-options", "gallery"]);
+/** Single PHP per slug at type root. */
+const FLAT_SLUG_TYPES = new Set(["custom-post-types", "taxonomies", "theme-options"]);
+
+/** ACF FieldsBuilder tabs — returned as `acf`, not template. */
+const FIELDS_BUILDER_TYPES = new Set(["theme-options"]);
 
 async function dirEntries(dir: string): Promise<string[]> {
   try {
@@ -36,6 +42,40 @@ export async function componentLibraryExists(): Promise<boolean> {
   }
 }
 
+async function listGalleryRootComponents(typePath: string): Promise<LibraryComponentRef[]> {
+  const components: LibraryComponentRef[] = [];
+  const phpFiles = (await dirEntries(typePath)).filter((f) => f.endsWith(".php"));
+
+  for (const file of phpFiles) {
+    if (file.startsWith("acf_")) {
+      continue;
+    }
+    const match = /^(.+)\.php$/.exec(file);
+    if (!match) {
+      continue;
+    }
+    const slug = match[1];
+    const acfCandidate = path.join(typePath, `acf_${slug}.php`);
+    try {
+      await fs.access(acfCandidate);
+      components.push({
+        type: "gallery",
+        folder: slug,
+        themeDestination: describeThemeDestinations("gallery"),
+      });
+    } catch {
+      /* template without paired acf — still list */
+      components.push({
+        type: "gallery",
+        folder: slug,
+        themeDestination: describeThemeDestinations("gallery"),
+      });
+    }
+  }
+
+  return components;
+}
+
 export async function listLibraryComponents(): Promise<LibraryComponentRef[]> {
   if (!(await componentLibraryExists())) {
     return [];
@@ -60,10 +100,19 @@ export async function listLibraryComponents(): Promise<LibraryComponentRef[]> {
       continue;
     }
 
-    if (FLAT_TYPES.has(type)) {
+    if (type === "gallery") {
+      components.push(...(await listGalleryRootComponents(typePath)));
+      continue;
+    }
+
+    if (FLAT_SLUG_TYPES.has(type)) {
       for (const file of await dirEntries(typePath)) {
         if (file.endsWith(".php")) {
-          components.push({ type, folder: file.replace(/\.php$/, "") });
+          components.push({
+            type,
+            folder: file.replace(/\.php$/, ""),
+            themeDestination: describeThemeDestinations(type),
+          });
         }
       }
       continue;
@@ -77,7 +126,11 @@ export async function listLibraryComponents(): Promise<LibraryComponentRef[]> {
       try {
         const variantStat = await fs.stat(variantPath);
         if (variantStat.isDirectory()) {
-          components.push({ type, folder });
+          components.push({
+            type,
+            folder,
+            themeDestination: describeThemeDestinations(type),
+          });
         }
       } catch {
         /* skip */
@@ -85,13 +138,20 @@ export async function listLibraryComponents(): Promise<LibraryComponentRef[]> {
     }
   }
 
-  return components.sort((a, b) => a.type.localeCompare(b.type) || a.folder.localeCompare(b.folder));
+  return components.sort(
+    (a, b) => a.type.localeCompare(b.type) || a.folder.localeCompare(b.folder),
+  );
 }
 
-export async function readLibraryComponent(
+export type ResolvedComponentFiles = {
+  acfPath: string | null;
+  templatePath: string | null;
+};
+
+export async function resolveComponentFiles(
   type: string,
   folder: string,
-): Promise<{ acf: string | null; template: string | null }> {
+): Promise<ResolvedComponentFiles> {
   const safeType = type.trim();
   const safeFolder = folder.trim();
   if (!/^[a-z0-9-]+$/.test(safeType) || !/^[a-zA-Z0-9_-]+$/.test(safeFolder)) {
@@ -99,32 +159,169 @@ export async function readLibraryComponent(
   }
 
   const base = path.join(COMPONENT_LIBRARY_ROOT, safeType);
-  const variantDir = FLAT_TYPES.has(safeType) ? base : path.join(base, safeFolder);
 
-  let acf: string | null = null;
-  let template: string | null = null;
-
-  if (FLAT_TYPES.has(safeType)) {
-    template = await readIfExists(path.join(base, `${safeFolder}.php`));
-    return { acf: null, template };
+  if (FLAT_SLUG_TYPES.has(safeType)) {
+    const filePath = path.join(base, `${safeFolder}.php`);
+    try {
+      await fs.access(filePath);
+      return { acfPath: null, templatePath: filePath };
+    } catch {
+      return { acfPath: null, templatePath: null };
+    }
   }
 
-  for (const file of await dirEntries(variantDir)) {
+  if (safeType === "gallery") {
+    const variantDir = path.join(base, safeFolder);
+    try {
+      const variantStat = await fs.stat(variantDir);
+      if (variantStat.isDirectory()) {
+        return resolvePhpPairInDir(variantDir);
+      }
+    } catch {
+      /* fall through to root pairing */
+    }
+
+    const templatePath = path.join(base, `${safeFolder}.php`);
+    const acfPath = path.join(base, `acf_${safeFolder}.php`);
+    return {
+      acfPath: (await readIfExists(acfPath)) ? acfPath : null,
+      templatePath: (await readIfExists(templatePath)) ? templatePath : null,
+    };
+  }
+
+  const variantDir = path.join(base, safeFolder);
+  return resolvePhpPairInDir(variantDir);
+}
+
+async function resolvePhpPairInDir(dir: string): Promise<ResolvedComponentFiles> {
+  let acfPath: string | null = null;
+  let templatePath: string | null = null;
+
+  for (const file of await dirEntries(dir)) {
     if (!file.endsWith(".php")) {
       continue;
     }
+    const filePath = path.join(dir, file);
     if (file.startsWith("acf_")) {
-      acf = await readIfExists(path.join(variantDir, file));
-    } else {
-      template = await readIfExists(path.join(variantDir, file));
+      acfPath = filePath;
+    } else if (file === "mobile.php" || !templatePath) {
+      templatePath = filePath;
     }
   }
 
-  if (!acf && !template) {
-    throw new Error(`No library component at ${safeType}/${safeFolder}`);
+  return { acfPath, templatePath };
+}
+
+export async function readLibraryComponent(
+  type: string,
+  folder: string,
+): Promise<{ acf: string | null; template: string | null }> {
+  const files = await resolveComponentFiles(type, folder);
+
+  if (!files.acfPath && !files.templatePath) {
+    throw new Error(`No library component at ${type}/${folder}`);
   }
 
-  return { acf, template };
+  const acfContent = files.acfPath ? await readIfExists(files.acfPath) : null;
+  const templateContent = files.templatePath ? await readIfExists(files.templatePath) : null;
+
+  if (FIELDS_BUILDER_TYPES.has(type)) {
+    return { acf: templateContent, template: null };
+  }
+
+  return { acf: acfContent, template: templateContent };
+}
+
+export async function readLibraryCatalog(): Promise<string> {
+  const catalogPath = path.join(COMPONENT_LIBRARY_ROOT, "CATALOG.md");
+  const catalog = await readIfExists(catalogPath);
+  if (catalog) {
+    return catalog;
+  }
+
+  const components = await listLibraryComponents();
+  const lines = [
+    "# Component catalog",
+    "",
+    `Library path: ${COMPONENT_LIBRARY_ROOT}`,
+    "",
+    "CATALOG.md not found. Run `php scripts/generate-catalog.php --write` in the library repo.",
+    "",
+    `Found ${components.length} component(s) via filesystem scan.`,
+    "",
+  ];
+
+  let currentType = "";
+  for (const { type, folder, themeDestination } of components) {
+    if (type !== currentType) {
+      currentType = type;
+      lines.push(`## ${type}/ → ${themeDestination}`, "");
+    }
+    lines.push(`- ${folder}`);
+  }
+
+  return lines.join("\n");
+}
+
+export type FindLibraryMatch = LibraryComponentRef & {
+  score: number;
+  path: string;
+};
+
+export async function findLibraryComponents(input: {
+  query: string;
+  type?: string;
+  limit?: number;
+}): Promise<FindLibraryMatch[]> {
+  const query = input.query.trim().toLowerCase();
+  if (!query) {
+    throw new Error("query is required.");
+  }
+
+  const limit = input.limit ?? 20;
+  const typeFilter = input.type?.trim().toLowerCase();
+  const components = await listLibraryComponents();
+  const matches: FindLibraryMatch[] = [];
+
+  for (const component of components) {
+    if (typeFilter && component.type !== typeFilter) {
+      continue;
+    }
+
+    const pathKey = `${component.type}/${component.folder}`;
+    const haystack = [
+      component.type,
+      component.folder,
+      pathKey,
+      component.themeDestination,
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    let score = 0;
+    if (pathKey === query) {
+      score = 100;
+    } else if (component.folder.toLowerCase() === query) {
+      score = 90;
+    } else if (component.type.toLowerCase() === query) {
+      score = 80;
+    } else if (pathKey.includes(query)) {
+      score = 70;
+    } else if (haystack.includes(query)) {
+      score = 50;
+    } else {
+      const tokens = query.split(/\s+/).filter(Boolean);
+      if (tokens.every((token) => haystack.includes(token))) {
+        score = 40;
+      }
+    }
+
+    if (score > 0) {
+      matches.push({ ...component, score, path: pathKey });
+    }
+  }
+
+  return matches.sort((a, b) => b.score - a.score || a.path.localeCompare(b.path)).slice(0, limit);
 }
 
 /** @deprecated Use listLibraryComponents — kept for inventory key name compat */
