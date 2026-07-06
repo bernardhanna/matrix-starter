@@ -1,37 +1,46 @@
-# Theme library
+# Component library
 
-Reference material for building flexi blocks and sections. **Not loaded in production** — copy into the canonical drop-in paths documented in [docs/theme-structure.md](../docs/theme-structure.md).
+The full Matrix component library is **not stored in the theme repo**. It is installed locally at:
 
-## Contents
-
-| Path | Purpose |
-|------|---------|
-| `examples/acf/flexi/` | ACF Builder field definitions (`acf_{layout}.php`) |
-| `examples/flexi/` | Frontend templates (`{layout}.php`) |
-| `examples/acf/hero/`, `examples/hero/` | Hero block pairs |
-| `examples/cpts/` | CPT registration snippets |
-| `matrix-starter-components/` | HTML/component reference ([bernardhanna/matrix-starter-components](https://github.com/bernardhanna/matrix-starter-components)) |
-
-## Sync components repo
-
-```bash
-npm run library:sync
-# or
-bash scripts/library-sync.sh
+```
+wp-content/matrix-component-library/
 ```
 
-`library/matrix-starter-components/` is gitignored — clone it locally after checkout.
+## Install
 
-## Copy to production
+- Activate **matrix-component-importer** (clones on activation), or
+- `npm run library:sync` from the theme root
 
-| From | To |
-|------|-----|
-| `library/examples/acf/flexi/acf_{layout}.php` | `acf-fields/partials/blocks/acf_{layout}.php` |
-| `library/examples/flexi/{layout}.php` | `template-parts/flexi/{layout}.php` |
+Source repo: [Matrix-Internet/matrix-component-library](https://github.com/Matrix-Internet/matrix-component-library)
 
-Also see committed gold standards in [`reference-blocks/flexi/`](../reference-blocks/flexi/).
+## Use
 
-## MCP
+- **WP Admin → Matrix Components** — import sections into production theme paths (flexi, hero, footer, header, CPTs, and more — see component types below)
+- **MCP** — `theme://library`, `theme://library/{type}/{folder}`
+- **Agents** — read `wp-content/matrix-component-library/` for coding patterns
 
-- `theme://library` — this README
-- `theme://library/examples/{layout}` — read example pair before building
+## Component types (not just flexi)
+
+The library and importer cover many drop-in targets. Examples:
+
+| Library folder | Imports to (active theme) |
+|----------------|---------------------------|
+| `content/`, `cta/`, `faq/`, `contact/`, … | `acf-fields/partials/blocks/` + `template-parts/flexi/` |
+| `hero/`, `single-hero/` | `acf-fields/partials/hero/` + `template-parts/hero/` or `template-parts/single/` |
+| `footer/`, `newsletter/`, `copyright/`, `back-to-top/` | `template-parts/footer/` |
+| `navigation-desktop/`, `navigation-mobile/`, `breadcrumbs/`, `topbar/` | `template-parts/header/` (mobile → `navbar/mobile.php`) |
+| `blog/`, `404/`, `sitemap/` | `template-parts/blog/`, `template-parts/404/`, `templates/` |
+| `custom-post-types/` | `inc/cpts/post-types/` (copy manually or import via admin) |
+| `taxonomies/` | `inc/cpts/taxonomies/` |
+
+Theme option tabs (`inc/theme-options/`) are not in the library yet — add those to the theme directly per [theme-structure.md](../docs/theme-structure.md).
+
+**Export from theme** (`npm run library:export`) currently targets **flexi blocks** only. Hero, footer, CPTs, etc. are added via WP Admin import or `export-section.php` with `--type` / `--variant`.
+
+From theme root (after block is on `/flexi/`):
+
+```bash
+npm run library:export -- --layout=content_029
+```
+
+See [GOLD-STANDARD.md](https://github.com/Matrix-Internet/matrix-component-library/blob/main/GOLD-STANDARD.md) in the component library repo.

@@ -99,7 +99,7 @@ MATRIX_GITHUB_FALLBACK_ORG=bernardhanna   # optional; used when a repo is not on
 |--------|------------|---------|
 | `advanced-custom-fields-pro` | [Matrix-Internet/acf](https://github.com/Matrix-Internet/acf) | ACF Pro — required by theme and content tools |
 | `updraftplus` | [updraft-plus](https://github.com/Matrix-Internet/updraft-plus) | UpdraftPlus Premium — backups (license in WP Admin after install) |
-| `matrix-component-importer` | `bernardhanna/matrix-component-importer` only (no Matrix-Internet repo yet) | Import flexi blocks / components into the theme |
+| `matrix-component-importer` | [matrix-component-importer](https://github.com/Matrix-Internet/matrix-component-importer) | Installs `wp-content/matrix-component-library/` locally; import sections into theme |
 | `matrix-sitemap-generator` | [matrix-sitemap-generator-plugin](https://github.com/Matrix-Internet/matrix-sitemap-generator-plugin) (fallback: `bernardhanna/matrix-sitemap-generator`) | Slickplan import → pages, CPTs, and main menu |
 | `matrix-content-gathering` | [matrix-content-gathering-plugin](https://github.com/Matrix-Internet/matrix-content-gathering-plugin) (fallback: `bernardhanna/matrix-content-gathering`) | Client content editing form, CSV import/export for ACF flexi |
 | `matrix-qc-snags` | [matrix-qc-snags-plugin](https://github.com/Matrix-Internet/matrix-qc-snags-plugin) (fallback: `bernardhanna/matrix-qc-snags`) | In-site QC snagging overlay + Cursor agent PR bridge |

@@ -41,11 +41,8 @@ playwright-report/
 
 # Examples (reference templates, not shipped with theme)
 examples/
-# Theme library PHP examples are committed reference material
-!library/examples/
-!library/examples/**
 
-# Superpowers: ignore generated files; keep example templates
+# Component library lives at wp-content/matrix-component-library/ (see library/README.md)
 docs/superpowers/*
 !docs/superpowers/plans/
 !docs/superpowers/specs/
@@ -54,6 +51,5 @@ docs/superpowers/plans/*
 docs/superpowers/specs/*
 !docs/superpowers/specs/example.md
 
-# Optional (depending on preference)
-# Cloned component reference (npm run library:sync)
+# Superpowers: ignore generated files; keep example templates
 library/matrix-starter-components/

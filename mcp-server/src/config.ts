@@ -6,6 +6,14 @@ const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 /** Absolute path to the Matrix Starter theme root (parent of mcp-server/). */
 export const THEME_ROOT = path.resolve(moduleDir, "../..");
 
+/** Absolute path to wp-content/ (parent of themes/). */
+export const WP_CONTENT_ROOT = path.resolve(THEME_ROOT, "../..");
+
+/** Local component library installed by matrix-component-importer. */
+export const COMPONENT_LIBRARY_ROOT = process.env.MATRIX_LIBRARY_DIR
+  ? path.resolve(process.env.MATRIX_LIBRARY_DIR)
+  : path.join(WP_CONTENT_ROOT, "matrix-component-library");
+
 export const PATHS = {
   acfBlocks: path.join(THEME_ROOT, "acf-fields/partials/blocks"),
   flexiTemplates: path.join(THEME_ROOT, "template-parts/flexi"),
@@ -18,10 +26,7 @@ export const PATHS = {
   heroTemplates: path.join(THEME_ROOT, "template-parts/hero"),
   referenceBlocksFlexi: path.join(THEME_ROOT, "reference-blocks/flexi"),
   themeStructureDoc: path.join(THEME_ROOT, "docs/theme-structure.md"),
-  libraryReadme: path.join(THEME_ROOT, "library/README.md"),
-  libraryExamplesAcfFlexi: path.join(THEME_ROOT, "library/examples/acf/flexi"),
-  libraryExamplesFlexi: path.join(THEME_ROOT, "library/examples/flexi"),
-  libraryComponents: path.join(THEME_ROOT, "library/matrix-starter-components"),
+  componentLibrary: COMPONENT_LIBRARY_ROOT,
 } as const;
 
 export function layoutFromAcfFilename(filename: string): string | null {

@@ -54,7 +54,8 @@
     "test:visual": "playwright test tests/visual",
     "ci": "npm run test && npm run test:a11y && npm run test:perf && npm run test:links",
     "test:a11y:flexi": "node scripts/run-a11y-flexi.js",
-    "library:sync": "bash scripts/library-sync.sh"
+    "library:sync": "bash scripts/library-sync.sh",
+    "library:export": "bash scripts/library-export.sh"
   },
   "keywords": [],
   "author": "",

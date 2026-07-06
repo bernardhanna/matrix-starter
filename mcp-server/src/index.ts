@@ -20,8 +20,10 @@ import { getThemeStatus, readThemeDoc } from "./lib/status.js";
 import { readThemeTokens, updateThemeTokens } from "./lib/tokens.js";
 import { validateFlexiA11yConventions } from "./lib/a11y-conventions.js";
 import {
-  listLibraryExampleLayouts,
+  listLibraryComponents,
+  readLibraryComponent,
   readLibraryExample,
+  readLibraryReadme,
 } from "./lib/library.js";
 import {
   getThemeInventory,
@@ -226,7 +228,7 @@ const RESOURCES = [
   {
     uri: "theme://library",
     name: "Theme library",
-    description: "library/examples and matrix-starter-components reference.",
+    description: "wp-content/matrix-component-library reference (install via matrix-component-importer).",
     mimeType: "text/markdown",
   },
 ] as const;
@@ -427,12 +429,12 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "list_theme_inventory": {
         const inventory = await getThemeInventory();
         const referenceBlocks = await listReferenceBlockLayouts();
-        const libraryExamples = await listLibraryExampleLayouts();
+        const libraryComponents = await listLibraryComponents();
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ ...inventory, referenceBlocks, libraryExamples }, null, 2),
+              text: JSON.stringify({ ...inventory, referenceBlocks, libraryComponents }, null, 2),
             },
           ],
         };
@@ -455,11 +457,11 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 server.server.setRequestHandler(ListResourcesRequestSchema, async () => {
   const referenceLayouts = await listReferenceBlockLayouts();
-  const libraryLayouts = await listLibraryExampleLayouts();
-  const libraryResources = libraryLayouts.map((layout) => ({
-    uri: `theme://library/examples/${layout}`,
-    name: `Library example: ${layout}`,
-    description: `ACF + template pair from library/examples/`,
+  const libraryComponents = await listLibraryComponents();
+  const libraryResources = libraryComponents.map(({ type, folder }) => ({
+    uri: `theme://library/${type}/${folder}`,
+    name: `Library: ${type}/${folder}`,
+    description: `ACF + template from wp-content/matrix-component-library/`,
     mimeType: "application/json",
   }));
   const referenceResources = referenceLayouts.map((layout) => ({
@@ -521,6 +523,17 @@ server.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         ],
       };
 
+    case "theme://library":
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "text/markdown",
+            text: await readLibraryReadme(),
+          },
+        ],
+      };
+
     case "theme://docs/daily-flow":
       return {
         contents: [
@@ -533,6 +546,34 @@ server.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       };
 
     default: {
+      const libMatch = /^theme:\/\/library\/([a-z0-9-]+)\/([a-zA-Z0-9_-]+)$/.exec(uri);
+      if (libMatch) {
+        const block = await readLibraryComponent(libMatch[1], libMatch[2]);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(block, null, 2),
+            },
+          ],
+        };
+      }
+
+      const legacyLibMatch = /^theme:\/\/library\/examples\/(.+)$/.exec(uri);
+      if (legacyLibMatch) {
+        const block = await readLibraryExample(legacyLibMatch[1]);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(block, null, 2),
+            },
+          ],
+        };
+      }
+
       const refMatch = /^theme:\/\/reference-blocks\/([a-z][a-z0-9_]*)$/.exec(uri);
       if (refMatch) {
         const block = await readReferenceBlock(refMatch[1]);

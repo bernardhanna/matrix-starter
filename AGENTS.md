@@ -10,7 +10,7 @@ Follow this workflow when building or modifying theme code. **Do not invent new 
 
 ## New flexi block (strict: two files only)
 
-1. Find the closest layout in `library/examples/`, `reference-blocks/flexi/`, or run `scaffold_flexi_block` with `{ layout, label }`
+1. Find the closest layout in [`reference-blocks/flexi/`](../reference-blocks/flexi/), then `wp-content/matrix-component-library/`, or run `scaffold_flexi_block`
 2. Edit **only** these two files:
    - `acf-fields/partials/blocks/acf_{layout}.php`
    - `template-parts/flexi/{layout}.php`
@@ -54,8 +54,31 @@ Follow this workflow when building or modifying theme code. **Do not invent new 
 
 Install: see `mcp-server/README.md`.
 
-## Library
+## Library (AI + developers)
 
-- `library/examples/` — PHP flexi pairs (committed)
-- `library/matrix-starter-components/` — HTML reference (`npm run library:sync`)
-- MCP: `theme://library/examples/{layout}`
+The component library is **not flexi-only**. It includes flexi sections, **hero**, **footer**, **header/nav**, **blog/404 templates**, **CPTs**, **taxonomies**, and more. Use WP Admin → **Matrix Components** to import any type; the importer maps each library folder to the correct theme drop-in path.
+
+**Copy from (in order):**
+
+1. [`reference-blocks/flexi/`](../reference-blocks/flexi/) — primary gold standard for **flexi** blocks (always in theme git)
+2. `wp-content/matrix-component-library/{type}/{folder}/` — extended patterns (e.g. `hero/001`, `footer/001`, `custom-post-types/faqs.php`, `content/031` for maps)
+3. `scaffold_flexi_block` — new flexi block when nothing matches
+
+| Need | Library example | Theme destination |
+|------|-----------------|-------------------|
+| Flexi section | `content/002/` | `acf-fields/partials/blocks/` + `template-parts/flexi/` |
+| Hero | `hero/001/` | `acf-fields/partials/hero/` + `template-parts/hero/` |
+| Footer | `footer/001/` | `template-parts/footer/` |
+| CPT | `custom-post-types/faqs.php` | `inc/cpts/post-types/` |
+| Taxonomy | `taxonomies/faq-categories.php` | `inc/cpts/taxonomies/` |
+| Theme option tab | — | `inc/theme-options/{name}.php` (theme only for now) |
+
+**Export flexi blocks to the library** (after a11y pass + on `/flexi/`):
+
+```bash
+npm run library:export -- --layout=content_029
+```
+
+CI on the component library repo **rejects** exports that fail gold standard. See [GOLD-STANDARD.md](https://github.com/Matrix-Internet/matrix-component-library/blob/main/GOLD-STANDARD.md).
+
+MCP: `theme://library/{type}/{folder}` · `theme://reference-blocks/{layout}`
