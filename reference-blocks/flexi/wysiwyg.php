@@ -1,4 +1,5 @@
 <?php
+$section_id = 'wysiwyg-' . wp_generate_uuid4();
 $text_content = get_sub_field('text_content');
 
 $padding_classes = [];
@@ -14,8 +15,14 @@ if (have_rows('padding_settings')) {
 }
 ?>
 
-<section class="flex overflow-hidden relative bg-white font-montserrat">
-  <div class="<?php echo esc_attr(matrix_content_container_classes()); ?>">
+<section
+  id="<?php echo esc_attr($section_id); ?>"
+  class="relative flex overflow-hidden bg-white font-montserrat"
+  role="region"
+  aria-labelledby="<?php echo esc_attr($section_id); ?>-heading"
+>
+  <div class="<?php echo esc_attr(matrix_content_container_classes()); ?> <?php echo esc_attr(implode(' ', $padding_classes)); ?>">
+    <h2 id="<?php echo esc_attr($section_id); ?>-heading" class="sr-only"><?php esc_html_e('Content', 'matrix-starter'); ?></h2>
     <div class="theme-prose wp_editor">
       <div class="entry-content">
         <?php if ($text_content) : ?>
@@ -25,4 +32,3 @@ if (have_rows('padding_settings')) {
     </div>
   </div>
 </section>
-

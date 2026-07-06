@@ -41,6 +41,9 @@ playwright-report/
 
 # Examples (reference templates, not shipped with theme)
 examples/
+# Theme library PHP examples are committed reference material
+!library/examples/
+!library/examples/**
 
 # Superpowers: ignore generated files; keep example templates
 docs/superpowers/*
@@ -52,3 +55,5 @@ docs/superpowers/specs/*
 !docs/superpowers/specs/example.md
 
 # Optional (depending on preference)
+# Cloned component reference (npm run library:sync)
+library/matrix-starter-components/

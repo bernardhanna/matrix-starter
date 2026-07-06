@@ -15,9 +15,14 @@ import {
   scaffoldFlexiBlock,
   validateFlexiBlocks,
 } from "./lib/flexi.js";
-import { formatCommandResult, runNpmScript } from "./lib/exec.js";
+import { formatCommandResult, runCommand, runNpmScript } from "./lib/exec.js";
 import { getThemeStatus, readThemeDoc } from "./lib/status.js";
 import { readThemeTokens, updateThemeTokens } from "./lib/tokens.js";
+import { validateFlexiA11yConventions } from "./lib/a11y-conventions.js";
+import {
+  listLibraryExampleLayouts,
+  readLibraryExample,
+} from "./lib/library.js";
 import {
   getThemeInventory,
   listReferenceBlockLayouts,
@@ -108,6 +113,31 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
+    name: "validate_flexi_a11y_conventions",
+    description:
+      "Static WCAG/convention checks on flexi PHP templates (aria, escaping, CTA focus) before finalize.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        layout: { type: "string", description: "Optional layout slug; omit to scan all flexi templates." },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_flexi_a11y",
+    description:
+      "Run axe accessibility scan on /flexi/ review page (requires BASE_URL in .env and block on review page).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        layout: { type: "string", description: "Optional layout slug to scope the scan." },
+        baseUrl: { type: "string", description: "Optional site URL override." },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_theme_tokens",
     description: "Read semantic THEME_TOKENS from tailwind.config.js.",
     inputSchema: {
@@ -159,7 +189,7 @@ const TOOLS = [
       properties: {
         suite: {
           type: "string",
-          enum: ["php", "e2e", "a11y", "links", "ci"],
+          enum: ["php", "e2e", "a11y", "a11y:flexi", "links", "ci"],
           description: "Which npm test script to run. Defaults to php.",
         },
       },
@@ -191,6 +221,12 @@ const RESOURCES = [
     uri: "theme://structure",
     name: "Theme drop-in structure",
     description: "Canonical folder contract for flexi blocks and autoloaded paths.",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "theme://library",
+    name: "Theme library",
+    description: "library/examples and matrix-starter-components reference.",
     mimeType: "text/markdown",
   },
 ] as const;
@@ -329,7 +365,7 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "theme_test": {
         const input = z
           .object({
-            suite: z.enum(["php", "e2e", "a11y", "links", "ci"]).optional(),
+            suite: z.enum(["php", "e2e", "a11y", "a11y:flexi", "links", "ci"]).optional(),
           })
           .parse(args ?? {});
 
@@ -338,6 +374,7 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
           php: "test:php",
           e2e: "test:e2e",
           a11y: "test:a11y",
+          "a11y:flexi": "test:a11y:flexi",
           links: "test:links",
           ci: "ci",
         } as const;
@@ -361,14 +398,41 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+
+      case "validate_flexi_a11y_conventions": {
+        const input = z.object({ layout: z.string().optional() }).parse(args ?? {});
+        const result = await validateFlexiA11yConventions(
+          input.layout ? { layout: input.layout } : undefined,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          isError: !result.valid,
+        };
+      }
+
+      case "validate_flexi_a11y": {
+        const input = z
+          .object({ layout: z.string().optional(), baseUrl: z.string().optional() })
+          .parse(args ?? {});
+        const scriptArgs = ["scripts/run-a11y-flexi.js"];
+        if (input.baseUrl) scriptArgs.push(input.baseUrl);
+        if (input.layout) scriptArgs.push(`--layout=${input.layout}`);
+        const result = await runCommand("node", scriptArgs, { timeoutMs: 10 * 60 * 1000 });
+        return {
+          content: [{ type: "text", text: formatCommandResult(result) }],
+          isError: result.exitCode !== 0,
+        };
+      }
+
       case "list_theme_inventory": {
         const inventory = await getThemeInventory();
         const referenceBlocks = await listReferenceBlockLayouts();
+        const libraryExamples = await listLibraryExampleLayouts();
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ ...inventory, referenceBlocks }, null, 2),
+              text: JSON.stringify({ ...inventory, referenceBlocks, libraryExamples }, null, 2),
             },
           ],
         };
@@ -391,6 +455,13 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 server.server.setRequestHandler(ListResourcesRequestSchema, async () => {
   const referenceLayouts = await listReferenceBlockLayouts();
+  const libraryLayouts = await listLibraryExampleLayouts();
+  const libraryResources = libraryLayouts.map((layout) => ({
+    uri: `theme://library/examples/${layout}`,
+    name: `Library example: ${layout}`,
+    description: `ACF + template pair from library/examples/`,
+    mimeType: "application/json",
+  }));
   const referenceResources = referenceLayouts.map((layout) => ({
     uri: `theme://reference-blocks/${layout}`,
     name: `Reference block: ${layout}`,
@@ -407,6 +478,7 @@ server.server.setRequestHandler(ListResourcesRequestSchema, async () => {
         mimeType,
       })),
       ...referenceResources,
+      ...libraryResources,
     ],
   };
 });

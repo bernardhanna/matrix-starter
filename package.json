@@ -52,7 +52,9 @@
     "test:perf": "lhci autorun --preset=desktop --budget-path=.lighthouserc.js --cwd=tests",
     "perf:open": "npm run test:perf && open-cli lhci-report/index.html",
     "test:visual": "playwright test tests/visual",
-    "ci": "npm run test && npm run test:a11y && npm run test:perf && npm run test:links"
+    "ci": "npm run test && npm run test:a11y && npm run test:perf && npm run test:links",
+    "test:a11y:flexi": "node scripts/run-a11y-flexi.js",
+    "library:sync": "bash scripts/library-sync.sh"
   },
   "keywords": [],
   "author": "",

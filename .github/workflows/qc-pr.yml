@@ -88,3 +88,7 @@ jobs:
       - name: Validate flexi block parity
         working-directory: mcp-server
         run: npm run validate-flexi
+
+      - name: Validate flexi a11y conventions
+        working-directory: mcp-server
+        run: npm run validate-a11y-conventions
