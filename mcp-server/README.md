@@ -30,8 +30,8 @@ Content seeders are not part of the default theme. Use `npm run flexi:install` f
 | `theme://docs/daily-flow` | Branch/build/PR workflow |
 | `theme://structure` | Drop-in folder contract ([docs/theme-structure.md](../docs/theme-structure.md)) |
 | `theme://reference-blocks/{layout}` | Gold-standard flexi block pair (read-only) |
-| `theme://library` | Library folder README |
-| `theme://library/examples/{layout}` | Full example pair from library/examples/ |
+| `theme://library` | Component library README |
+| `theme://library/{type}/{folder}` | ACF + template from wp-content/matrix-component-library/ |
 
 ## Install
 

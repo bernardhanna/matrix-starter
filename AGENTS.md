@@ -10,7 +10,7 @@ Follow this workflow when building or modifying theme code. **Do not invent new 
 
 ## New flexi block (strict: two files only)
 
-1. Find the closest layout in `library/examples/`, `reference-blocks/flexi/`, or run `scaffold_flexi_block` with `{ layout, label }`
+1. Find the closest layout in `wp-content/matrix-component-library/`, `reference-blocks/flexi/`, or run `scaffold_flexi_block` with `{ layout, label }`
 2. Edit **only** these two files:
    - `acf-fields/partials/blocks/acf_{layout}.php`
    - `template-parts/flexi/{layout}.php`
@@ -56,6 +56,6 @@ Install: see `mcp-server/README.md`.
 
 ## Library
 
-- `library/examples/` — PHP flexi pairs (committed)
-- `library/matrix-starter-components/` — HTML reference (`npm run library:sync`)
-- MCP: `theme://library/examples/{layout}`
+- `wp-content/matrix-component-library/` — full catalog (install via matrix-component-importer or `npm run library:sync`)
+- [`reference-blocks/flexi/`](../reference-blocks/flexi/) — small gold-standard subset in theme repo
+- MCP: `theme://library/{type}/{folder}`

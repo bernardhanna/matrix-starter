@@ -23,7 +23,7 @@ Each flexi block is **exactly two drop-in files**. Do not create loaders, partia
 
 **Do not create additional files** for a flexi block (no `inc/` partials, no per-block requires in `functions.php`, no `template-parts/blocks/`).
 
-Reference implementations: [`library/examples/`](../library/examples/) (primary), [`reference-blocks/flexi/`](../reference-blocks/flexi/) (gold subset), `library/matrix-starter-components/` (HTML via `npm run library:sync`) — e.g. `acf_content_002.php` + `content_002.php`. Client-specific blocks may also live in gitignored `examples/`.
+Reference implementations: `wp-content/matrix-component-library/` (install via matrix-component-importer or `npm run library:sync`), [`reference-blocks/flexi/`](../reference-blocks/flexi/) (gold subset in theme repo) — e.g. `content/002/acf_content_002.php` + `content_002.php`. Client-specific blocks may live in gitignored theme-root `examples/`.
 
 ---
 

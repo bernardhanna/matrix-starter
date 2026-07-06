@@ -1,37 +1,24 @@
-# Theme library
+# Component library
 
-Reference material for building flexi blocks and sections. **Not loaded in production** — copy into the canonical drop-in paths documented in [docs/theme-structure.md](../docs/theme-structure.md).
+The full Matrix component library is **not stored in the theme repo**. It is installed locally at:
 
-## Contents
-
-| Path | Purpose |
-|------|---------|
-| `examples/acf/flexi/` | ACF Builder field definitions (`acf_{layout}.php`) |
-| `examples/flexi/` | Frontend templates (`{layout}.php`) |
-| `examples/acf/hero/`, `examples/hero/` | Hero block pairs |
-| `examples/cpts/` | CPT registration snippets |
-| `matrix-starter-components/` | HTML/component reference ([bernardhanna/matrix-starter-components](https://github.com/bernardhanna/matrix-starter-components)) |
-
-## Sync components repo
-
-```bash
-npm run library:sync
-# or
-bash scripts/library-sync.sh
+```
+wp-content/matrix-component-library/
 ```
 
-`library/matrix-starter-components/` is gitignored — clone it locally after checkout.
+## Install
 
-## Copy to production
+- Activate **matrix-component-importer** (clones on activation), or
+- `npm run library:sync` from the theme root
 
-| From | To |
-|------|-----|
-| `library/examples/acf/flexi/acf_{layout}.php` | `acf-fields/partials/blocks/acf_{layout}.php` |
-| `library/examples/flexi/{layout}.php` | `template-parts/flexi/{layout}.php` |
+Source repo: [Matrix-Internet/matrix-component-library](https://github.com/Matrix-Internet/matrix-component-library)
 
-Also see committed gold standards in [`reference-blocks/flexi/`](../reference-blocks/flexi/).
+## Use
 
-## MCP
+- **WP Admin → Matrix Components** — import sections into production theme paths
+- **MCP** — `theme://library`, `theme://library/{type}/{folder}`
+- **Agents** — read `wp-content/matrix-component-library/` for coding patterns
 
-- `theme://library` — this README
-- `theme://library/examples/{layout}` — read example pair before building
+## Add new sections
+
+Contribute back via `scripts/add-section.php` in the component library repo.
