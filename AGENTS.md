@@ -71,13 +71,19 @@ The component library is **not flexi-only**. It includes flexi sections, **hero*
 | Footer | `footer/001/` | `template-parts/footer/` |
 | CPT | `custom-post-types/faqs.php` | `inc/cpts/post-types/` |
 | Taxonomy | `taxonomies/faq-categories.php` | `inc/cpts/taxonomies/` |
-| Theme option tab | — | `inc/theme-options/{name}.php` (theme only for now) |
+| Theme option tab | `theme-options/{slug}.php` in library → `inc/theme-options/{slug}.php` |
 
-**Export flexi blocks to the library** (after a11y pass + on `/flexi/`):
+**Export to the library** (after validation; flexi also needs `/flexi/` for screenshot):
 
 ```bash
-npm run library:export -- --layout=content_029
+npm run library:export -- --kind=flexi --layout=content_029
+npm run library:export -- --kind=hero --slug=hero_001
+npm run library:export -- --kind=theme-option --slug=footer
+npm run library:export -- --kind=cpt --slug=faqs
+npm run library:export -- --kind=taxonomy --slug=faq-categories
 ```
+
+Full inventory: [CATALOG.md](https://github.com/Matrix-Internet/matrix-component-library/blob/main/CATALOG.md)
 
 CI on the component library repo **rejects** exports that fail gold standard. See [GOLD-STANDARD.md](https://github.com/Matrix-Internet/matrix-component-library/blob/main/GOLD-STANDARD.md).
 

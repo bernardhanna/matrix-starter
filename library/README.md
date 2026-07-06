@@ -35,7 +35,17 @@ The library and importer cover many drop-in targets. Examples:
 
 Theme option tabs (`inc/theme-options/`) are not in the library yet — add those to the theme directly per [theme-structure.md](../docs/theme-structure.md).
 
-**Export from theme** (`npm run library:export`) currently targets **flexi blocks** only. Hero, footer, CPTs, etc. are added via WP Admin import or `export-section.php` with `--type` / `--variant`.
+**Export from theme** — use `npm run library:export` with `--kind`:
+
+| Kind | Example |
+|------|---------|
+| `flexi` | `--kind=flexi --layout=content_029` |
+| `hero` | `--kind=hero --slug=hero_001` |
+| `theme-option` | `--kind=theme-option --slug=footer` |
+| `cpt` | `--kind=cpt --slug=faqs` |
+| `taxonomy` | `--kind=taxonomy --slug=faq-categories` |
+
+Full inventory: [CATALOG.md](https://github.com/Matrix-Internet/matrix-component-library/blob/main/CATALOG.md)
 
 From theme root (after block is on `/flexi/`):
 

@@ -9,7 +9,7 @@ export type LibraryComponentRef = {
 
 const SKIP_TOP_LEVEL = new Set([".git", "scripts", ".github", "README.md"]);
 
-const FLAT_TYPES = new Set(["custom-post-types", "taxonomies", "gallery"]);
+const FLAT_TYPES = new Set(["custom-post-types", "taxonomies", "theme-options", "gallery"]);
 
 async function dirEntries(dir: string): Promise<string[]> {
   try {
