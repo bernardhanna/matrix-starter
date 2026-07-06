@@ -10,19 +10,16 @@ Follow this workflow when building or modifying theme code. **Do not invent new 
 
 ## New flexi block (strict: two files only)
 
-**Reference, do not copy wholesale.** The library and `reference-blocks/` are pattern catalogs — read them, then write a **new** layout adapted to the design. Do not `copy_from_library` into a new flexi slug.
+**Reference, do not copy wholesale.** Read patterns from the catalog, scaffold a **new** slug, then adapt.
 
-1. Find the closest pattern: `find_library_component` or `theme://library/catalog`
-2. **Read** the pattern: `get_library_component` or `theme://reference-blocks/{layout}` — study ACF fields, helpers, a11y markup
-3. Create the **new** block with `scaffold_flexi_block` (new layout slug), then adapt the reference into **only** these two files:
+1. `find_library_component` → `get_library_component` (or `theme://reference-blocks/{layout}`)
+2. `scaffold_flexi_block` with new `layout` and optional `source` (e.g. `library:content/031`, `reference-blocks:content_002`)
+3. Adapt fields and markup for the design — edit **only**:
    - `acf-fields/partials/blocks/acf_{layout}.php`
    - `template-parts/flexi/{layout}.php`
-4. Use existing helpers: `matrix_btn_classes()`, `matrix_flexi_padding_classes()`, `matrix_flexi_heading_html()`, `matrix_content_container_classes()`
-5. Inside flexi templates: **`get_sub_field()` only** — never `get_field()`
-6. Run `validate_flexi_a11y_conventions` (static template checks)
-7. Add block row on `/flexi/` review page, then `validate_flexi_a11y` when site is running
-8. Run `validate_flexi_blocks`, `validate_theme_structure`, then `theme_build`
-9. PR: `npm run test:a11y:quick` (full site)
+4. `preflight_flexi_block` with `{ "layout": "{layout}" }`
+5. `seed_flexi_review_block` → `validate_flexi_a11y` when site is running
+6. `theme_build` → PR: `npm run test:a11y:quick`
 
 ## Never do this for a flexi block
 
@@ -46,11 +43,15 @@ Follow this workflow when building or modifying theme code. **Do not invent new 
 
 | Tool | When |
 |------|------|
+| `preflight_flexi_block` | One-shot structure + flexi + a11y conventions |
+| `seed_flexi_review_block` | WP-CLI: add block to `/flexi/` page (needs `WP_PATH`) |
+| `library_sync` | Pull component library repo |
+| `library_export` | Export validated component to library |
 | `find_library_component` | Search catalog for a **reference** pattern before building |
 | `get_library_component` | **Read** library ACF + template as reference (primary tool for new blocks) |
 | `copy_from_library` | Import a finished component as-is (footer, CPT, etc.) — **not** for new flexi blocks |
 | `list_theme_inventory` | Discover layouts, CPTs, options tabs |
-| `scaffold_flexi_block` | Start a new block pair |
+| `scaffold_flexi_block` | New flexi pair; optional `source` from library/reference-blocks |
 | `validate_theme_structure` | Before commit / after changes |
 | `validate_flexi_a11y_conventions` | Static a11y/convention checks on flexi template |
 | `validate_flexi_a11y` | Axe scan on `/flexi/` (needs BASE_URL) |

@@ -28,6 +28,9 @@ import {
   readLibraryReadme,
 } from "./lib/library.js";
 import { copyFromLibrary, getLibraryComponentDetail } from "./lib/library-copy.js";
+import { runLibraryExport, runLibrarySync } from "./lib/library-scripts.js";
+import { preflightFlexiBlock } from "./lib/preflight.js";
+import { formatWpCliResult, seedFlexiReviewBlock } from "./lib/wp-cli.js";
 import {
   getThemeInventory,
   listReferenceBlockLayouts,
@@ -40,7 +43,7 @@ import { PATHS } from "./config.js";
 const server = new McpServer(
   {
     name: "matrix-starter",
-    version: "0.2.0",
+    version: "0.3.0",
   },
   {
     capabilities: {
@@ -103,6 +106,59 @@ const TOOLS = [
     },
   },
   {
+    name: "preflight_flexi_block",
+    description:
+      "Run validate_theme_structure + validate_flexi_blocks + validate_flexi_a11y_conventions in one call. Optional layout scopes flexi/a11y checks.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        layout: { type: "string", description: "Optional flexi layout slug to scope checks." },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "seed_flexi_review_block",
+    description:
+      "WP-CLI: add a flexi layout row to the /flexi/ review page for runtime axe scans. Requires WP_PATH in .env.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        layout: { type: "string", description: "Flexi layout slug (must exist as ACF + template pair)." },
+        createPage: {
+          type: "boolean",
+          description: "Create published page with slug flexi if missing. Defaults to true.",
+        },
+      },
+      required: ["layout"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "library_sync",
+    description: "Clone or pull wp-content/matrix-component-library (npm run library:sync).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "library_export",
+    description:
+      "Export a validated theme component to the component library repo (npm run library:export).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        kind: {
+          type: "string",
+          enum: ["flexi", "hero", "footer", "header", "blog", "cpt", "taxonomy", "theme-option"],
+        },
+        slug: { type: "string", description: "Layout slug or component name." },
+        variant: { type: "string", description: "Optional library variant folder." },
+        skipScreenshot: { type: "boolean", description: "Skip Playwright preview capture for flexi." },
+      },
+      required: ["kind", "slug"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "theme_status",
     description:
       "Report Matrix Starter repo health: dist assets, node_modules, .env, flexi layout parity.",
@@ -135,7 +191,7 @@ const TOOLS = [
   {
     name: "scaffold_flexi_block",
     description:
-      "Create a new flexi block pair (ACF Builder partial + template-parts/flexi template) from the theme starter pattern.",
+      "Create a new flexi block pair. Optionally seed from reference-blocks:{layout} or library:{type}/{folder}, adapted to the new layout slug.",
     inputSchema: {
       type: "object",
       properties: {
@@ -146,6 +202,10 @@ const TOOLS = [
         label: {
           type: "string",
           description: "Human-readable block label shown in WordPress admin.",
+        },
+        source: {
+          type: "string",
+          description: "Optional reference: reference-blocks:content_002 or library:content/031.",
         },
         overwrite: {
           type: "boolean",
@@ -159,7 +219,7 @@ const TOOLS = [
   {
     name: "validate_theme_structure",
     description:
-      "Validate drop-in folder contract: flexi/hero parity, forbidden paths, suspicious functions.php requires.",
+      "Validate drop-in folder contract: flexi/hero parity, theme-options, CPTs/taxonomies, footer/header/blog templates, forbidden paths.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
@@ -318,9 +378,9 @@ Theme root: \`${THEME_ROOT}\`
 5. Install ACF Pro manually
 6. \`npm run build\` or \`npm run dev\`
 
-## Phase 1 MCP scope
+## Phase 1–2 MCP scope
 
-Filesystem + npm tooling only. WordPress content/options tooling is planned for Phase 2 (WP-CLI).
+Filesystem + npm + WP-CLI tooling. \`seed_flexi_review_block\` adds /flexi/ rows for runtime axe scans.
 `;
 
 server.server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -396,6 +456,74 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case "preflight_flexi_block": {
+        const input = z.object({ layout: z.string().optional() }).parse(args ?? {});
+        const result = await preflightFlexiBlock(input.layout);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          isError: !result.valid,
+        };
+      }
+
+      case "seed_flexi_review_block": {
+        const input = z
+          .object({
+            layout: z.string(),
+            createPage: z.boolean().optional(),
+          })
+          .parse(args ?? {});
+        const result = await seedFlexiReviewBlock(input);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  ...result,
+                  wpCli: result.wpCli ? formatWpCliResult(result.wpCli) : undefined,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+          isError: !result.success,
+        };
+      }
+
+      case "library_sync": {
+        const result = await runLibrarySync();
+        return {
+          content: [{ type: "text", text: result.output }],
+          isError: !result.success,
+        };
+      }
+
+      case "library_export": {
+        const input = z
+          .object({
+            kind: z.enum([
+              "flexi",
+              "hero",
+              "footer",
+              "header",
+              "blog",
+              "cpt",
+              "taxonomy",
+              "theme-option",
+            ]),
+            slug: z.string(),
+            variant: z.string().optional(),
+            skipScreenshot: z.boolean().optional(),
+          })
+          .parse(args ?? {});
+        const result = await runLibraryExport(input);
+        return {
+          content: [{ type: "text", text: result.output }],
+          isError: !result.success,
+        };
+      }
+
       case "theme_status": {
         const status = await getThemeStatus();
         return {
@@ -422,6 +550,7 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
           .object({
             layout: z.string(),
             label: z.string().optional(),
+            source: z.string().optional(),
             overwrite: z.boolean().optional(),
           })
           .parse(args ?? {});
@@ -429,6 +558,7 @@ server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const result = await scaffoldFlexiBlock({
           layout: input.layout,
           label: input.label ?? "",
+          source: input.source,
           overwrite: input.overwrite ?? false,
         });
 
