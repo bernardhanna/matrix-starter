@@ -56,13 +56,24 @@ Install: see `mcp-server/README.md`.
 
 ## Library (AI + developers)
 
+The component library is **not flexi-only**. It includes flexi sections, **hero**, **footer**, **header/nav**, **blog/404 templates**, **CPTs**, **taxonomies**, and more. Use WP Admin → **Matrix Components** to import any type; the importer maps each library folder to the correct theme drop-in path.
+
 **Copy from (in order):**
 
-1. [`reference-blocks/flexi/`](../reference-blocks/flexi/) — primary gold standard (always in theme git)
-2. `wp-content/matrix-component-library/` — extended patterns (maps, Jawg/OSM, listings, etc.)
-3. `scaffold_flexi_block` — when nothing matches
+1. [`reference-blocks/flexi/`](../reference-blocks/flexi/) — primary gold standard for **flexi** blocks (always in theme git)
+2. `wp-content/matrix-component-library/{type}/{folder}/` — extended patterns (e.g. `hero/001`, `footer/001`, `custom-post-types/faqs.php`, `content/031` for maps)
+3. `scaffold_flexi_block` — new flexi block when nothing matches
 
-**Export new sections to the library** (after block passes a11y + is on `/flexi/`):
+| Need | Library example | Theme destination |
+|------|-----------------|-------------------|
+| Flexi section | `content/002/` | `acf-fields/partials/blocks/` + `template-parts/flexi/` |
+| Hero | `hero/001/` | `acf-fields/partials/hero/` + `template-parts/hero/` |
+| Footer | `footer/001/` | `template-parts/footer/` |
+| CPT | `custom-post-types/faqs.php` | `inc/cpts/post-types/` |
+| Taxonomy | `taxonomies/faq-categories.php` | `inc/cpts/taxonomies/` |
+| Theme option tab | — | `inc/theme-options/{name}.php` (theme only for now) |
+
+**Export flexi blocks to the library** (after a11y pass + on `/flexi/`):
 
 ```bash
 npm run library:export -- --layout=content_029

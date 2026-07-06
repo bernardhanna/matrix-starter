@@ -56,8 +56,8 @@ Do **not** create these when adding a flexi block:
 
 ## Reference implementations
 
-- [`wp-content/matrix-component-library/`](../../../matrix-component-library/) — full PHP catalog (install via matrix-component-importer or `npm run library:sync`)
-- [`reference-blocks/flexi/`](../reference-blocks/flexi/) — smaller gold-standard subset committed in the theme repo
+- [`wp-content/matrix-component-library/`](../../../matrix-component-library/) — full catalog: flexi, hero, footer, header, CPTs, taxonomies, blog/404 templates (`npm run library:sync` or matrix-component-importer)
+- [`reference-blocks/flexi/`](../reference-blocks/flexi/) — small gold-standard **flexi** subset committed in the theme repo
 
 Copy from the component library or `reference-blocks/flexi/` into the production paths above. The gitignored theme-root `examples/` folder is for client-specific blocks only.
 
