@@ -30,10 +30,9 @@ The library and importer cover many drop-in targets. Examples:
 | `footer/`, `newsletter/`, `copyright/`, `back-to-top/` | `template-parts/footer/` |
 | `navigation-desktop/`, `navigation-mobile/`, `breadcrumbs/`, `topbar/` | `template-parts/header/` (mobile → `navbar/mobile.php`) |
 | `blog/`, `404/`, `sitemap/` | `template-parts/blog/`, `template-parts/404/`, `templates/` |
-| `custom-post-types/` | `inc/cpts/post-types/` (copy manually or import via admin) |
+| `custom-post-types/` | `inc/cpts/post-types/` |
 | `taxonomies/` | `inc/cpts/taxonomies/` |
-
-Theme option tabs (`inc/theme-options/`) are not in the library yet — add those to the theme directly per [theme-structure.md](../docs/theme-structure.md).
+| `theme-options/` | `inc/theme-options/` |
 
 **Export from theme** — use `npm run library:export` with `--kind`:
 
@@ -50,7 +49,7 @@ Full inventory: [CATALOG.md](https://github.com/Matrix-Internet/matrix-component
 From theme root (after block is on `/flexi/`):
 
 ```bash
-npm run library:export -- --layout=content_029
+npm run library:export -- --kind=flexi --layout=content_029
 ```
 
 See [GOLD-STANDARD.md](https://github.com/Matrix-Internet/matrix-component-library/blob/main/GOLD-STANDARD.md) in the component library repo.
