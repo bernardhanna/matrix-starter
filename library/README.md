@@ -21,4 +21,10 @@ Source repo: [Matrix-Internet/matrix-component-library](https://github.com/Matri
 
 ## Add new sections
 
-Contribute back via `scripts/add-section.php` in the component library repo.
+From theme root (after block is on `/flexi/`):
+
+```bash
+npm run library:export -- --layout=content_029
+```
+
+See [GOLD-STANDARD.md](https://github.com/Matrix-Internet/matrix-component-library/blob/main/GOLD-STANDARD.md) in the component library repo.
