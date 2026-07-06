@@ -10,7 +10,7 @@ Follow this workflow when building or modifying theme code. **Do not invent new 
 
 ## New flexi block (strict: two files only)
 
-1. Find the closest layout in `wp-content/matrix-component-library/`, `reference-blocks/flexi/`, or run `scaffold_flexi_block` with `{ layout, label }`
+1. Find the closest layout in [`reference-blocks/flexi/`](../reference-blocks/flexi/), then `wp-content/matrix-component-library/`, or run `scaffold_flexi_block`
 2. Edit **only** these two files:
    - `acf-fields/partials/blocks/acf_{layout}.php`
    - `template-parts/flexi/{layout}.php`
@@ -54,8 +54,20 @@ Follow this workflow when building or modifying theme code. **Do not invent new 
 
 Install: see `mcp-server/README.md`.
 
-## Library
+## Library (AI + developers)
 
-- `wp-content/matrix-component-library/` — full catalog (install via matrix-component-importer or `npm run library:sync`)
-- [`reference-blocks/flexi/`](../reference-blocks/flexi/) — small gold-standard subset in theme repo
-- MCP: `theme://library/{type}/{folder}`
+**Copy from (in order):**
+
+1. [`reference-blocks/flexi/`](../reference-blocks/flexi/) — primary gold standard (always in theme git)
+2. `wp-content/matrix-component-library/` — extended patterns (maps, Jawg/OSM, listings, etc.)
+3. `scaffold_flexi_block` — when nothing matches
+
+**Export new sections to the library** (after block passes a11y + is on `/flexi/`):
+
+```bash
+npm run library:export -- --layout=content_029
+```
+
+CI on the component library repo **rejects** exports that fail gold standard. See [GOLD-STANDARD.md](https://github.com/Matrix-Internet/matrix-component-library/blob/main/GOLD-STANDARD.md).
+
+MCP: `theme://library/{type}/{folder}` · `theme://reference-blocks/{layout}`
