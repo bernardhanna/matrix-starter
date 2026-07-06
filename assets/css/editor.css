@@ -1,90 +1,99 @@
 /* minimal preflight shim so Tailwind border utilities work */
 
-h1, .entry-content h1 {
+h1, .entry-content h1, .editor-styles-wrapper h1 {
   @apply text-4xl font-bold;
 }
 
-h2, .entry-content h2 {
+h2, .entry-content h2, .editor-styles-wrapper h2 {
   @apply text-3xl font-semibold;
 }
 
-h3, .entry-content h3 {
+h3, .entry-content h3, .editor-styles-wrapper h3 {
   @apply text-2xl font-medium;
 }
 
-h4, .entry-content h4 {
+h4, .entry-content h4, .editor-styles-wrapper h4 {
   @apply text-xl font-medium;
 }
 
-h5, .entry-content h5 {
+h5, .entry-content h5, .editor-styles-wrapper h5 {
   @apply text-lg font-medium;
 }
 
-h6, .entry-content h6 {
+h6, .entry-content h6, .editor-styles-wrapper h6 {
   @apply text-base font-medium;
 }
 
-.entry-content h1, .entry-content h2, .entry-content h3, .entry-content h4, .entry-content h5, .entry-content h6 {
+.entry-content h1, .entry-content h2, .entry-content h3, .entry-content h4, .entry-content h5, .entry-content h6,
+.editor-styles-wrapper h1, .editor-styles-wrapper h2, .editor-styles-wrapper h3, .editor-styles-wrapper h4, .editor-styles-wrapper h5, .editor-styles-wrapper h6 {
   @apply pt-0 pb-1 mb-2;
 }
 
-.entry-content p {
+.entry-content p, .editor-styles-wrapper p {
   @apply mb-4 font-normal leading-6 text-gray-800;
 }
 
-.entry-content ul {
+.entry-content ul, .editor-styles-wrapper ul {
   @apply mb-4 list-disc list-inside;
 }
 
-.entry-content ol {
+.entry-content ol, .editor-styles-wrapper ol {
   @apply mb-4 list-decimal list-inside;
 }
 
-.entry-content li {
+.entry-content li, .editor-styles-wrapper li {
   @apply mb-2 text-base font-normal leading-6 text-gray-800;
 }
 
 .entry-content li > ul,
-.entry-content li > ol {
+.entry-content li > ol,
+.editor-styles-wrapper li > ul,
+.editor-styles-wrapper li > ol {
   @apply mt-2 ml-4;
 }
 
 .entry-content strong,
-.entry-content b {
+.entry-content b,
+.editor-styles-wrapper strong,
+.editor-styles-wrapper b {
   @apply font-semibold;
 }
 
 .entry-content em,
-.entry-content i {
+.entry-content i,
+.editor-styles-wrapper em,
+.editor-styles-wrapper i {
   @apply italic;
 }
 
-.entry-content a {
+.entry-content a, .editor-styles-wrapper a {
   @apply underline text-primary hover:text-secondary;
 }
 
-.entry-content blockquote {
+.entry-content blockquote, .editor-styles-wrapper blockquote {
   @apply pl-4 my-4 italic border-l-4 border-gray-300;
 }
 
-.entry-content code {
+.entry-content code, .editor-styles-wrapper code {
   @apply px-1 py-0.5 text-sm bg-gray-100 rounded;
 }
 
-.entry-content pre {
+.entry-content pre, .editor-styles-wrapper pre {
   @apply overflow-x-auto p-4 mb-4 bg-gray-100 rounded;
 }
 
-.entry-content table {
+.entry-content table, .editor-styles-wrapper table {
   @apply mb-4 w-full border-collapse;
 }
 
 .entry-content th,
-.entry-content td {
+.entry-content td,
+.editor-styles-wrapper th,
+.editor-styles-wrapper td {
   @apply p-2 text-left border border-gray-300;
 }
 
-.entry-content th {
+.entry-content th, .editor-styles-wrapper th {
   @apply font-semibold bg-gray-50;
 }
 
@@ -93,11 +102,112 @@ h6, .entry-content h6 {
 .entry-content li h3,
 .entry-content li h4,
 .entry-content li h5,
-.entry-content li h6 {
+.entry-content li h6,
+.editor-styles-wrapper li h1,
+.editor-styles-wrapper li h2,
+.editor-styles-wrapper li h3,
+.editor-styles-wrapper li h4,
+.editor-styles-wrapper li h5,
+.editor-styles-wrapper li h6 {
   @apply inline-block pl-0;
   /* This ensures the heading stays on the same line as the marker */
 }
 
 .woocommerce-EditAccountForm .entry-content span {
   @apply w-full text-base font-normal leading-6 text-gray-800;
+}
+
+/* Block editor prose — mirrors .theme-prose .entry-content in app.css */
+.editor-styles-wrapper {
+  font-family: Comfortaa, sans-serif;
+  font-size: 18px;
+  line-height: 27px;
+  color: #1d1d1d;
+}
+
+.editor-styles-wrapper > *:first-child {
+  margin-top: 0;
+}
+
+.editor-styles-wrapper p,
+.editor-styles-wrapper li {
+  margin-bottom: 1rem;
+  font-family: Comfortaa, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 27px;
+  color: #1d1d1d;
+}
+
+.editor-styles-wrapper p:last-child,
+.editor-styles-wrapper li:last-child {
+  margin-bottom: 0;
+}
+
+.editor-styles-wrapper h1,
+.editor-styles-wrapper h2,
+.editor-styles-wrapper h3,
+.editor-styles-wrapper h4,
+.editor-styles-wrapper h5,
+.editor-styles-wrapper h6 {
+  font-family: Montserrat, sans-serif;
+  font-weight: 700;
+  color: #003b65 !important;
+}
+
+.editor-styles-wrapper h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  font-size: 28px;
+  line-height: 33.6px;
+  letter-spacing: -0.28px;
+}
+
+.editor-styles-wrapper h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 24px;
+  line-height: 28.8px;
+}
+
+.editor-styles-wrapper h4 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 20px;
+  line-height: 24px;
+}
+
+.editor-styles-wrapper h5 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 18px;
+  line-height: 21.6px;
+}
+
+.editor-styles-wrapper h6 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 16px;
+  line-height: 19.2px;
+  font-weight: 600;
+}
+
+.editor-styles-wrapper a {
+  font-weight: 600;
+  color: #0a60a0;
+  text-decoration: underline;
+  text-decoration-color: rgba(10, 96, 160, 0.4);
+  text-underline-offset: 2px;
+}
+
+.editor-styles-wrapper strong,
+.editor-styles-wrapper b {
+  font-weight: 600;
+  color: #003b65;
+}
+
+.editor-styles-wrapper ul,
+.editor-styles-wrapper ol {
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
 }

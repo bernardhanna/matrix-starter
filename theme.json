@@ -1,0 +1,83 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "layout": {
+      "contentSize": "720px",
+      "wideSize": "1280px"
+    },
+    "color": {
+      "palette": [
+        {
+          "slug": "brand-primary",
+          "color": "#008BCC",
+          "name": "Brand primary"
+        },
+        {
+          "slug": "brand-primary-hover",
+          "color": "#00628F",
+          "name": "Brand primary hover"
+        },
+        {
+          "slug": "brand-primary-soft",
+          "color": "#EBF9FF",
+          "name": "Brand primary soft"
+        },
+        {
+          "slug": "brand-accent",
+          "color": "#1C959B",
+          "name": "Brand accent"
+        },
+        {
+          "slug": "content-heading",
+          "color": "#001929",
+          "name": "Content heading"
+        },
+        {
+          "slug": "content-body",
+          "color": "#00263E",
+          "name": "Content body"
+        },
+        {
+          "slug": "content-muted",
+          "color": "#475467",
+          "name": "Content muted"
+        },
+        {
+          "slug": "surface-page",
+          "color": "#F2F4F7",
+          "name": "Surface page"
+        },
+        {
+          "slug": "surface-warm",
+          "color": "#FEFAE7",
+          "name": "Surface warm"
+        },
+        {
+          "slug": "white",
+          "color": "#FFFFFF",
+          "name": "White"
+        }
+      ]
+    },
+    "typography": {
+      "fontFamilies": [
+        {
+          "slug": "public-sans",
+          "name": "Public Sans",
+          "fontFamily": "\"Public Sans\", sans-serif"
+        },
+        {
+          "slug": "montserrat",
+          "name": "Montserrat",
+          "fontFamily": "Montserrat, sans-serif"
+        },
+        {
+          "slug": "comfortaa",
+          "name": "Comfortaa",
+          "fontFamily": "Comfortaa, sans-serif"
+        }
+      ]
+    }
+  }
+}
