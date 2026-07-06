@@ -77,8 +77,10 @@ Copy from the component library or `reference-blocks/flexi/` into the production
 
 Use the Matrix Starter MCP server:
 
-- `validate_theme_structure` — parity, forbidden paths, suspicious requires
+- `validate_theme_structure` — parity, forbidden paths, theme-options, CPTs/taxonomies, template drop-ins
 - `validate_flexi_blocks` — ACF/template pairs for flexi
-- `scaffold_flexi_block` — creates only the two canonical files
+- `preflight_flexi_block` — structure + flexi + a11y conventions in one call
+- `scaffold_flexi_block` — creates only the two canonical files; optional `source` from library/reference-blocks
+- `seed_flexi_review_block` — WP-CLI row on `/flexi/` (requires `WP_PATH` in `.env`)
 
 Resource: `theme://structure` (this document).

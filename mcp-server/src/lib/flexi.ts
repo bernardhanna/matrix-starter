@@ -6,6 +6,7 @@ import {
   layoutFromAcfFilename,
   layoutFromFlexiFilename,
 } from "../config.js";
+import { readLibraryComponent } from "./library.js";
 
 function relativeThemePath(absolutePath: string): string {
   return path.relative(THEME_ROOT, absolutePath).replace(/\\/g, "/");
@@ -99,6 +100,8 @@ export type ScaffoldFlexiBlockInput = {
   layout: string;
   label: string;
   overwrite?: boolean;
+  /** `reference-blocks:content_002` or `library:content/031` */
+  source?: string;
 };
 
 export type ScaffoldFlexiBlockResult = {
@@ -106,7 +109,128 @@ export type ScaffoldFlexiBlockResult = {
   skipped: string[];
   hint: string;
   allowedPaths: string[];
+  source?: string;
+  adaptedFrom?: string;
 };
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractLayoutFromAcf(acfSource: string): string | null {
+  const match = /FieldsBuilder\s*\(\s*['"]([^'"]+)['"]/.exec(acfSource);
+  return match?.[1] ?? null;
+}
+
+function toPhpVarName(layout: string): string {
+  return layout.replace(/[^a-zA-Z0-9_]/g, "_");
+}
+
+function adaptFlexiSources(
+  acfSource: string,
+  templateSource: string,
+  targetLayout: string,
+  label: string,
+): { acf: string; template: string; sourceLayout: string } {
+  const sourceLayout = extractLayoutFromAcf(acfSource) ?? targetLayout;
+  const sourceVar = toPhpVarName(sourceLayout);
+  const targetVar = toPhpVarName(targetLayout);
+
+  let acf = acfSource;
+  let template = templateSource;
+
+  if (sourceLayout !== targetLayout) {
+    acf = acf.replace(
+      new RegExp(`FieldsBuilder\\(\\s*['"]${escapeRegExp(sourceLayout)}['"]`, "g"),
+      `FieldsBuilder('${targetLayout}'`,
+    );
+    template = template.split(sourceLayout).join(targetLayout);
+  }
+
+  if (sourceVar !== targetVar) {
+    acf = acf.replace(new RegExp(`\\$${escapeRegExp(sourceVar)}\\b`, "g"), `$${targetVar}`);
+  }
+
+  acf = acf.replace(
+    /(['"]label['"]\s*=>\s*['"])([^'"]*)(['"])/,
+    `$1${label.replace(/'/g, "\\'")}$3`,
+  );
+
+  return { acf, template, sourceLayout };
+}
+
+type SourceRef =
+  | { kind: "reference-blocks"; layout: string }
+  | { kind: "library"; type: string; folder: string };
+
+function parseScaffoldSource(source: string): SourceRef {
+  const trimmed = source.trim();
+  if (trimmed.startsWith("reference-blocks:")) {
+    const layout = trimmed.slice("reference-blocks:".length).trim();
+    if (!/^[a-z][a-z0-9_]*$/.test(layout)) {
+      throw new Error("reference-blocks source layout must be snake_case.");
+    }
+    return { kind: "reference-blocks", layout };
+  }
+
+  if (trimmed.startsWith("library:")) {
+    const rest = trimmed.slice("library:".length).trim();
+    const slash = rest.indexOf("/");
+    if (slash === -1) {
+      throw new Error("library source must be library:type/folder (e.g. library:content/031).");
+    }
+    const type = rest.slice(0, slash).trim();
+    const folder = rest.slice(slash + 1).trim();
+    if (!type || !folder) {
+      throw new Error("library source must be library:type/folder.");
+    }
+    return { kind: "library", type, folder };
+  }
+
+  throw new Error('source must be "reference-blocks:{layout}" or "library:{type}/{folder}".');
+}
+
+async function loadScaffoldSource(source: string): Promise<{
+  acf: string;
+  template: string;
+  adaptedFrom: string;
+}> {
+  const ref = parseScaffoldSource(source);
+
+  if (ref.kind === "reference-blocks") {
+    let acf: string | null = null;
+    let template: string | null = null;
+    try {
+      acf = await fs.readFile(path.join(PATHS.referenceBlocksFlexi, `acf_${ref.layout}.php`), "utf8");
+    } catch {
+      /* missing */
+    }
+    try {
+      template = await fs.readFile(path.join(PATHS.referenceBlocksFlexi, `${ref.layout}.php`), "utf8");
+    } catch {
+      /* missing */
+    }
+    if (!acf || !template) {
+      throw new Error(`Reference block "${ref.layout}" is missing ACF or template.`);
+    }
+    return {
+      acf,
+      template,
+      adaptedFrom: `reference-blocks:${ref.layout}`,
+    };
+  }
+
+  const block = await readLibraryComponent(ref.type, ref.folder);
+  if (!block.acf || !block.template) {
+    throw new Error(`Library component ${ref.type}/${ref.folder} is missing ACF or template.`);
+  }
+
+  return {
+    acf: block.acf,
+    template: block.template,
+    adaptedFrom: `library:${ref.type}/${ref.folder}`,
+  };
+}
 
 function toLabel(layout: string): string {
   return layout
@@ -233,12 +357,24 @@ export async function scaffoldFlexiBlock(
   const created: string[] = [];
   const skipped: string[] = [];
 
+  let acfContents = buildAcfPartial(layout, label);
+  let templateContents = buildFlexiTemplate(layout);
+  let adaptedFrom: string | undefined;
+
+  if (input.source?.trim()) {
+    const loaded = await loadScaffoldSource(input.source);
+    const adapted = adaptFlexiSources(loaded.acf, loaded.template, layout, label);
+    acfContents = adapted.acf;
+    templateContents = adapted.template;
+    adaptedFrom = `${loaded.adaptedFrom} (was ${adapted.sourceLayout})`;
+  }
+
   await fs.mkdir(PATHS.acfBlocks, { recursive: true });
   await fs.mkdir(PATHS.flexiTemplates, { recursive: true });
 
   for (const [filePath, contents] of [
-    [acfPath, buildAcfPartial(layout, label)],
-    [templatePath, buildFlexiTemplate(layout)],
+    [acfPath, acfContents],
+    [templatePath, templateContents],
   ] as const) {
     let exists = false;
     try {
@@ -260,7 +396,9 @@ export async function scaffoldFlexiBlock(
   const hint =
     skipped.length > 0 && created.length === 0
       ? "Files already exist. Pass overwrite:true to replace. Do not create files outside allowedPaths."
-      : "Edit only the two files in allowedPaths. Do not add requires, inc/ partials, or loader scripts.";
+      : adaptedFrom
+        ? `Starting point adapted from ${adaptedFrom}. Customize fields and markup for this design — do not ship unchanged. Edit only allowedPaths.`
+        : "Edit only the two files in allowedPaths. Do not add requires, inc/ partials, or loader scripts.";
 
-  return { created, skipped, hint, allowedPaths };
+  return { created, skipped, hint, allowedPaths, source: input.source, adaptedFrom };
 }

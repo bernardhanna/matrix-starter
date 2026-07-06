@@ -27,6 +27,12 @@ export const PATHS = {
   referenceBlocksFlexi: path.join(THEME_ROOT, "reference-blocks/flexi"),
   themeStructureDoc: path.join(THEME_ROOT, "docs/theme-structure.md"),
   componentLibrary: COMPONENT_LIBRARY_ROOT,
+  themeOptions: path.join(THEME_ROOT, "inc/theme-options"),
+  cptPostTypes: path.join(THEME_ROOT, "inc/cpts/post-types"),
+  cptTaxonomies: path.join(THEME_ROOT, "inc/cpts/taxonomies"),
+  footerTemplates: path.join(THEME_ROOT, "template-parts/footer"),
+  headerTemplates: path.join(THEME_ROOT, "template-parts/header"),
+  blogTemplates: path.join(THEME_ROOT, "template-parts/blog"),
 } as const;
 
 export function layoutFromAcfFilename(filename: string): string | null {

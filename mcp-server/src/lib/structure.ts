@@ -138,6 +138,123 @@ async function validateFunctionsPhpRequires(): Promise<StructureViolation[]> {
   return violations;
 }
 
+async function validateThemeOptionsTabs(): Promise<StructureViolation[]> {
+  const violations: StructureViolation[] = [];
+  if (!(await dirExists(PATHS.themeOptions))) {
+    return violations;
+  }
+
+  for (const file of await listPhpBasenames(PATHS.themeOptions)) {
+    if (file === "admin-dashboard-controls.php") {
+      continue;
+    }
+
+    const relative = `inc/theme-options/${file}`;
+    const content = await fs.readFile(path.join(THEME_ROOT, relative), "utf8");
+    const trimmed = content.trim();
+
+    if (trimmed === "" || trimmed === "<?php") {
+      violations.push({
+        severity: "warning",
+        code: "empty_theme_option_stub",
+        message: `Remove or implement empty theme option tab: ${relative}`,
+        path: relative,
+      });
+      continue;
+    }
+
+    if (!content.includes("FieldsBuilder")) {
+      violations.push({
+        severity: "error",
+        code: "theme_option_missing_fields_builder",
+        message: `${relative} must use FieldsBuilder and return the builder instance`,
+        path: relative,
+      });
+    }
+
+    if (!/return\s+\$/.test(content)) {
+      violations.push({
+        severity: "error",
+        code: "theme_option_missing_return",
+        message: `${relative} must return a FieldsBuilder variable`,
+        path: relative,
+      });
+    }
+  }
+
+  return violations;
+}
+
+async function validateCptAndTaxonomyFiles(): Promise<StructureViolation[]> {
+  const violations: StructureViolation[] = [];
+
+  const checks = [
+    {
+      dir: PATHS.cptPostTypes,
+      prefix: "inc/cpts/post-types",
+      needle: "register_post_type",
+      code: "cpt_missing_registration",
+      message: "must call register_post_type()",
+    },
+    {
+      dir: PATHS.cptTaxonomies,
+      prefix: "inc/cpts/taxonomies",
+      needle: "register_taxonomy",
+      code: "taxonomy_missing_registration",
+      message: "must call register_taxonomy()",
+    },
+  ] as const;
+
+  for (const check of checks) {
+    if (!(await dirExists(check.dir))) {
+      continue;
+    }
+
+    for (const file of await listPhpBasenames(check.dir)) {
+      const relative = `${check.prefix}/${file}`;
+      const content = await fs.readFile(path.join(THEME_ROOT, relative), "utf8");
+      if (!content.includes(check.needle)) {
+        violations.push({
+          severity: "warning",
+          code: check.code,
+          message: `${relative} ${check.message}`,
+          path: relative,
+        });
+      }
+    }
+  }
+
+  return violations;
+}
+
+async function validateTemplateDropInDirs(): Promise<StructureViolation[]> {
+  const violations: StructureViolation[] = [];
+  const allowedRoots = [
+    { dir: PATHS.footerTemplates, label: "template-parts/footer" },
+    { dir: PATHS.headerTemplates, label: "template-parts/header" },
+    { dir: PATHS.blogTemplates, label: "template-parts/blog" },
+  ];
+
+  for (const { dir, label } of allowedRoots) {
+    if (!(await dirExists(dir))) {
+      continue;
+    }
+
+    for (const file of await listPhpBasenames(dir)) {
+      if (file.startsWith("_")) {
+        violations.push({
+          severity: "warning",
+          code: "template_partial_underscore",
+          message: `${label}/${file} — partials prefixed with _ are not standard drop-ins`,
+          path: `${label}/${file}`,
+        });
+      }
+    }
+  }
+
+  return violations;
+}
+
 async function validateEmptyHelperStubs(): Promise<StructureViolation[]> {
   const violations: StructureViolation[] = [];
   const utilsDir = path.join(THEME_ROOT, "inc/helpers/utils");
@@ -164,6 +281,9 @@ export async function validateThemeStructure() {
     ...(await validateHeroParity()),
     ...(await validateForbiddenPaths()),
     ...(await validateFunctionsPhpRequires()),
+    ...(await validateThemeOptionsTabs()),
+    ...(await validateCptAndTaxonomyFiles()),
+    ...(await validateTemplateDropInDirs()),
     ...(await validateEmptyHelperStubs()),
   ];
 

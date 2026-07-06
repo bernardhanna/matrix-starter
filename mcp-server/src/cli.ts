@@ -2,6 +2,7 @@
 
 import { validateFlexiA11yConventions } from "./lib/a11y-conventions.js";
 import { validateFlexiBlocks } from "./lib/flexi.js";
+import { preflightFlexiBlock } from "./lib/preflight.js";
 import { validateThemeStructure } from "./lib/structure.js";
 
 async function main(): Promise<void> {
@@ -25,8 +26,15 @@ async function main(): Promise<void> {
       console.log(JSON.stringify(result, null, 2));
       process.exit(result.valid ? 0 : 1);
     }
+    case "preflight-flexi": {
+      const result = await preflightFlexiBlock(layout);
+      console.log(JSON.stringify(result, null, 2));
+      process.exit(result.valid ? 0 : 1);
+    }
     default:
-      console.error("Usage: matrix-starter-mcp-cli <validate-structure|validate-flexi|validate-a11y-conventions> [--layout=name]");
+      console.error(
+        "Usage: matrix-starter-mcp-cli <validate-structure|validate-flexi|validate-a11y-conventions|preflight-flexi> [--layout=name]",
+      );
       process.exit(2);
   }
 }
