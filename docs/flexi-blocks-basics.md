@@ -23,7 +23,7 @@ Each flexi block is **exactly two drop-in files**. Do not create loaders, partia
 
 **Do not create additional files** for a flexi block (no `inc/` partials, no per-block requires in `functions.php`, no `template-parts/blocks/`).
 
-Reference implementations (copy into production paths above): [`reference-blocks/flexi/`](../reference-blocks/flexi/) — e.g. `acf_content_002.php` + `content_002.php`. Client-specific blocks may also live in gitignored `examples/`.
+Reference implementations: [`library/examples/`](../library/examples/) (primary), [`reference-blocks/flexi/`](../reference-blocks/flexi/) (gold subset), `library/matrix-starter-components/` (HTML via `npm run library:sync`) — e.g. `acf_content_002.php` + `content_002.php`. Client-specific blocks may also live in gitignored `examples/`.
 
 ---
 
@@ -340,6 +340,8 @@ Always scope selectors with `#<?php echo esc_attr($section_id); ?>`.
 - [ ] WYSIWYG fields wrapped with `wp_editor` class
 - [ ] Escaping on all dynamic output
 - [ ] No `min-w-[240px]`, `aspect-[…]`, or `self-stretch` (except documented nav exceptions)
+- [ ] `validate_flexi_a11y_conventions` passes (MCP or `cd mcp-server && npm run validate-a11y-conventions`)
+- [ ] Block on `/flexi/` page + `validate_flexi_a11y` when site running
 - [ ] Accessibility: landmarks, labels, focus, alt text ([accessibility-basics.md](accessibility-basics.md))
 
 ---

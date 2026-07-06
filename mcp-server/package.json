@@ -14,7 +14,8 @@
     "start": "node dist/index.js",
     "prepare": "npm run build",
     "validate-structure": "node dist/cli.js validate-structure",
-    "validate-flexi": "node dist/cli.js validate-flexi"
+    "validate-flexi": "node dist/cli.js validate-flexi",
+    "validate-a11y-conventions": "node dist/cli.js validate-a11y-conventions"
   },
   "engines": {
     "node": ">=18"

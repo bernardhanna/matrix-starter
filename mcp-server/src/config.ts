@@ -18,6 +18,10 @@ export const PATHS = {
   heroTemplates: path.join(THEME_ROOT, "template-parts/hero"),
   referenceBlocksFlexi: path.join(THEME_ROOT, "reference-blocks/flexi"),
   themeStructureDoc: path.join(THEME_ROOT, "docs/theme-structure.md"),
+  libraryReadme: path.join(THEME_ROOT, "library/README.md"),
+  libraryExamplesAcfFlexi: path.join(THEME_ROOT, "library/examples/acf/flexi"),
+  libraryExamplesFlexi: path.join(THEME_ROOT, "library/examples/flexi"),
+  libraryComponents: path.join(THEME_ROOT, "library/matrix-starter-components"),
 } as const;
 
 export function layoutFromAcfFilename(filename: string): string | null {

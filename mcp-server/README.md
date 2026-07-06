@@ -12,7 +12,9 @@ Content seeders are not part of the default theme. Use `npm run flexi:install` f
 | `list_flexi_layouts` | Inventory of ACF + template pairs |
 | `validate_flexi_blocks` | Fail if any layout is missing its pair |
 | `validate_theme_structure` | Enforce drop-in folder contract (no extra partials/requires) |
-| `list_theme_inventory` | List flexi layouts, CPTs, theme options, reference blocks |
+| `list_theme_inventory` | List flexi layouts, CPTs, theme options, library + reference blocks |
+| `validate_flexi_a11y_conventions` | Static a11y checks on flexi PHP templates |
+| `validate_flexi_a11y` | Axe scan on `/flexi/` review page (needs BASE_URL) |
 | `scaffold_flexi_block` | Generate `acf_{layout}.php` + `{layout}.php` |
 | `get_theme_tokens` | Read `THEME_TOKENS` from `tailwind.config.js` |
 | `update_theme_tokens` | Patch semantic tokens (then run `theme_build`) |
@@ -28,6 +30,8 @@ Content seeders are not part of the default theme. Use `npm run flexi:install` f
 | `theme://docs/daily-flow` | Branch/build/PR workflow |
 | `theme://structure` | Drop-in folder contract ([docs/theme-structure.md](../docs/theme-structure.md)) |
 | `theme://reference-blocks/{layout}` | Gold-standard flexi block pair (read-only) |
+| `theme://library` | Library folder README |
+| `theme://library/examples/{layout}` | Full example pair from library/examples/ |
 
 ## Install
 
@@ -63,4 +67,9 @@ WP-CLI tools for Theme Options reads, plugin checks, and generic page seeding.
 cd mcp-server && npm run build
 npm run validate-structure
 npm run validate-flexi
+```
+
+```bash
+npm run validate-a11y-conventions
+npm run validate-a11y-conventions -- --layout=wysiwyg
 ```
