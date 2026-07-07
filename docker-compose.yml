@@ -1,0 +1,103 @@
+# Matrix Starter — local / staging / CI WordPress stack
+# Usage: cp .env.docker.example .env.docker && npm run docker:up && npm run docker:bootstrap
+
+name: matrix-starter
+
+services:
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-wordpress}
+      MYSQL_USER: ${DB_USER:-wordpress}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-wordpress}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  wordpress:
+    image: wordpress:php8.3-apache
+    restart: unless-stopped
+    ports:
+      - "${WP_PORT:-8080}:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: ${DB_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wordpress}
+      WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-1}
+      MATRIX_SUPPORT_SANDBOX: ${MATRIX_SUPPORT_SANDBOX:-}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', false);
+        if (getenv('WP_HOME')) {
+          define('WP_HOME', getenv('WP_HOME'));
+          define('WP_SITEURL', getenv('WP_HOME'));
+        }
+        if (getenv('ACF_PRO_LICENSE')) {
+          define('ACF_PRO_LICENSE', getenv('ACF_PRO_LICENSE'));
+        }
+    volumes:
+      - wp_data:/var/www/html
+      - .:/var/www/html/wp-content/themes/${THEME_SLUG:-matrix-starter}
+      - ./docker/mu-plugins:/var/www/html/wp-content/mu-plugins
+    depends_on:
+      db:
+        condition: service_healthy
+
+  wpcli:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.wpcli
+    user: "82:82"
+    working_dir: /var/www/html/wp-content/themes/${THEME_SLUG:-matrix-starter}
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: ${DB_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wordpress}
+      WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
+      WP_HOME: ${WP_HOME:-http://localhost:8080}
+      BASE_URL: ${BASE_URL:-http://localhost:8080}
+      WP_PATH: /var/www/html
+      MATRIX_RUNTIME: docker
+      THEME_SLUG: ${THEME_SLUG:-matrix-starter}
+      WP_ADMIN_USER: ${WP_ADMIN_USER:-admin}
+      WP_ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD:-matrix2026}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-devs@matrixinternet.ie}
+      WP_SITE_TITLE: ${WP_SITE_TITLE:-Matrix Starter}
+      GH_TOKEN: ${GH_TOKEN:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      ACF_PRO_LICENSE: ${ACF_PRO_LICENSE:-}
+      MATRIX_GITHUB_ORG: ${MATRIX_GITHUB_ORG:-Matrix-Internet}
+      MATRIX_GITHUB_FALLBACK_ORG: ${MATRIX_GITHUB_FALLBACK_ORG:-bernardhanna}
+      WP_CLI_CACHE_DIR: /tmp/wp-cli-cache
+    volumes:
+      - wp_data:/var/www/html
+      - .:/var/www/html/wp-content/themes/${THEME_SLUG:-matrix-starter}
+      - ./docker/mu-plugins:/var/www/html/wp-content/mu-plugins
+    depends_on:
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_started
+    profiles:
+      - cli
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+    profiles:
+      - mail
+
+volumes:
+  wp_data:
+  db_data:

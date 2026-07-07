@@ -1,0 +1,856 @@
+#!/usr/bin/env node
+
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListResourcesRequestSchema,
+  ListToolsRequestSchema,
+  ReadResourceRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
+import { THEME_ROOT } from "./config.js";
+import {
+  getFlexiInventory,
+  scaffoldFlexiBlock,
+  validateFlexiBlocks,
+} from "./lib/flexi.js";
+import { formatCommandResult, runCommand, runNpmScript } from "./lib/exec.js";
+import { getThemeStatus, readThemeDoc } from "./lib/status.js";
+import { readThemeTokens, updateThemeTokens } from "./lib/tokens.js";
+import { validateFlexiA11yConventions } from "./lib/a11y-conventions.js";
+import {
+  findLibraryComponents,
+  listLibraryComponents,
+  readLibraryCatalog,
+  readLibraryComponent,
+  readLibraryExample,
+  readLibraryReadme,
+} from "./lib/library.js";
+import { copyFromLibrary, getLibraryComponentDetail } from "./lib/library-copy.js";
+import { runLibraryExport, runLibrarySync } from "./lib/library-scripts.js";
+import { preflightFlexiBlock } from "./lib/preflight.js";
+import { formatWpCliResult, seedFlexiReviewBlock } from "./lib/wp-cli.js";
+import {
+  getThemeInventory,
+  listReferenceBlockLayouts,
+  readReferenceBlock,
+  validateThemeStructure,
+} from "./lib/structure.js";
+import fs from "node:fs/promises";
+import { PATHS } from "./config.js";
+
+const server = new McpServer(
+  {
+    name: "matrix-starter",
+    version: "0.3.0",
+  },
+  {
+    capabilities: {
+      tools: {},
+      resources: {},
+    },
+  },
+);
+
+const TOOLS = [
+  {
+    name: "find_library_component",
+    description:
+      "Search wp-content/matrix-component-library for reference patterns (type, folder, or path like content/031). Use results with get_library_component — do not wholesale-copy when building new flexi blocks.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Search term (e.g. map, hero, footer, content/031)." },
+        type: { type: "string", description: "Optional library category filter (e.g. content, hero)." },
+        limit: { type: "number", description: "Max results. Defaults to 20." },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_library_component",
+    description:
+      "Read a library component (ACF + template) as reference when building new blocks. Returns source code and theme drop-in paths. Prefer this over copy_from_library for new flexi layouts.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        type: { type: "string", description: "Library category (e.g. content, hero, theme-options)." },
+        folder: { type: "string", description: "Variant folder or slug (e.g. 031, footer, faqs)." },
+      },
+      required: ["type", "folder"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "copy_from_library",
+    description:
+      "Import a finished library component into theme drop-in paths (same as WP Admin Matrix Components). For new flexi blocks, use get_library_component as reference and scaffold_flexi_block instead — do not copy wholesale.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        type: { type: "string", description: "Library category." },
+        folder: { type: "string", description: "Variant folder or slug." },
+        dryRun: {
+          type: "boolean",
+          description: "Preview copy plan without writing files. Defaults to false.",
+        },
+        overwrite: {
+          type: "boolean",
+          description: "Replace existing theme files. Defaults to false.",
+        },
+      },
+      required: ["type", "folder"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "preflight_flexi_block",
+    description:
+      "Run validate_theme_structure + validate_flexi_blocks + validate_flexi_a11y_conventions in one call. Optional layout scopes flexi/a11y checks.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        layout: { type: "string", description: "Optional flexi layout slug to scope checks." },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "seed_flexi_review_block",
+    description:
+      "WP-CLI: add a flexi layout row to the /flexi/ review page for runtime axe scans. Requires WP_PATH in .env.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        layout: { type: "string", description: "Flexi layout slug (must exist as ACF + template pair)." },
+        createPage: {
+          type: "boolean",
+          description: "Create published page with slug flexi if missing. Defaults to true.",
+        },
+      },
+      required: ["layout"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "library_sync",
+    description: "Clone or pull wp-content/matrix-component-library (npm run library:sync).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "library_export",
+    description:
+      "Export a validated theme component to the component library repo (npm run library:export).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        kind: {
+          type: "string",
+          enum: ["flexi", "hero", "footer", "header", "blog", "cpt", "taxonomy", "theme-option"],
+        },
+        slug: { type: "string", description: "Layout slug or component name." },
+        variant: { type: "string", description: "Optional library variant folder." },
+        skipScreenshot: { type: "boolean", description: "Skip Playwright preview capture for flexi." },
+      },
+      required: ["kind", "slug"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "theme_status",
+    description:
+      "Report Matrix Starter repo health: dist assets, node_modules, .env, flexi layout parity.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_flexi_layouts",
+    description:
+      "List flexi block layouts and whether each has a matching ACF definition and PHP template.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_flexi_blocks",
+    description:
+      "Validate that every acf-fields/partials/blocks/acf_{layout}.php has template-parts/flexi/{layout}.php.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "scaffold_flexi_block",
+    description:
+      "Create a new flexi block pair. Optionally seed from reference-blocks:{layout} or library:{type}/{folder}, adapted to the new layout slug.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        layout: {
+          type: "string",
+          description: "Layout slug, lowercase snake_case (e.g. content_002).",
+        },
+        label: {
+          type: "string",
+          description: "Human-readable block label shown in WordPress admin.",
+        },
+        source: {
+          type: "string",
+          description: "Optional reference: reference-blocks:content_002 or library:content/031.",
+        },
+        overwrite: {
+          type: "boolean",
+          description: "Overwrite existing files when true. Defaults to false.",
+        },
+      },
+      required: ["layout"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_theme_structure",
+    description:
+      "Validate drop-in folder contract: flexi/hero parity, theme-options, CPTs/taxonomies, footer/header/blog templates, forbidden paths.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "list_theme_inventory",
+    description:
+      "List flexi layouts, hero files, theme option tabs, CPTs, taxonomies, and helper utils.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "validate_flexi_a11y_conventions",
+    description:
+      "Static WCAG/convention checks on flexi PHP templates (aria, escaping, CTA focus) before finalize.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        layout: { type: "string", description: "Optional layout slug; omit to scan all flexi templates." },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_flexi_a11y",
+    description:
+      "Run axe accessibility scan on /flexi/ review page (requires BASE_URL in .env and block on review page).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        layout: { type: "string", description: "Optional layout slug to scope the scan." },
+        baseUrl: { type: "string", description: "Optional site URL override." },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_theme_tokens",
+    description: "Read semantic THEME_TOKENS from tailwind.config.js.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "update_theme_tokens",
+    description:
+      "Patch one or more semantic token values in tailwind.config.js. Run theme_build after changing colors.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        patches: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              group: { type: "string", description: "Token group (brand, text, surface, ...)." },
+              key: { type: "string", description: "Token key within the group." },
+              value: { type: "string", description: "New token value." },
+            },
+            required: ["group", "key", "value"],
+          },
+          minItems: 1,
+        },
+      },
+      required: ["patches"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "theme_build",
+    description: "Run npm run build (PostCSS + Webpack) to regenerate dist/ assets.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "theme_test",
+    description:
+      "Run theme test scripts. Supports php, e2e, a11y, links, or full ci pipeline.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        suite: {
+          type: "string",
+          enum: ["php", "e2e", "a11y", "a11y:flexi", "links", "ci"],
+          description: "Which npm test script to run. Defaults to php.",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+] as const;
+
+const RESOURCES = [
+  {
+    uri: "theme://architecture",
+    name: "Matrix Starter architecture",
+    description: "High-level map of theme folders and extension points.",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "theme://docs/flexi-blocks-basics",
+    name: "Flexi blocks basics",
+    description: "How to build ACF flexible content blocks in Matrix Starter.",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "theme://docs/daily-flow",
+    name: "Daily development flow",
+    description: "Branching, build, and PR workflow for theme development.",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "theme://structure",
+    name: "Theme drop-in structure",
+    description: "Canonical folder contract for flexi blocks and autoloaded paths.",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "theme://library",
+    name: "Theme library",
+    description: "wp-content/matrix-component-library reference (install via matrix-component-importer).",
+    mimeType: "text/markdown",
+  },
+  {
+    uri: "theme://library/catalog",
+    name: "Component library catalog",
+    description: "CATALOG.md inventory of all library components and theme destinations.",
+    mimeType: "text/markdown",
+  },
+] as const;
+
+const architectureMarkdown = `# Matrix Starter architecture
+
+Theme root: \`${THEME_ROOT}\`
+
+## Extension points
+
+| Concern | Location |
+|---------|----------|
+| Flexi ACF layouts | \`acf-fields/partials/blocks/acf_{layout}.php\` |
+| Flexi templates | \`template-parts/flexi/{layout}.php\` |
+| Flexi registration | \`acf-fields/partials/flexi.php\` (auto-loads blocks/*.php) |
+| Hero fields | \`acf-fields/partials/hero.php\` + \`template-parts/hero/\` |
+| Theme options | \`inc/theme-options.php\` + \`inc/theme-options/*.php\` |
+| Semantic tokens | \`tailwind.config.js\` → \`THEME_TOKENS\` |
+| Built assets | \`dist/\` (generated by \`npm run build\`) |
+
+## Bootstrap
+
+1. \`composer install\`
+2. \`npm install\`
+3. Copy \`.env.example\` → \`.env\` and set \`WP_PATH\`
+4. \`npm run flexi:install\` — clones Matrix plugins, activates theme via WP-CLI
+5. Install ACF Pro manually
+6. \`npm run build\` or \`npm run dev\`
+
+## Phase 1–2 MCP scope
+
+Filesystem + npm + WP-CLI tooling. \`seed_flexi_review_block\` adds /flexi/ rows for runtime axe scans.
+`;
+
+server.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: TOOLS.map(({ name, description, inputSchema }) => ({
+    name,
+    description,
+    inputSchema,
+  })),
+}));
+
+server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  try {
+    switch (name) {
+      case "find_library_component": {
+        const input = z
+          .object({
+            query: z.string(),
+            type: z.string().optional(),
+            limit: z.number().optional(),
+          })
+          .parse(args ?? {});
+
+        const matches = await findLibraryComponents(input);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  query: input.query,
+                  count: matches.length,
+                  matches,
+                  hint: "Use get_library_component to read as reference. copy_from_library only for importing finished components (not new flexi blocks).",
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      }
+
+      case "get_library_component": {
+        const input = z
+          .object({
+            type: z.string(),
+            folder: z.string(),
+          })
+          .parse(args ?? {});
+
+        const detail = await getLibraryComponentDetail(input.type, input.folder);
+        return {
+          content: [{ type: "text", text: JSON.stringify(detail, null, 2) }],
+        };
+      }
+
+      case "copy_from_library": {
+        const input = z
+          .object({
+            type: z.string(),
+            folder: z.string(),
+            dryRun: z.boolean().optional(),
+            overwrite: z.boolean().optional(),
+          })
+          .parse(args ?? {});
+
+        const result = await copyFromLibrary(input);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          isError: !result.success,
+        };
+      }
+
+      case "preflight_flexi_block": {
+        const input = z.object({ layout: z.string().optional() }).parse(args ?? {});
+        const result = await preflightFlexiBlock(input.layout);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          isError: !result.valid,
+        };
+      }
+
+      case "seed_flexi_review_block": {
+        const input = z
+          .object({
+            layout: z.string(),
+            createPage: z.boolean().optional(),
+          })
+          .parse(args ?? {});
+        const result = await seedFlexiReviewBlock(input);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  ...result,
+                  wpCli: result.wpCli ? formatWpCliResult(result.wpCli) : undefined,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+          isError: !result.success,
+        };
+      }
+
+      case "library_sync": {
+        const result = await runLibrarySync();
+        return {
+          content: [{ type: "text", text: result.output }],
+          isError: !result.success,
+        };
+      }
+
+      case "library_export": {
+        const input = z
+          .object({
+            kind: z.enum([
+              "flexi",
+              "hero",
+              "footer",
+              "header",
+              "blog",
+              "cpt",
+              "taxonomy",
+              "theme-option",
+            ]),
+            slug: z.string(),
+            variant: z.string().optional(),
+            skipScreenshot: z.boolean().optional(),
+          })
+          .parse(args ?? {});
+        const result = await runLibraryExport(input);
+        return {
+          content: [{ type: "text", text: result.output }],
+          isError: !result.success,
+        };
+      }
+
+      case "theme_status": {
+        const status = await getThemeStatus();
+        return {
+          content: [{ type: "text", text: JSON.stringify(status, null, 2) }],
+        };
+      }
+
+      case "list_flexi_layouts": {
+        const layouts = await getFlexiInventory();
+        return {
+          content: [{ type: "text", text: JSON.stringify(layouts, null, 2) }],
+        };
+      }
+
+      case "validate_flexi_blocks": {
+        const result = await validateFlexiBlocks();
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "scaffold_flexi_block": {
+        const input = z
+          .object({
+            layout: z.string(),
+            label: z.string().optional(),
+            source: z.string().optional(),
+            overwrite: z.boolean().optional(),
+          })
+          .parse(args ?? {});
+
+        const result = await scaffoldFlexiBlock({
+          layout: input.layout,
+          label: input.label ?? "",
+          source: input.source,
+          overwrite: input.overwrite ?? false,
+        });
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_theme_tokens": {
+        const tokens = await readThemeTokens();
+        return {
+          content: [{ type: "text", text: JSON.stringify(tokens, null, 2) }],
+        };
+      }
+
+      case "update_theme_tokens": {
+        const input = z
+          .object({
+            patches: z.array(
+              z.object({
+                group: z.string(),
+                key: z.string(),
+                value: z.string(),
+              }),
+            ),
+          })
+          .parse(args ?? {});
+
+        const tokens = await updateThemeTokens(input.patches);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  updated: input.patches,
+                  tokens,
+                  nextStep: "Run theme_build to regenerate dist/*.css",
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      }
+
+      case "theme_build": {
+        const result = await runNpmScript("build", { timeoutMs: 15 * 60 * 1000 });
+        return {
+          content: [{ type: "text", text: formatCommandResult(result) }],
+          isError: result.exitCode !== 0,
+        };
+      }
+
+      case "theme_test": {
+        const input = z
+          .object({
+            suite: z.enum(["php", "e2e", "a11y", "a11y:flexi", "links", "ci"]).optional(),
+          })
+          .parse(args ?? {});
+
+        const suite = input.suite ?? "php";
+        const scriptMap = {
+          php: "test:php",
+          e2e: "test:e2e",
+          a11y: "test:a11y",
+          "a11y:flexi": "test:a11y:flexi",
+          links: "test:links",
+          ci: "ci",
+        } as const;
+
+        const result = await runNpmScript(scriptMap[suite], {
+          timeoutMs: 30 * 60 * 1000,
+        });
+
+        return {
+          content: [{ type: "text", text: formatCommandResult(result) }],
+          isError: result.exitCode !== 0,
+        };
+      }
+
+
+      case "validate_theme_structure": {
+        const result = await validateThemeStructure();
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          isError: !result.valid,
+        };
+      }
+
+
+      case "validate_flexi_a11y_conventions": {
+        const input = z.object({ layout: z.string().optional() }).parse(args ?? {});
+        const result = await validateFlexiA11yConventions(
+          input.layout ? { layout: input.layout } : undefined,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          isError: !result.valid,
+        };
+      }
+
+      case "validate_flexi_a11y": {
+        const input = z
+          .object({ layout: z.string().optional(), baseUrl: z.string().optional() })
+          .parse(args ?? {});
+        const scriptArgs = ["scripts/run-a11y-flexi.js"];
+        if (input.baseUrl) scriptArgs.push(input.baseUrl);
+        if (input.layout) scriptArgs.push(`--layout=${input.layout}`);
+        const result = await runCommand("node", scriptArgs, { timeoutMs: 10 * 60 * 1000 });
+        return {
+          content: [{ type: "text", text: formatCommandResult(result) }],
+          isError: result.exitCode !== 0,
+        };
+      }
+
+      case "list_theme_inventory": {
+        const inventory = await getThemeInventory();
+        const referenceBlocks = await listReferenceBlockLayouts();
+        const libraryComponents = await listLibraryComponents();
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({ ...inventory, referenceBlocks, libraryComponents }, null, 2),
+            },
+          ],
+        };
+      }
+
+      default:
+        return {
+          content: [{ type: "text", text: `Unknown tool: ${name}` }],
+          isError: true,
+        };
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      content: [{ type: "text", text: message }],
+      isError: true,
+    };
+  }
+});
+
+server.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  const referenceLayouts = await listReferenceBlockLayouts();
+  const referenceResources = referenceLayouts.map((layout) => ({
+    uri: `theme://reference-blocks/${layout}`,
+    name: `Reference block: ${layout}`,
+    description: `Gold-standard ACF + template pair from reference-blocks/flexi/`,
+    mimeType: "application/json",
+  }));
+
+  return {
+    resources: [
+      ...RESOURCES.map(({ uri, name, description, mimeType }) => ({
+        uri,
+        name,
+        description,
+        mimeType,
+      })),
+      ...referenceResources,
+    ],
+  };
+});
+
+server.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const { uri } = request.params;
+
+  switch (uri) {
+    case "theme://architecture":
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "text/markdown",
+            text: architectureMarkdown,
+          },
+        ],
+      };
+
+    case "theme://docs/flexi-blocks-basics":
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "text/markdown",
+            text: await readThemeDoc("docs/flexi-blocks-basics.md"),
+          },
+        ],
+      };
+
+
+    case "theme://structure":
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "text/markdown",
+            text: await fs.readFile(PATHS.themeStructureDoc, "utf8"),
+          },
+        ],
+      };
+
+    case "theme://library":
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "text/markdown",
+            text: await readLibraryReadme(),
+          },
+        ],
+      };
+
+    case "theme://library/catalog":
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "text/markdown",
+            text: await readLibraryCatalog(),
+          },
+        ],
+      };
+
+    case "theme://docs/daily-flow":
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "text/markdown",
+            text: await readThemeDoc("docs/wiki/3-daily-flow-for-development.md"),
+          },
+        ],
+      };
+
+    default: {
+      const libMatch = /^theme:\/\/library\/([a-z0-9-]+)\/([a-zA-Z0-9_-]+)$/.exec(uri);
+      if (libMatch) {
+        const block = await readLibraryComponent(libMatch[1], libMatch[2]);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(block, null, 2),
+            },
+          ],
+        };
+      }
+
+      const legacyLibMatch = /^theme:\/\/library\/examples\/(.+)$/.exec(uri);
+      if (legacyLibMatch) {
+        const block = await readLibraryExample(legacyLibMatch[1]);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(block, null, 2),
+            },
+          ],
+        };
+      }
+
+      const refMatch = /^theme:\/\/reference-blocks\/([a-z][a-z0-9_]*)$/.exec(uri);
+      if (refMatch) {
+        const block = await readReferenceBlock(refMatch[1]);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(block, null, 2),
+            },
+          ],
+        };
+      }
+      throw new Error(`Unknown resource: ${uri}`);
+    }
+  }
+});
+
+async function main(): Promise<void> {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

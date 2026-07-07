@@ -1,5 +1,5 @@
 /**
- * PACE counters — count up when scrolled into view.
+ * Stat counters — count up when scrolled into view.
  */
 (function () {
   function formatValue(current, format, target) {
@@ -34,12 +34,12 @@
   }
 
   function initSection(section) {
-    if (section.dataset.paceCountersReady === '1') {
+    if (section.dataset.statCountersReady === '1') {
       return;
     }
-    section.dataset.paceCountersReady = '1';
+    section.dataset.statCountersReady = '1';
 
-    const cards = section.querySelectorAll('[data-pace-counter-card]');
+    const cards = section.querySelectorAll('[data-stat-counter-card]');
     if (!cards.length) {
       return;
     }
@@ -51,12 +51,12 @@
             return;
           }
           const card = entry.target;
-          if (card.dataset.paceCounterDone === '1') {
+          if (card.dataset.statCounterDone === '1') {
             return;
           }
-          card.dataset.paceCounterDone = '1';
+          card.dataset.statCounterDone = '1';
 
-          const span = card.querySelector('.pace-counter-value');
+          const span = card.querySelector('.stat-counter-value');
           if (!span) {
             return;
           }
@@ -71,7 +71,7 @@
     );
 
     cards.forEach((card) => {
-      const span = card.querySelector('.pace-counter-value');
+      const span = card.querySelector('.stat-counter-value');
       if (span) {
         const target = parseInt(span.dataset.target || '0', 10) || 0;
         const format = span.dataset.format || 'number';
@@ -82,7 +82,7 @@
   }
 
   function boot() {
-    document.querySelectorAll('.pace-counters-001').forEach(initSection);
+    document.querySelectorAll('.stat-counters-block').forEach(initSection);
   }
 
   if (document.readyState === 'loading') {

@@ -27,7 +27,7 @@ Typical flow:
 
 ```bash
 cd "/path/to/Local Sites/your-site/app/public/wp-content/themes"
-git clone https://github.com/bernardhanna/matrix-starter.git your-project-theme
+git clone https://github.com/Matrix-Internet/matrix-starter-theme.git your-project-theme
 cd your-project-theme
 git remote set-url origin git@github.com:your-org/your-project-theme.git
 ```

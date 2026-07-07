@@ -33,13 +33,19 @@ Run from the **theme root**. Site must be **Running** in Local.
 
 ## Plugins
 
-### Cloned from GitHub
+### Cloned from GitHub ([Matrix-Internet](https://github.com/Matrix-Internet/) — private)
+
+Registry: `scripts/matrix-plugins.sh`. Authenticate with `gh auth login` before first install.
 
 | Folder | Repo | Purpose |
 |--------|------|---------|
-| `matrix-component-importer` | [matrix-component-importer](https://github.com/bernardhanna/matrix-component-importer) | Import flexi components |
-| `matrix-sitemap-generator` | [matrix-sitemap-generator](https://github.com/bernardhanna/matrix-sitemap-generator) | XML sitemap |
-| `matrix-content-gathering` | [matrix-content-gathering](https://github.com/bernardhanna/matrix-content-gathering) | Client content form + CSV flexi import/export |
+| `advanced-custom-fields-pro` | `acf` | ACF Pro |
+| `updraftplus` | `updraft-plus` | UpdraftPlus Premium backups |
+| `matrix-component-importer` | `matrix-component-importer` | Installs `wp-content/matrix-component-library/` locally and imports sections into the theme |
+| `matrix-sitemap-generator` | `matrix-sitemap-generator-plugin` | Slickplan sitemap → WP pages/CPTs/menu (fallback repo: `matrix-sitemap-generator` on bernardhanna) |
+| `matrix-content-gathering` | `matrix-content-gathering-plugin` | Client content form + CSV flexi import/export (fallback repo: `matrix-content-gathering` on bernardhanna) |
+| `matrix-qc-snags` | `matrix-qc-snags-plugin` | QC snagging overlay + agent bridge (fallback repo: `matrix-qc-snags` on bernardhanna) |
+| `matrix-golive-preflight-checks` | `Matrix-Go-Live-Preflight-Checks` | Go-live preflight checks (admin + WP-CLI) |
 
 ### WordPress.org
 

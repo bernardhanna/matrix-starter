@@ -8,6 +8,7 @@ dist/
 # Environment files
 .env
 .env.local
+.env.docker
 
 # OS files
 .DS_Store
@@ -41,7 +42,7 @@ playwright-report/
 # Examples (reference templates, not shipped with theme)
 examples/
 
-# Superpowers: ignore generated files; keep example templates
+# Component library lives at wp-content/matrix-component-library/ (see library/README.md)
 docs/superpowers/*
 !docs/superpowers/plans/
 !docs/superpowers/specs/
@@ -50,4 +51,5 @@ docs/superpowers/plans/*
 docs/superpowers/specs/*
 !docs/superpowers/specs/example.md
 
-# Optional (depending on preference)
+# Superpowers: ignore generated files; keep example templates
+library/matrix-starter-components/

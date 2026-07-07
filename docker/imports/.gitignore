@@ -1,0 +1,3 @@
+# SQL dumps for docker import — do not commit production data
+*.sql
+!.gitkeep

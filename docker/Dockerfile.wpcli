@@ -1,0 +1,12 @@
+FROM wordpress:cli-php8.3
+
+USER root
+
+RUN apk add --no-cache bash git curl openssh-client \
+  && mkdir -p /tmp/gh-home \
+  && chown www-data:www-data /tmp/gh-home
+
+# wp-cli image runs as www-data without a writable HOME — git config --global fails otherwise.
+ENV HOME=/tmp/gh-home
+
+USER www-data

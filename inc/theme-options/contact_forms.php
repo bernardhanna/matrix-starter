@@ -13,8 +13,8 @@ $forms_opts
   ])
   ->addEmail('email_from_address', [
     'label'         => 'Default From Email',
-    'instructions'  => 'Use a domain address e.g. no-reply@sanctuaryrunners.ie',
-    'default_value' => 'no-reply@sanctuaryrunners.ie',
+    'instructions'  => 'Use a domain address for this site, e.g. no-reply@example.com',
+    'default_value' => '',
   ])
 
   // CAPTCHA provider

@@ -1,0 +1,45 @@
+name: Docker smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'docker/**'
+      - 'docker-compose.yml'
+      - '.env.docker.example'
+      - 'scripts/flexi-install.sh'
+
+concurrency:
+  group: docker-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Docker compose + WordPress install
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env.docker
+        run: cp .env.docker.example .env.docker
+
+      - name: Start stack
+        run: docker compose --env-file .env.docker up -d --build --wait
+
+      - name: Bootstrap WordPress
+        run: docker compose --env-file .env.docker --profile cli run --rm wpcli bash docker/bootstrap.sh
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Verify site responds
+        run: |
+          docker compose --env-file .env.docker --profile cli run --rm wpcli \
+            wp --path=/var/www/html --skip-plugins --skip-themes core is-installed
+          docker compose --env-file .env.docker --profile cli run --rm wpcli \
+            wp --path=/var/www/html --skip-plugins --skip-themes theme activate twentytwentyfour
+          curl -fsSL --retry 5 --retry-delay 3 http://localhost:8080/ | grep -qi twenty
+
+      - name: Tear down
+        if: always()
+        run: docker compose --env-file .env.docker down -v

@@ -2,7 +2,7 @@
 
 **Matrix Starter** is a WordPress theme for Matrix Internet projects: ACF Builder flexi blocks, Tailwind CSS, Alpine.js, and a standard plugin/tooling stack.
 
-**Repo:** https://github.com/bernardhanna/matrix-starter  
+**Repo:** https://github.com/Matrix-Internet/matrix-starter-theme  
 **Theme README:** see repo root `README.md`  
 **Scripts detail:** `scripts/README.md` in the repo
 
@@ -16,22 +16,35 @@
 | [2. Local setup & build tools](2-local-setup-and-build-tools.md) | Clone, Composer/npm, `.env`, `npm run dev` / `build`, `flexi:install` |
 | [3. Daily development flow](3-daily-flow-for-development.md) | Branches, PRs, rebase, checklist |
 | [4. flexi-install & environment](4-flexi-install-and-environment.md) | Bootstrap script, plugins, Password Protected, WP Mail SMTP, `.env` reference |
-| [5. Tests & quality checks](Tests.md) | Playwright, a11y, Lighthouse, link checker |
+| [5. Docker environments](5-docker-environments.md) | Containerized local, staging, CI, live-site import |
+| [6. Support orchestrator](6-support-orchestrator.md) | AI support pipeline, Docker sandboxes, Cursor agent handoff |
+| [7. Tests & quality checks](Tests.md) | Playwright, a11y, Lighthouse, link checker |
 
-> **Publishing to GitHub:** Copy each file’s body into the matching page at https://github.com/bernardhanna/matrix-starter/wiki/ (GitHub wiki titles/slugs may differ slightly from filenames here).
+> **Publishing to GitHub:** Copy each file’s body into the matching page at https://github.com/Matrix-Internet/matrix-starter-theme/wiki/ (GitHub wiki titles/slugs may differ slightly from filenames here).
 
 ---
 
 ## Quick start (new site)
+
+**Option A — Local (Flywheel)**
 
 1. Create or clone the **project repo** (theme in `wp-content/themes/<project-theme>/`).
 2. `composer install` and `npm install` in the theme folder.
 3. `cp .env.example .env` — set `WP_PATH`, `BASE_URL`, and SMTP secret if needed.
 4. Start the site in **Local** (status **Running**).
 5. `npm run flexi:install` — plugins, theme activation, staging lock.
-6. Install **ACF Pro** manually (not included in flexi-install).
+6. Enter **ACF Pro** license in wp-admin.
 7. `npm run build` — production CSS/JS.
 8. Complete **WP Mail SMTP → Authorize** in wp-admin if using Gmail.
+
+**Option B — Docker**
+
+1. `composer install` and `npm install` in the theme folder.
+2. `npm run docker:up` then `npm run docker:bootstrap` (GitHub auth prompted or via `gh auth login`).
+3. `npm run build` or `npm run dev`.
+4. Same manual steps: ACF license, SMTP authorize.
+
+→ Full Docker guide: **[5. Docker environments](5-docker-environments.md)**
 
 ---
 
@@ -41,8 +54,8 @@
 - [Composer](https://getcomposer.org/)
 - [Node.js](https://nodejs.org/) (LTS recommended)
 - [Git](https://git-scm.com/)
-- [Local by Flywheel](https://localwp.com/) (recommended for local WordPress)
-- **WP-CLI** (included in Local’s “Open Site Shell”)
+- [Local by Flywheel](https://localwp.com/) **or** [Docker Desktop](https://www.docker.com/products/docker-desktop/) — see [5. Docker environments](5-docker-environments.md)
+- **WP-CLI** (included in Local’s “Open Site Shell” or Docker `wpcli` service)
 - **ACF Pro** (required by theme and Matrix Content Gathering)
 
 ---

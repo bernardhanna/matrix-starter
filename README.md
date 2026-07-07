@@ -4,9 +4,33 @@ Matrix Starter is a modern and highly customizable WordPress theme that uses ACF
 
 ## Clone and Install
 
-Follow these steps to clone the repository and set up the project on your local machine. We recommend using **Local by Flywheel** and cloning straight to your theme folder for testing and development.
+Follow these steps to clone the repository and set up the project on your local machine.
 
-### Prerequisites
+**Two ways to run WordPress locally:**
+
+| Path | Best for |
+|------|----------|
+| **[Local by Flywheel](https://localwp.com/)** (below) | Designers, existing Local workflow |
+| **[Docker](docs/wiki/5-docker-environments.md)** | One-command spin-up, staging parity, CI |
+
+### Docker quick start
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+```bash
+composer install && npm install
+npm run docker:up
+npm run docker:bootstrap   # prompts for GitHub access if needed
+npm run dev                # asset watchers on host
+```
+
+Site: **http://localhost:8080/** — full guide: **[docs/wiki/5-docker-environments.md](docs/wiki/5-docker-environments.md)**
+
+---
+
+We also recommend using **Local by Flywheel** and cloning straight to your theme folder for testing and development.
+
+### Prerequisites (Local path)
 
 Ensure you have the following installed on your system:
 
@@ -21,7 +45,7 @@ Ensure you have the following installed on your system:
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/bernardhanna/matrix-starter.git
+   git clone https://github.com/Matrix-Internet/matrix-starter-theme.git
    ```
 
 2. **Navigate to the Project Directory**
@@ -109,7 +133,7 @@ Ensure you have the following installed on your system:
 
    This bootstrap script will:
 
-   * Clone **Matrix Component Importer**, **Matrix Sitemap Generator**, and **[Matrix Content Gathering](https://github.com/bernardhanna/matrix-content-gathering)** (client content form + flexi CSV import/export)
+   * Clone **Matrix-Internet** private plugins (ACF Pro, Component Importer, Sitemap Generator, Content Gathering, QC Snag, Go-Live Preflight Checks) — run `gh auth login` first
    * Install common plugins from WordPress.org (Classic Editor, Duplicate Page, Password Protected, Prevent Browser Caching, Rank Math SEO, WP Mail SMTP)
    * Attempt to **activate** the theme and all plugins (best-effort if the DB is reachable)
 
@@ -117,7 +141,9 @@ Ensure you have the following installed on your system:
 
    * Component importer: `/wp-admin/admin.php?page=matrix-ci-admin-page`
    * Content gathering: **Tools → Content Gathering**
-   * Still required separately: **ACF Pro**, then `npm run build`
+   * QC snagging: front-end admin toolbar → **QC Mode**
+   * Go-live preflight: **Matrix Go-Live Preflight Checks** in wp-admin (or `wp matrix-preflight run`)
+   * Still required separately: **ACF Pro license** (WP Admin → ACF), **UpdraftPlus license** (Settings → UpdraftPlus), then `npm run build`
 
 ### Troubleshooting
 
@@ -256,7 +282,7 @@ To re-skin this theme quickly for a new client/site, update semantic tokens in `
 
 These tokens are additive and mapped to existing values by default, so current styles stay visually consistent.
 
-#### Font utilities (PACE)
+#### Font utilities
 
 - `font-primary` — Public Sans (default)
 - `font-montserrat` — Montserrat (headings, kicker, CTAs)
@@ -283,14 +309,13 @@ See **[docs/accessibility-basics.md](docs/accessibility-basics.md)** for WCAG 2.
 
 ### Documentation
 
-- **[Wiki (GitHub sync source)](docs/wiki/)** — project setup, flexi-install, daily flow, tests ([publish to GitHub Wiki](https://github.com/bernardhanna/matrix-starter/wiki/))
+- **[Wiki (GitHub sync source)](docs/wiki/)** — project setup, flexi-install, daily flow, tests ([publish to GitHub Wiki](https://github.com/Matrix-Internet/matrix-starter-theme/wiki/))
 - **[Coding guidelines](docs/coding-guidelines.md)** — layout (Grid over Flex), section structure, buttons, classes to avoid, naming
 - **[Accessibility basics](docs/accessibility-basics.md)** — WCAG 2.1 AA, theme focus classes, testing checklist
 - **[Desktop menu basics](docs/desktop-menu-basics.md)** — Navi, `#site-nav` section shell, logo, dropdown/mobile partials, ACF options
 - **[ACF WordPress conversion](docs/acf-wordpress-conversion.md)** — convert static HTML to dynamic ACF sections (general)
 - **[Flexi blocks basics](docs/flexi-blocks-basics.md)** — ACF Builder flexi blocks, section structure, padding repeater, CTAs, templates
 - **[Examples folder basics](docs/examples-folder-basics.md)** — `examples/` layout, naming, code style, copy-to-production paths
-- **[PACE Hero spec](docs/superpowers/specs/pace-hero.md)** — Figma hero block (`3:5` / `3:299`), ACF + template contract
 
 ### Getting Started
 
@@ -299,7 +324,7 @@ See **[docs/accessibility-basics.md](docs/accessibility-basics.md)** for WCAG 2.
 ### Contact
 
 Bernard Hanna — [bernard@matrixinternet.ie](mailto:bernard@matrixinternet.ie)
-Project Link: [https://github.com/bernardhanna/matrix-starter](https://github.com/bernardhanna/matrix-starter)
+Project Link: [https://github.com/Matrix-Internet/matrix-starter-theme](https://github.com/Matrix-Internet/matrix-starter-theme)
 
 ## Acknowledgements
 

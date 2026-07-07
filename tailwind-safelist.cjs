@@ -9,7 +9,7 @@ module.exports = [
   // Button component (design system primary CTA)
   'btn-primary',
 
-  // PACE / brand fonts
+  // Brand / display fonts
   'font-montserrat',
   'font-comfortaa',
 
