@@ -98,24 +98,26 @@
   margin: 0;
 }
 
-/* Smaller header title + subtotal than the theme's text-lg-font utility.
- * Scoped to .rd-side-cart so it wins over the single-class utility without
- * needing !important. */
+/* Header title + subtotal — slightly larger for readability in the narrow panel. */
 .rd-side-cart .rd-side-cart__title {
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   line-height: 1.3;
 }
 
 .rd-side-cart .rd-side-cart__subtotal-amount {
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+
+.rd-side-cart .rd-side-cart__subtotal > span:first-child {
   font-size: 1.05rem;
   line-height: 1.3;
 }
 
-/* Slightly smaller item titles than the theme's text-sm-md-font utility.
- * Scoped to .rd-side-cart so it wins over the single-class utility. */
+/* Item titles — slightly larger than before; wins over text-sm-md-font utility. */
 .rd-side-cart .rd-side-cart__item-name {
-  font-size: 0.9rem;
-  line-height: 1.3;
+  font-size: 1rem;
+  line-height: 1.35;
 }
 
 .rd-side-cart__items {
@@ -175,20 +177,25 @@
   margin-top: 0.35rem;
 }
 
-/* Quantity + price line: smaller than the item name so it reads as a meta line.
- * Scoped to .rd-side-cart so it wins over the inline `text-sm-md-font` utility. */
+/* Quantity + price line and any variation/add-on text under the title. */
 .rd-side-cart .rd-side-cart__item-meta,
 .rd-side-cart .rd-side-cart__item-meta .rd-side-cart__qty,
 .rd-side-cart .rd-side-cart__item-meta .rd-side-cart__price {
-  font-size: 0.8rem;
-  line-height: 1.3;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.rd-side-cart__item dl.variation,
+.rd-side-cart__item .variation {
+  font-size: 0.92rem;
+  line-height: 1.35;
 }
 
 .rd-side-cart__item .donut-box-builder-items {
   margin: 0.5rem 0 0;
   padding-left: 1.1rem;
   list-style: disc;
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   line-height: 1.4;
 }
 
@@ -205,6 +212,16 @@
   border-top: 2px solid #291f19;
 }
 
+.rd-side-cart .rd-side-cart__note {
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.rd-side-cart .rd-side-cart__empty p {
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
 .rd-side-cart__btn {
   display: flex;
   align-items: center;
@@ -215,7 +232,7 @@
   border-radius: 4.5rem;
   border: 2px solid #291f19;
   font-family: Edmondsans, system-ui, sans-serif;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 420;
   text-align: center;
   text-decoration: none;
@@ -250,6 +267,17 @@
 
 .rd-side-cart__btn--ghost:hover {
   background: rgb(255 237 86 / 35%);
+}
+
+.rd-side-cart__btn--clear {
+  background: transparent;
+  color: #b3261e;
+  border-color: #b3261e;
+}
+
+.rd-side-cart__btn--clear:hover {
+  background: #fdecea;
+  color: #b3261e;
 }
 
 body.rd-side-cart-open {

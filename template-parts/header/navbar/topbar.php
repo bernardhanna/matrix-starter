@@ -27,10 +27,10 @@ if ($topbar_text === '' && $discount_text === '') {
 ?>
 <section
   id="topbar"
-  class="rd-topbar flextopbar relative z-[100] mx-auto w-full max-w-sitewidth bg-black-full transition-all duration-300 max-lg:px-4"
+  class="rd-topbar flextopbar relative z-[100] w-full bg-black-full transition-all duration-300"
   data-rd-topbar
 >
-  <div class="mx-auto flex max-w-max-1514 items-center justify-between">
+  <div class="mx-auto flex w-full max-w-max-1514 items-center justify-between px-4 max-lg:px-4 lg:px-8">
     <div class="relative mx-auto flex items-center justify-center gap-2 lg:h-[40px]">
       <?php if ($icon['url']) : ?>
         <img

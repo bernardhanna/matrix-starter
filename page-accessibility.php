@@ -10,13 +10,12 @@
 get_header();
 ?>
 <main id="main-content" class="site-main w-full overflow-hidden bg-white">
+  <?php get_template_part('template-parts/header/page-header-rd'); ?>
   <div class="w-full px-4 pt-10 pb-16 mx-auto lg:pt-16 max-w-max-1038">
     <?php
     while (have_posts()) :
         the_post();
         ?>
-      <h1 class="mb-8 text-center text-mob-xxl-font lg:text-lg-font font-regular text-black-full"><?php the_title(); ?></h1>
-
       <div class="gutenburg max-w-max-720 mx-auto text-base-font font-lighter text-black-full">
         <?php
         if (trim(get_the_content()) !== '') {

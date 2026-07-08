@@ -21,7 +21,7 @@ if (empty($donut_posts)) {
 
 $total = count($donut_posts);
 ?>
-<section class="featured-donuts relative bg-black" id="featured-section">
+<section class="<?php echo esc_attr(matrix_rd_section_shell_classes('featured-donuts relative bg-black')); ?>" id="featured-section">
   <div class="splide relative overflow-visible tablet-sm:[&_.splide__pagination]:hidden" id="featured-slider" role="group" aria-roledescription="carousel" aria-label="<?php esc_attr_e('Featured donuts', 'matrix-starter'); ?>">
     <div class="splide__track" id="featured-slider-track">
       <div class="splide__list">
@@ -33,7 +33,7 @@ $total = count($donut_posts);
           $image_url   = get_the_post_thumbnail_url($donut->ID, 'large') ?: get_the_post_thumbnail_url($donut->ID);
           ?>
           <div class="splide__slide" style="background-color: <?php echo esc_attr($bg_color); ?>">
-            <div class="featured-slide tablet-sm:flex-row mx-auto flex h-full w-full max-w-sitewidth flex-col pb-8 tablet-sm:pb-0">
+            <div class="<?php echo esc_attr(matrix_rd_section_inner_classes('featured-slide tablet-sm:flex-row flex h-full flex-col pb-8 tablet-sm:pb-0')); ?>">
               <div class="left-feature w-full tablet-sm:w-45">
                 <img
                   class="featured-image mobile:h-full max-tablet-sm:aspect-square xyz-in xyz-n10 w-full object-cover transition duration-150 ease-in-out"

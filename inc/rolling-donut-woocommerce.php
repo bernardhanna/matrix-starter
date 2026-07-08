@@ -503,15 +503,23 @@ function matrix_rd_product_filter_scripts(): void {
     }
 
     $product_type = is_page('merch') ? 'Merch' : 'Box';
-    wp_register_script('matrix-rd-product-filter', '', [], get_option('theme_css_version', '1.0'), true);
-    wp_enqueue_script('matrix-rd-product-filter');
-    wp_add_inline_script(
+    $version      = get_option('theme_css_version', '1.0');
+
+    wp_enqueue_script(
         'matrix-rd-product-filter',
-        sprintf(
-            '(function(){function init(){var e=document.querySelectorAll("#custom-filter a"),t=document.querySelector(".filter.products.columns-3");if(e.length&&t){var n=t.innerHTML;e.forEach(function(e){e.addEventListener("click",function(o){o.preventDefault();var r=e.dataset.filter;if(r==="all"){t.innerHTML=n;return}fetch(%s,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({action:"filter_products",category:r,productType:%s})}).then(function(e){return e.text()}).then(function(e){t.innerHTML=e})})})}var c=document.getElementById("custom-filter");if(c){var down=false,sx=0,sl=0,moved=false;c.style.cursor="grab";c.addEventListener("pointerdown",function(ev){if(ev.pointerType!=="mouse")return;down=true;moved=false;sx=ev.pageX;sl=c.scrollLeft;c.style.cursor="grabbing";c.style.userSelect="none";});window.addEventListener("pointermove",function(ev){if(!down)return;var dx=ev.pageX-sx;if(Math.abs(dx)>3)moved=true;c.scrollLeft=sl-dx;});window.addEventListener("pointerup",function(){if(!down)return;down=false;c.style.cursor="grab";c.style.userSelect="";});c.addEventListener("click",function(ev){if(moved){ev.preventDefault();ev.stopPropagation();}},true);}}if(document.readyState!=="loading"){init()}else{document.addEventListener("DOMContentLoaded",init)}})();',
-            wp_json_encode(admin_url('admin-ajax.php')),
-            wp_json_encode($product_type)
-        )
+        get_template_directory_uri() . '/assets/js/rolling-donut-product-filter.js',
+        [],
+        $version,
+        true
+    );
+
+    wp_localize_script(
+        'matrix-rd-product-filter',
+        'matrixRdProductFilter',
+        [
+            'ajaxUrl'     => admin_url('admin-ajax.php'),
+            'productType' => $product_type,
+        ]
     );
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_product_filter_scripts', 35);
@@ -562,6 +570,15 @@ function matrix_rd_single_product_assets(): void {
         get_template_directory_uri() . '/assets/js/rolling-donut-product-gallery.js',
         ['splide'],
         $version,
+        true
+    );
+
+    $bundle_list_js = get_template_directory() . '/assets/js/rolling-donut-woosb-bundle-list.js';
+    wp_enqueue_script(
+        'matrix-rd-woosb-bundle-list',
+        get_template_directory_uri() . '/assets/js/rolling-donut-woosb-bundle-list.js',
+        [],
+        file_exists($bundle_list_js) ? (string) filemtime($bundle_list_js) : $version,
         true
     );
 

@@ -25,14 +25,15 @@ $pb_class    = $is_box_page ? 'pb-8 max-md:pb-4' : 'pb-20 max-md:pb-12';
 // about pages, so there's nothing to conflict with here). The `lg:flex` rules
 // keep the existing desktop row layout — `grid` only governs below `lg`.
 $inner_class = $is_box_page
-    ? 'grid grid-cols-2 gap-x-4 gap-y-6 items-start w-full mx-auto lg:flex lg:items-center lg:justify-center lg:flex-row lg:max-w-max-1514'
-    : 'items-center w-full mx-auto services-slick lg:flex lg:justify-center lg:flex-row lg:max-w-max-1514';
+    ? 'grid grid-cols-2 gap-x-4 gap-y-6 items-start w-full lg:flex lg:items-center lg:justify-center lg:flex-row'
+    : 'items-center w-full services-slick lg:flex lg:justify-center lg:flex-row';
 ?>
 <style>
   .slick-initialized .slick-slide { display: flex; }
   .slick-track { display: flex; }
 </style>
-<section class="px-8 services">
+<section class="<?php echo esc_attr(matrix_rd_section_shell_classes('services')); ?>">
+  <div class="<?php echo esc_attr(matrix_rd_section_inner_classes('px-8')); ?>">
   <div class="relative w-full pt-16 <?php echo esc_attr($pb_class); ?>">
     <div class="lg:flex lg:justify-center lg:w-full">
       <div class="<?php echo esc_attr($inner_class); ?>">
@@ -90,5 +91,6 @@ $inner_class = $is_box_page
         <?php endforeach; ?>
       </div>
     </div>
+  </div>
   </div>
 </section>

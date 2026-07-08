@@ -34,16 +34,21 @@ if (is_home()) {
 }
 ?>
 <style>
-/* On phones the page-header band switches to a solid dark background (set via the
- * Alpine init below at <=575px). Make the breadcrumb legible against it and stop
- * the oversized title + heavy padding from leaving a huge empty band. */
-@media (max-width: 575px) {
-  #breadcrumbs,
-  #breadcrumbs a,
-  #breadcrumbs span {
-    color: #fff !important;
-  }
+/* Interior page headers use a photo band — keep breadcrumbs legible at every width. */
+.rd-page-header .rd-breadcrumbs,
+.rd-page-header .rd-breadcrumbs a,
+.rd-page-header .rd-breadcrumbs .breadcrumb-item,
+.rd-page-header .rd-breadcrumbs span {
+  color: #fff;
+}
 
+.rd-page-header .rd-breadcrumbs .breadcrumb-item.text-yellow-primary {
+  color: var(--color-yellow-primary, #f2e900);
+}
+
+/* On phones the page-header band switches to a solid dark background (set via the
+ * Alpine init below at <=575px). Tighten title spacing on small screens. */
+@media (max-width: 575px) {
   .rd-page-header__titlerow {
     padding-top: 1rem !important;
     padding-bottom: 1.25rem !important;
@@ -55,7 +60,7 @@ if (is_home()) {
   }
 }
 </style>
-<section class="relative z-20 w-full">
+<section class="rd-page-header relative z-20 w-full">
   <?php if ($image_url || $image_url_mobile) : ?>
   <div
     class="relative w-full bg-cover bg-center"
@@ -83,12 +88,8 @@ if (is_home()) {
   <?php endif; ?>
   <div class="absolute top-0 left-0 right-0 w-full h-full px-4 mx-auto desktop:p-0 lg:max-w-max-1549">
     <?php if (! function_exists('is_woocommerce') || ! is_woocommerce()) : ?>
-    <div class="flex items-start justify-start w-full pt-4">
-      <?php
-      if (function_exists('yoast_breadcrumb')) {
-          yoast_breadcrumb('<p id="breadcrumbs">', '</p>');
-      }
-      ?>
+    <div class="relative z-30 flex items-start justify-start w-full pt-4">
+      <?php matrix_rd_render_breadcrumbs(); ?>
     </div>
     <?php endif; ?>
     <div class="rd-page-header__titlerow flex w-full flex-col items-center justify-center py-8 text-center md:py-12">

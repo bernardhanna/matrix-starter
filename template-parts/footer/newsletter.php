@@ -10,8 +10,8 @@ $title_one = (string) get_field('footer_newsletter_title_one', 'option');
 $title_two = (string) get_field('footer_newsletter_title_two', 'option');
 $text      = (string) get_field('footer_newsletter_text', 'option');
 ?>
-<section class="relative newsletter bg-black-full">
-  <div class="flex relative flex-col justify-around items-center px-4 pt-4 w-full max-w-full bg-black-full lg:justify-between containermax-md: max-lg:py-4 lg:flex-row lg:mx-auto lg:max-w-max-1504 newsletter-layout">
+<section class="<?php echo esc_attr(matrix_rd_section_shell_classes('relative newsletter bg-black-full')); ?>">
+  <div class="<?php echo esc_attr(matrix_rd_section_inner_classes('newsletter-layout flex relative flex-col justify-around items-center pt-4 max-lg:py-4 lg:flex-row lg:justify-between')); ?>">
     <div class="flex flex-col w-full rounded-t-lg newsletter-content">
       <div class="flex flex-col justify-start content-start items-start px-1 pt-1 highlighted">
         <?php if ($title_one !== '') : ?>

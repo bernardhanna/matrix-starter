@@ -136,6 +136,13 @@ $item_count = $is_empty ? 0 : $cart->get_cart_contents_count();
       <a href="<?php echo esc_url($cart_url); ?>" class="rd-side-cart__btn rd-side-cart__btn--secondary">
         <?php esc_html_e('View Cart', 'matrix-starter'); ?>
       </a>
+      <button
+        type="button"
+        class="rd-side-cart__btn rd-side-cart__btn--clear"
+        data-rd-side-cart-clear
+      >
+        <?php esc_html_e('Clear cart', 'matrix-starter'); ?>
+      </button>
       <button type="button" class="rd-side-cart__btn rd-side-cart__btn--ghost" data-rd-side-cart-close>
         <?php esc_html_e('Continue Shopping', 'matrix-starter'); ?>
       </button>

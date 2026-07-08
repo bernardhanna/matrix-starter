@@ -40,14 +40,116 @@ $is_box_product      = $product_type_slug === 'box'
 $is_donut_product    = $product_type_slug === 'donut'
     || in_array('rd-product-type-donut', $body_classes, true);
 $center_header_text  = ! $is_singular_product || $is_box_product;
+$is_archive_header   = ! $is_singular_product;
+
+if ($is_archive_header) {
+    $inner_classes = 'rd-woo-header__inner absolute top-0 left-0 right-0 w-full h-full mx-auto lg:max-w-max-1549 flex flex-col items-stretch justify-start bg-black-full sm:bg-transparent min-h-[150px] max-md:min-h-[200px]';
+    $bc_classes    = 'rd-woo-bc relative z-30 flex w-full items-start justify-start pt-4 px-4 desktop:p-0';
+    $band_classes  = 'rd-woo-header__band flex-1 relative flex flex-col items-center justify-center gap-3 px-2 py-4 text-center w-full mx-auto overflow-visible';
+} elseif ($center_header_text) {
+    $inner_classes = 'rd-woo-header__inner bg-black-full sm:bg-transparent min-h-[150px] max-md:min-h-[200px] mobile:absolute top-0 left-0 right-0 w-full h-auto mobile:h-full mx-auto max-w-max-1485 flex flex-col items-center justify-center text-center';
+    $bc_classes    = 'rd-woo-bc hidden w-full pl-4 md:flex lg:max-w-max-1485 desktop:pl-0';
+    $band_classes  = 'rd-woo-header__band max-md:h-[200px] relative flex items-center px-2 text-center mobile:pt-8 mobile:px-4 desktop:p-0 desktop:pt-6 flex-col md:flex-row w-full mx-auto';
+} else {
+    $inner_classes = 'rd-woo-header__inner bg-black-full sm:bg-transparent min-h-[150px] max-md:min-h-[200px] mobile:absolute top-0 left-0 right-0 w-full h-auto mobile:h-full mx-auto max-w-max-1485 tablet:flex-col max-tablet:flex max-tablet:justify-center max-tablet:items-center';
+    $bc_classes    = 'rd-woo-bc hidden w-full pl-4 md:flex lg:max-w-max-1485 desktop:pl-0';
+    $band_classes  = 'rd-woo-header__band max-md:h-[200px] relative flex items-center justify-center px-2 text-center mobile:pt-8 mobile:px-4 desktop:p-0 desktop:pt-6 flex-col w-full';
+}
 ?>
 <style>
 /* Unified mobile hero band for every WooCommerce archive / page header
  * (shop, our-donuts, merch, donut-box, my-account). Matches the interior
  * page-header baseline used on pages like /contact-us/: a solid dark band with
  * the breadcrumb on top (white) and a centred title. Filterable archives keep
- * the "Sort by" pill centred directly under the title. Single product headers
+ * the "Sort by" control pinned top-right beside the breadcrumbs. Single product headers
  * are intentionally excluded (they have their own gallery title treatment). */
+/* Archive / shop headers: pin breadcrumbs to the top like page-header-rd. */
+@media (min-width: 768px) {
+  .rd-woo-header--archive .rd-woo-header__inner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    height: 100%;
+    min-height: 243px;
+  }
+
+  .rd-woo-header--archive .rd-woo-bc {
+    display: flex !important;
+    flex: 0 0 auto;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .rd-woo-header--archive .rd-woo-header__band {
+    flex: 1 1 auto;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.75rem;
+    height: auto !important;
+    margin: 0;
+    padding: 0.5rem 0.5rem 1.25rem;
+  }
+
+  .rd-woo-header--archive .rd-woo-header__subtitle {
+    margin: 0;
+    max-width: 90%;
+  }
+
+  .rd-woo-header--archive .rd-woo-header__titlewrap {
+    margin: 0 !important;
+    padding: 0;
+  }
+
+  .rd-woo-header__toolbar {
+    position: relative;
+    z-index: 40;
+  }
+
+  .rd-woo-header__toolbar .rd-woo-bc {
+    display: flex !important;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .rd-woo-header__toolbar .rd-woo-filter {
+    margin: 0;
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .rd-woo-header--has-filter {
+    overflow: visible;
+  }
+
+  .rd-woo-header--has-filter .rd-woo-header__inner {
+    overflow: visible;
+  }
+
+  .rd-woo-header--has-filter .rd-woo-header__headline {
+    position: relative;
+    width: 100%;
+  }
+
+  .rd-woo-header--has-filter .rd-woo-filter__panel {
+    position: absolute;
+    top: calc(100% + 1rem);
+    right: 0;
+    left: 0;
+    z-index: 60;
+    margin-top: 0;
+    width: 100%;
+  }
+}
+
 @media (max-width: 767px) {
   .rd-woo-header--archive .rd-woo-header__inner {
     display: flex !important;
@@ -59,12 +161,15 @@ $center_header_text  = ! $is_singular_product || $is_box_product;
     overflow: hidden;
   }
 
+  .rd-woo-header--has-filter.rd-woo-header--archive .rd-woo-header__inner {
+    overflow: visible;
+  }
+
   .rd-woo-header--archive .rd-woo-bc {
     display: flex !important;
     position: relative;
     z-index: 10;
     width: 100%;
-    padding: 12px 16px 0;
   }
   .rd-woo-header--archive .rd-woo-bc,
   .rd-woo-header--archive .rd-woo-bc a,
@@ -95,25 +200,26 @@ $center_header_text  = ! $is_singular_product || $is_box_product;
     line-height: 1.15;
   }
 
-  .rd-woo-header--archive .rd-woo-filter {
+  .rd-woo-header--has-filter .rd-woo-filter__panel {
+    position: absolute;
+    top: calc(100% + 1rem);
+    right: 0;
+    left: 0;
+    z-index: 60;
     margin-top: 0;
     width: 100%;
-    justify-content: center;
   }
 }
 
-/* From tablet up the band is a single row (legacy layout): the title stays
- * centred and the "Sort by" filter shrinks to its content and floats to the
- * right, so the description below sits directly under the title instead of being
- * pushed down by a full-width filter row. */
+/* From tablet up the band is a single row (legacy layout) for non-archive headers. */
 @media (min-width: 768px) {
-  .rd-woo-header .rd-woo-header__band > .rd-woo-filter {
+  .rd-woo-header:not(.rd-woo-header--archive) .rd-woo-header__band > .rd-woo-filter {
     width: auto;
     margin-top: 0;
   }
 }
 </style>
-<section class="rd-woo-header <?php echo $is_box_page ? 'rd-woo-header--box ' : ''; ?><?php echo $is_singular_product ? '' : 'rd-woo-header--archive '; ?>relative z-50 w-full mb-0 <?php echo $is_box_product ? '' : 'lg:mb-12'; ?>"
+<section class="rd-woo-header <?php echo $is_box_page ? 'rd-woo-header--box ' : ''; ?><?php echo $filter_cats !== [] ? 'rd-woo-header--has-filter ' : ''; ?><?php echo $is_singular_product ? '' : 'rd-woo-header--archive '; ?>relative z-50 w-full mb-0 <?php echo $is_box_product ? '' : 'lg:mb-12'; ?>"
   x-data="{
     activeTab: 'sign-in',
     showLostPassword: false,
@@ -139,14 +245,49 @@ $center_header_text  = ! $is_singular_product || $is_box_product;
   </div>
   <?php endif; ?>
 
-  <div class="rd-woo-header__inner bg-black-full sm:bg-transparent min-h-[150px] max-md:min-h-[200px] mobile:absolute top-0 left-0 right-0 w-full h-auto mobile:h-full mx-auto max-w-max-1485 <?php echo $is_singular_product ? 'tablet:flex-col max-tablet:flex max-tablet:justify-center max-tablet:items-center' : ($center_header_text ? 'flex flex-col items-center justify-center text-center' : 'tablet:flex-col max-tablet:flex max-tablet:justify-center max-tablet:items-center'); ?>">
-    <?php if (function_exists('woocommerce_breadcrumb')) : ?>
-    <div class="rd-woo-bc hidden w-full pl-4 md:flex lg:max-w-max-1485 desktop:pl-0">
+  <div class="<?php echo esc_attr($inner_classes); ?>">
+    <?php if ($filter_cats !== [] && function_exists('woocommerce_breadcrumb')) : ?>
+    <div
+      class="rd-woo-header__filter-shell flex w-full flex-col"
+      x-data="{
+        showFilter: false,
+        toggleFilter() {
+          if (this.showFilter) {
+            this.showFilter = false;
+            if (window.matrixRdResetProductFilter) {
+              window.matrixRdResetProductFilter();
+            }
+            return;
+          }
+          this.showFilter = true;
+        }
+      }"
+      :class="showFilter ? 'rd-woo-header__filter-shell--open' : ''"
+    >
+      <div class="rd-woo-header__toolbar w-full px-4 pt-4 desktop:px-0">
+        <div class="flex items-start justify-between gap-4">
+          <div class="<?php echo esc_attr($bc_classes); ?> !p-0">
+            <?php woocommerce_breadcrumb(); ?>
+          </div>
+          <?php get_template_part('template-parts/woocommerce/product-filter', null, ['render' => 'button']); ?>
+        </div>
+      </div>
+
+      <div class="<?php echo esc_attr($band_classes); ?>">
+    <?php elseif (function_exists('woocommerce_breadcrumb')) : ?>
+    <div class="<?php echo esc_attr($bc_classes); ?>">
       <?php woocommerce_breadcrumb(); ?>
     </div>
+
+    <div class="<?php echo esc_attr($band_classes); ?>">
+    <?php else : ?>
+    <div class="<?php echo esc_attr($band_classes); ?>">
     <?php endif; ?>
 
-    <div class="rd-woo-header__band max-md:h-[200px] relative flex items-center <?php echo $is_singular_product ? 'justify-center' : ''; ?> px-2 text-center mobile:pt-8 mobile:px-4 desktop:p-0 <?php echo $is_singular_product ? ($is_box_product ? 'desktop:pt-0 flex-col w-full' : 'desktop:pt-6 flex-col w-full') : ($center_header_text ? 'desktop:pt-6 flex-col md:flex-row w-full mx-auto' : 'desktop:pt-6 flex-row w-full'); ?>">
+      <?php if ($filter_cats !== []) : ?>
+      <div class="rd-woo-header__headline relative flex w-full flex-col items-center gap-3">
+      <?php endif; ?>
+
       <div class="rd-woo-header__titlewrap relative inline-block px-4 <?php echo $is_singular_product ? '' : 'm-auto'; ?> text-container width-fit-content desktop:p-0">
         <h1 class="relative left-0 z-10 m-auto text-center text-white font-reg420 text-font-28 mobile:text-mob-xl-font lg:text-lg-font xl:text-lg-font xxl:text-xxl-font" x-text="
           showLostPassword ? 'Reset Password' :
@@ -158,8 +299,28 @@ $center_header_text  = ! $is_singular_product || $is_box_product;
         "></h1>
       </div>
 
+      <?php if (is_page('donut-box') && has_excerpt()) : ?>
+      <p class="rd-woo-header__subtitle hidden w-2/3 px-2 text-center text-white md:block text-base-font font-lighter laptop:font-light font-laca">
+        <?php the_excerpt(); ?>
+      </p>
+      <?php elseif ($is_product_archive) : ?>
+      <p class="rd-woo-header__subtitle hidden w-[90%] px-2 text-center text-white md:block text-base-font font-lighter laptop:font-light font-laca">
+        <?php esc_html_e('Our latest flavours are listed below. Donuts can be purchased as part of a box.', 'matrix-starter'); ?>
+      </p>
+      <?php elseif ($is_merch_page) : ?>
+      <?php
+      $merch_desc = has_excerpt()
+          ? get_the_excerpt()
+          : __('Show your love for The Rolling Donut with our official merchandise.', 'matrix-starter');
+      ?>
+      <p class="rd-woo-header__subtitle hidden w-2/3 px-2 text-center text-white md:block text-base-font font-lighter laptop:font-light font-laca">
+        <?php echo esc_html($merch_desc); ?>
+      </p>
+      <?php endif; ?>
+
       <?php if ($filter_cats !== []) : ?>
-      <?php get_template_part('template-parts/woocommerce/product-filter'); ?>
+      <?php get_template_part('template-parts/woocommerce/product-filter', null, ['render' => 'panel']); ?>
+      </div>
       <?php endif; ?>
 
       <?php if ($is_singular_product) :
@@ -175,25 +336,7 @@ $center_header_text  = ! $is_singular_product || $is_box_product;
           <?php endif; ?>
       <?php endif; ?>
     </div>
-
-    <?php if (is_page('donut-box') && has_excerpt()) : ?>
-    <div class="justify-center hidden w-2/3 px-2 mx-auto mt-3 text-center text-white md:flex text-base-font font-lighter laptop:font-light font-laca">
-      <?php the_excerpt(); ?>
-    </div>
-    <?php elseif ($is_product_archive) : ?>
-    <div class="justify-center hidden w-[90%] px-2 mx-auto mt-3 text-center text-white md:flex text-base-font font-lighter laptop:font-light font-laca">
-      <?php esc_html_e('Our latest flavours are listed below. Donuts can be purchased as part of a box.', 'matrix-starter'); ?>
-    </div>
-    <?php elseif ($is_merch_page) : ?>
-    <?php // Match the donut-box/shop headers: a subtitle under the title keeps the
-          // breadcrumb + title group vertically aligned with the other archives
-          // (without it the shorter content centres lower and looks pushed down).
-          $merch_desc = has_excerpt()
-              ? get_the_excerpt()
-              : __('Show your love for The Rolling Donut with our official merchandise.', 'matrix-starter');
-    ?>
-    <div class="justify-center hidden w-2/3 px-2 mx-auto mt-3 text-center text-white md:flex text-base-font font-lighter laptop:font-light font-laca">
-      <?php echo esc_html($merch_desc); ?>
+    <?php if ($filter_cats !== [] && function_exists('woocommerce_breadcrumb')) : ?>
     </div>
     <?php endif; ?>
   </div>

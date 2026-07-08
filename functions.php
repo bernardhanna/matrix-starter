@@ -87,6 +87,7 @@ require_once get_template_directory() . '/inc/rolling-donut-single-product.php';
 require_once get_template_directory() . '/inc/rolling-donut-locations.php';
 require_once get_template_directory() . '/inc/rolling-donut-flexi-meta.php';
 require_once get_template_directory() . '/inc/rolling-donut-sections.php';
+require_once get_template_directory() . '/inc/rolling-donut-breadcrumbs.php';
 require_once get_template_directory() . '/inc/rolling-donut-contact.php';
 require_once get_template_directory() . '/inc/rolling-donut-weddings.php';
 require_once get_template_directory() . '/inc/rolling-donut-sitemap.php';
@@ -757,6 +758,14 @@ add_action('wp_footer', function () {
                 var normalized = rawName.replace(/\[\]$/, '');
                 if (map[normalized]) {
                     control.setAttribute('autocomplete', map[normalized]);
+                    return;
+                }
+                if (normalized.indexOf('eircode') !== -1 || normalized.indexOf('postcode') !== -1) {
+                    control.setAttribute('autocomplete', normalized.indexOf('shipping') === 0 || normalized.indexOf('custom_shipping') === 0 ? 'shipping postal-code' : 'postal-code');
+                    return;
+                }
+                if (normalized.indexOf('_state') !== -1 || normalized === 'state') {
+                    control.setAttribute('autocomplete', normalized.indexOf('shipping_') === 0 ? 'shipping address-level1' : 'address-level1');
                 }
             });
         }

@@ -26,14 +26,14 @@ the_title('<h2 class="pt-4 pb-2 font-bold leading-none entry-titles !max-lg:hidd
   /* Product title — responsive sizing applied to every single product page.
      Uses element+class specificity so it wins over Tailwind utilities without a CSS rebuild. */
   h2.entry-titles {
-    font-size: 1.875rem; /* 30px — mobile */
+    font-size: 1rem; /* 16px — mobile */
     line-height: 1.05;
   }
   @media (min-width: 768px) {
-    h2.entry-titles { font-size: 2.25rem; } /* 36px — tablet */
+    h2.entry-titles { font-size: 1.25rem; } /* 20px — tablet */
   }
   @media (min-width: 1250px) {
-    h2.entry-titles { font-size: 2.75rem; } /* 44px — desktop */
+    h2.entry-titles { font-size: 1.5rem; } /* 24px — desktop */
   }
 </style>
 <?php

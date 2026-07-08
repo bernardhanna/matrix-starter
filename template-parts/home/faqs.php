@@ -19,8 +19,8 @@ if ($faqs === [] && $faq_img['url'] === '') {
     return;
 }
 ?>
-<section class="w-full py-20 faq-section bg-grey-background max-md:bg-white">
-  <div class="flex flex-col items-start px-4 mx-auto sm:flex-row lg:max-w-max-1568">
+<section class="<?php echo esc_attr(matrix_rd_section_shell_classes('py-20 faq-section bg-grey-background max-md:bg-white')); ?>">
+  <div class="<?php echo esc_attr(matrix_rd_section_inner_classes('flex flex-col items-start sm:flex-row')); ?>">
     <?php if ($faq_img['url']) : ?>
     <div class="block w-full pl-4 pr-4 mx-auto lg:mx-0 lg:p-0 lg:pr-0 lg:w-45">
       <img class="m-auto lg:m-0 object-cover max-h-max-473 rounded-xl rounded-[15px] border-3 border-black-full" src="<?php echo esc_url($faq_img['url']); ?>" alt="<?php echo esc_attr($faq_img['alt']); ?>" />

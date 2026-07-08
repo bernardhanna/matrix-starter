@@ -4,6 +4,22 @@
  */
 
 /**
+ * Full-bleed section shell — background spans the viewport; do not put max-width here.
+ */
+function matrix_rd_section_shell_classes(string $extra = ''): string
+{
+    return trim('w-full ' . $extra);
+}
+
+/**
+ * Centered content column — matches footer/newsletter width (~1549px).
+ */
+function matrix_rd_section_inner_classes(string $extra = ''): string
+{
+    return trim('mx-auto w-full max-w-max-1549 px-4 lg:px-8 ' . $extra);
+}
+
+/**
  * Render our-story section for a given page (home = front page ID).
  */
 function matrix_rd_render_our_story(?int $post_id = null): void {

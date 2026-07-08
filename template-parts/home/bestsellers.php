@@ -24,7 +24,7 @@ $text_image = matrix_rd_acf_image(get_field('text_image'));
 $heading    = get_field('heading');
 ?>
 <section
-  class="bestsellers-slider relative bg-repeat"
+  class="<?php echo esc_attr(matrix_rd_section_shell_classes('bestsellers-slider relative bg-repeat')); ?>"
   <?php if ($bg_image['url']) : ?>
     style="background-image: url('<?php echo esc_url($bg_image['url']); ?>');"
   <?php endif; ?>
@@ -38,7 +38,7 @@ $heading    = get_field('heading');
         <?php echo esc_html($heading); ?>
       </h1>
     <?php endif; ?>
-    <div class="relative top-0 flex w-full flex-col content align-center pt-4 pb-20 max-desktop:px-6 lg:mx-auto lg:max-w-max-1578">
+    <div class="<?php echo esc_attr(matrix_rd_section_inner_classes('relative top-0 flex flex-col content align-center pt-4 pb-20 max-desktop:px-6')); ?>">
       <div class="bestseller-splide splide relative w-full lg:pt-8 lg:px-14 xl:px-16" role="group" aria-roledescription="carousel" aria-label="<?php esc_attr_e('Bestselling donuts', 'matrix-starter'); ?>">
         <div class="splide__track">
           <div class="splide__list">

@@ -136,6 +136,44 @@
     return refreshSideCartContent();
   }
 
+  async function clearCart() {
+    const inner = getInner();
+    const cfg = getConfig();
+    if (!inner || !cfg.ajaxUrl || !cfg.clearNonce) {
+      return null;
+    }
+
+    const body = new URLSearchParams();
+    body.append('action', 'clear_side_cart');
+    body.append('nonce', cfg.clearNonce);
+
+    try {
+      const response = await fetch(cfg.ajaxUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+        body: body.toString(),
+      });
+      const result = await response.json();
+      if (!result.success || !result.data) {
+        return null;
+      }
+
+      inner.innerHTML = result.data.html || '';
+      applyCartHeaderData(result.data);
+
+      if (typeof jQuery !== 'undefined') {
+        jQuery(document.body).trigger('removed_from_cart');
+      }
+
+      return result.data;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function bindEvents() {
     document.addEventListener('click', function (event) {
       const closeTarget = event.target.closest('[data-rd-side-cart-close]');
@@ -154,6 +192,21 @@
           refreshSideCartContent().finally(function () {
             setLoadingState(false);
           });
+        });
+        return;
+      }
+
+      const clearBtn = event.target.closest('[data-rd-side-cart-clear]');
+      if (clearBtn) {
+        event.preventDefault();
+        const cfg = getConfig();
+        const confirmMsg = (cfg.i18n && cfg.i18n.clearConfirm) || 'Remove all items from your cart?';
+        if (!window.confirm(confirmMsg)) {
+          return;
+        }
+        setLoadingState(true);
+        clearCart().finally(function () {
+          setLoadingState(false);
         });
         return;
       }

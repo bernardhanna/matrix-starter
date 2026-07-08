@@ -5,6 +5,93 @@
  * @package Matrix_Starter
  */
 
+defined('ABSPATH') || exit;
+
+/**
+ * Normalize Irish county/state values from autofill (e.g. "Co. Dublin" → "Dublin").
+ */
+function matrix_rd_normalize_ie_county(string $state, string $country = 'IE'): string {
+    if ('IE' !== $country) {
+        return $state;
+    }
+
+    $state = trim(wp_strip_all_tags($state));
+    if ('' === $state) {
+        return $state;
+    }
+
+    $state = preg_replace('/^co\.?\s*/i', '', $state);
+    $state = preg_replace('/^county\s+/i', '', $state);
+    $state = trim($state);
+
+    $states = WC()->countries->get_states('IE');
+    if (! is_array($states)) {
+        return $state;
+    }
+
+    if (isset($states[ $state ])) {
+        return $state;
+    }
+
+    foreach ($states as $code => $label) {
+        if (strcasecmp((string) $code, $state) === 0) {
+            return (string) $code;
+        }
+    }
+
+    foreach ($states as $code => $label) {
+        if (strcasecmp((string) $label, $state) === 0) {
+            return (string) $code;
+        }
+    }
+
+    if (preg_match('/^dublin\b/i', $state)) {
+        return 'Dublin';
+    }
+
+    return $state;
+}
+
+/**
+ * Normalize county + Eircode from posted checkout data (autofill often targets
+ * hidden postcode or uses "Co. …" county labels that do not match our fields).
+ *
+ * @param array<string, mixed> $data Posted checkout data.
+ *
+ * @return array<string, mixed>
+ */
+function matrix_rd_normalize_checkout_address_fields(array $data): array {
+    foreach (['billing_state', 'shipping_state'] as $field) {
+        if (empty($data[ $field ])) {
+            continue;
+        }
+
+        $country_field = str_replace('_state', '_country', $field);
+        $country       = isset($data[ $country_field ]) ? (string) $data[ $country_field ] : 'IE';
+        $data[ $field ] = matrix_rd_normalize_ie_county((string) $data[ $field ], $country);
+    }
+
+    $default_pc = 'D01 F5P2';
+    $custom     = isset($data['custom_shipping_eircode']) ? trim((string) $data['custom_shipping_eircode']) : '';
+    $ship_pc    = isset($data['shipping_postcode']) ? trim((string) $data['shipping_postcode']) : '';
+    $bill_pc    = isset($data['billing_postcode']) ? trim((string) $data['billing_postcode']) : '';
+
+    if ('' === $custom) {
+        if ('' !== $ship_pc && $default_pc !== $ship_pc) {
+            $data['custom_shipping_eircode'] = $ship_pc;
+        } elseif ('' !== $bill_pc) {
+            $data['custom_shipping_eircode'] = $bill_pc;
+        }
+    }
+
+    if (! empty($data['custom_shipping_eircode'])) {
+        $data['shipping_postcode'] = $data['custom_shipping_eircode'];
+    }
+
+    return $data;
+}
+add_filter('woocommerce_checkout_posted_data', 'matrix_rd_normalize_checkout_address_fields', 5);
+
 // Force recalculation of shipping rates when a coupon is applied or removed
 add_action('woocommerce_cart_calculate_fees', 'force_shipping_recalculation_on_coupon', 20);
 function force_shipping_recalculation_on_coupon($cart) {
@@ -58,8 +145,20 @@ function set_valid_default_eircode_for_checkout($data) {
 // Clear the default Eircode if it wasn't provided by the user before saving the order
 add_action('woocommerce_checkout_create_order', 'clear_default_eircode_for_order', 10, 2);
 function clear_default_eircode_for_order($order, $data) {
-    if ($order->get_shipping_country() === 'IE' && $order->get_shipping_postcode() === 'D01 F5P2') {
-        $order->set_shipping_postcode(''); // Clear the default Eircode before saving the order
+    $default_pc = 'D01 F5P2';
+    $eircode    = '';
+
+    if (! empty($data['custom_shipping_eircode'])) {
+        $eircode = sanitize_text_field($data['custom_shipping_eircode']);
+    } elseif ($order->get_shipping_postcode() && $default_pc !== $order->get_shipping_postcode()) {
+        $eircode = $order->get_shipping_postcode();
+    }
+
+    if ('' !== $eircode) {
+        $order->set_shipping_postcode($eircode);
+        $order->update_meta_data('_custom_shipping_eircode', $eircode);
+    } elseif ($default_pc === $order->get_shipping_postcode()) {
+        $order->set_shipping_postcode('');
     }
 }
 
@@ -174,6 +273,7 @@ function add_custom_shipping_eircode_field($fields) {
         // shipping address is actually needed, so collection orders are unaffected.
         'required'    => true,
         'priority'    => 71, // Set priority just after County (typically priority 70)
+        'autocomplete' => 'postal-code',
     );
 
     // Reorder fields to ensure custom Eircode appears right after the County field
@@ -186,6 +286,51 @@ function add_custom_shipping_eircode_field($fields) {
         }
     }
     $fields['shipping'] = $ordered_shipping_fields;
+
+    return $fields;
+}
+
+// County as plain text (not a dropdown) so browser autofill can populate it, and
+// wire autocomplete hints for state + Eircode fields.
+add_filter('woocommerce_checkout_fields', 'matrix_rd_checkout_autofill_field_attrs', 25);
+function matrix_rd_checkout_autofill_field_attrs($fields) {
+    $autocomplete = array(
+        'billing_first_name'      => 'given-name',
+        'billing_last_name'       => 'family-name',
+        'billing_address_1'       => 'address-line1',
+        'billing_address_2'       => 'address-line2',
+        'billing_city'            => 'address-level2',
+        'billing_state'           => 'address-level1',
+        'billing_postcode'        => 'postal-code',
+        'billing_country'         => 'country',
+        'billing_phone'           => 'tel',
+        'billing_email'           => 'email',
+        'shipping_first_name'     => 'shipping given-name',
+        'shipping_last_name'      => 'shipping family-name',
+        'shipping_address_1'      => 'shipping address-line1',
+        'shipping_address_2'      => 'shipping address-line2',
+        'shipping_city'           => 'shipping address-level2',
+        'shipping_state'          => 'shipping address-level1',
+        'shipping_postcode'       => 'shipping postal-code',
+        'shipping_country'        => 'shipping country',
+        'custom_shipping_eircode' => 'shipping postal-code',
+    );
+
+    foreach (array('billing', 'shipping') as $section) {
+        if (empty($fields[ $section ]) || ! is_array($fields[ $section ])) {
+            continue;
+        }
+
+        foreach ($fields[ $section ] as $key => $field) {
+            if (in_array($key, array('billing_state', 'shipping_state'), true)) {
+                $fields[ $section ][ $key ]['type'] = 'text';
+            }
+
+            if (isset($autocomplete[ $key ])) {
+                $fields[ $section ][ $key ]['autocomplete'] = $autocomplete[ $key ];
+            }
+        }
+    }
 
     return $fields;
 }
@@ -270,6 +415,8 @@ function custom_woocommerce_form_field_args($args, $key, $value)
 
         case 'shipping_state':
             $args['placeholder'] = 'County';
+            $args['type']        = 'text';
+            $args['default']     = 'Dublin';
             break;
 
         case 'custom_shipping_eircode':
@@ -394,9 +541,10 @@ function validate_addresses_for_supported_areas() {
 
     if ($ship_to_different_address) {
         // Validate the shipping address if "Ship to a different address" is selected
-        $shipping_state = isset($_POST['shipping_state']) ? trim($_POST['shipping_state']) : '';
+        $shipping_country = isset($_POST['shipping_country']) ? wc_clean(wp_unslash($_POST['shipping_country'])) : 'IE';
+        $shipping_state   = isset($_POST['shipping_state']) ? matrix_rd_normalize_ie_county(trim(wp_unslash($_POST['shipping_state'])), $shipping_country) : '';
 
-        if (!in_array($shipping_state, $valid_dublin_areas)) {
+        if (!in_array($shipping_state, $valid_dublin_areas, true)) {
             wc_add_notice(__('We do not deliver to this area. Please enter a valid Dublin area for shipping.', 'woocommerce'), 'error');
         }
     } else {
@@ -406,7 +554,7 @@ function validate_addresses_for_supported_areas() {
         // address as the delivery address, so for delivery that address must be
         // in Dublin (Ireland). Otherwise we ask them to ship to a Dublin address.
         $billing_country = isset($_POST['billing_country']) ? wc_clean(wp_unslash($_POST['billing_country'])) : '';
-        $billing_state   = isset($_POST['billing_state']) ? trim(wp_unslash($_POST['billing_state'])) : '';
+        $billing_state   = isset($_POST['billing_state']) ? matrix_rd_normalize_ie_county(trim(wp_unslash($_POST['billing_state'])), $billing_country) : '';
 
         $delivers_to_dublin = ('IE' === $billing_country) && in_array($billing_state, $valid_dublin_areas, true);
 
@@ -452,8 +600,18 @@ function customize_checkout_shipping_fields($shipping_fields)
 // Save the custom Eircode field to order meta
 add_action('woocommerce_checkout_update_order_meta', 'save_custom_eircode_field');
 function save_custom_eircode_field($order_id) {
-    if (!empty($_POST['custom_shipping_eircode'])) {
-        update_post_meta($order_id, '_custom_shipping_eircode', sanitize_text_field($_POST['custom_shipping_eircode']));
+    $eircode = '';
+
+    if (! empty($_POST['custom_shipping_eircode'])) {
+        $eircode = sanitize_text_field(wp_unslash($_POST['custom_shipping_eircode']));
+    } elseif (! empty($_POST['shipping_postcode']) && 'D01 F5P2' !== $_POST['shipping_postcode']) {
+        $eircode = sanitize_text_field(wp_unslash($_POST['shipping_postcode']));
+    } elseif (! empty($_POST['billing_postcode'])) {
+        $eircode = sanitize_text_field(wp_unslash($_POST['billing_postcode']));
+    }
+
+    if ('' !== $eircode) {
+        update_post_meta($order_id, '_custom_shipping_eircode', $eircode);
     }
 }
 

@@ -130,9 +130,55 @@ function matrix_rd_render_buy_now_button(): void {
         esc_html__('Buy Now', 'matrix-starter')
     );
 }
+
+/**
+ * Wrap Add/Buy buttons in the CTA row at render time so themed styles apply on
+ * first paint (avoids a flash of default WooCommerce button styles before JS).
+ */
+function matrix_rd_open_product_cta_row(): void
+{
+    static $opened = false;
+
+    if ($opened) {
+        return;
+    }
+
+    $opened = true;
+    echo '<div class="rd-product-cta-row">';
+}
+
+function matrix_rd_close_product_cta_row(): void
+{
+    static $closed = false;
+
+    if ($closed) {
+        return;
+    }
+
+    $closed = true;
+    echo '</div>';
+}
+
+function matrix_rd_open_product_cta_row_variable(): void
+{
+    global $product;
+
+    if (! $product instanceof WC_Product || ! $product->is_type('variable')) {
+        return;
+    }
+
+    matrix_rd_open_product_cta_row();
+}
+
+// Simple / bundle forms: open after quantity, before the add button.
+add_action('woocommerce_after_add_to_cart_quantity', 'matrix_rd_open_product_cta_row', 999);
+// Variable forms have no quantity hook — open immediately before the button.
+add_action('woocommerce_before_add_to_cart_button', 'matrix_rd_open_product_cta_row_variable', 99);
 // Priority 9 so Buy Now sits directly under Add to Basket and *above* the
 // allergen-info accordion (box-builder-woo hooks that at the default 10).
 add_action('woocommerce_after_add_to_cart_button', 'matrix_rd_render_buy_now_button', 9);
+// Close the row after Buy Now (same priority, registered second).
+add_action('woocommerce_after_add_to_cart_button', 'matrix_rd_close_product_cta_row', 9);
 
 /**
  * Send "Buy Now" adds straight to checkout (skips cart + slide-out cart).
@@ -196,7 +242,10 @@ function matrix_rd_actionbar_product(): ?WC_Product {
     return null;
 }
 
-function matrix_rd_should_show_mobile_actionbar(): bool {
+/**
+ * Standard (non-box-builder) single product pages — kept for backwards compatibility.
+ */
+function matrix_rd_is_standard_product_page(): bool {
     if (! function_exists('is_product') || ! is_product()) {
         return false;
     }
@@ -205,7 +254,17 @@ function matrix_rd_should_show_mobile_actionbar(): bool {
     if (! $product instanceof WC_Product) {
         return false;
     }
-    if (function_exists('matrix_rd_is_box_builder_product') && matrix_rd_is_box_builder_product($product)) {
+
+    return ! (function_exists('matrix_rd_is_box_builder_product') && matrix_rd_is_box_builder_product($product));
+}
+
+function matrix_rd_should_show_mobile_actionbar(): bool {
+    if (! function_exists('is_product') || ! is_product()) {
+        return false;
+    }
+
+    $product = matrix_rd_actionbar_product();
+    if (! $product instanceof WC_Product) {
         return false;
     }
 
@@ -238,7 +297,7 @@ add_action('wp_footer', 'matrix_rd_render_mobile_action_bar', 30);
  * Enqueue the proxy script that wires the floating bar to the real form buttons.
  */
 function matrix_rd_enqueue_mobile_actionbar_script(): void {
-    if (! matrix_rd_should_show_mobile_actionbar()) {
+    if (! function_exists('is_product') || ! is_product()) {
         return;
     }
 

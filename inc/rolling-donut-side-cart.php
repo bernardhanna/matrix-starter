@@ -170,6 +170,38 @@ add_action('wp_ajax_fetch_side_cart', 'matrix_rd_ajax_fetch_side_cart');
 add_action('wp_ajax_nopriv_fetch_side_cart', 'matrix_rd_ajax_fetch_side_cart');
 
 /**
+ * AJAX: empty the cart and return refreshed side cart HTML.
+ */
+function matrix_rd_ajax_clear_side_cart(): void {
+    check_ajax_referer('rd_clear_side_cart', 'nonce');
+
+    if (! class_exists('WooCommerce')) {
+        wp_send_json_error(__('WooCommerce not available.', 'matrix-starter'));
+    }
+
+    if (null === WC()->session) {
+        WC()->initialize_session();
+    }
+
+    if (is_null(WC()->cart)) {
+        wc_load_cart();
+    }
+
+    WC()->cart->empty_cart();
+
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+
+    wp_send_json_success([
+        'html'       => matrix_rd_render_side_cart_contents(),
+        'cart_count' => 0,
+        'cart_total' => '',
+    ]);
+}
+add_action('wp_ajax_clear_side_cart', 'matrix_rd_ajax_clear_side_cart');
+add_action('wp_ajax_nopriv_clear_side_cart', 'matrix_rd_ajax_clear_side_cart');
+
+/**
  * Enqueue side cart assets.
  */
 function matrix_rd_enqueue_side_cart_assets(): void {
@@ -223,7 +255,10 @@ function matrix_rd_enqueue_side_cart_assets(): void {
             'checkout'          => __('Checkout', 'matrix-starter'),
             'empty'             => __('Your cart is empty.', 'matrix-starter'),
             'remove'            => __('Remove item', 'matrix-starter'),
+            'clearCart'         => __('Clear cart', 'matrix-starter'),
+            'clearConfirm'      => __('Remove all items from your cart?', 'matrix-starter'),
         ],
+        'clearNonce' => wp_create_nonce('rd_clear_side_cart'),
     ]);
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_enqueue_side_cart_assets', 19);

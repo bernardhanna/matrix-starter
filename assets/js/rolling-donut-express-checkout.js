@@ -453,14 +453,80 @@
         syncingBillingFromShipping = false;
     }
 
-    function syncCustomEircodeToPostcodes() {
-        var $customEircode = $('#custom_shipping_eircode');
+    var DEFAULT_SEED_EIRCODE = 'D01 F5P2';
 
-        if (!$customEircode.length || !$customEircode.val()) {
+    function normalizeIrishCountyValue(raw) {
+        var value = String(raw || '').trim();
+        if (!value) {
+            return value;
+        }
+
+        value = value.replace(/^co\.?\s*/i, '').replace(/^county\s+/i, '').trim();
+        if (/^dublin\b/i.test(value)) {
+            return 'Dublin';
+        }
+
+        return value;
+    }
+
+    function normalizeIrishCountyField($field) {
+        if (!$field || !$field.length) {
             return;
         }
 
-        $('#billing_postcode, #shipping_postcode').val($customEircode.val());
+        var normalized = normalizeIrishCountyValue($field.val());
+        if (normalized && $field.val() !== normalized) {
+            $field.val(normalized).trigger('change');
+        }
+    }
+
+    function syncCustomEircodeToPostcodes() {
+        var $customEircode = $('#custom_shipping_eircode');
+        var $shippingPostcode = $('#shipping_postcode');
+        var $billingPostcode = $('#billing_postcode');
+
+        if (!$customEircode.length) {
+            return;
+        }
+
+        var customVal = String($customEircode.val() || '').trim();
+        var shippingVal = String($shippingPostcode.val() || '').trim();
+        var billingVal = $billingPostcode.length ? String($billingPostcode.val() || '').trim() : '';
+
+        if (shippingVal === DEFAULT_SEED_EIRCODE && !customVal) {
+            shippingVal = '';
+        }
+
+        if (customVal) {
+            if ($shippingPostcode.length && shippingVal !== customVal) {
+                $shippingPostcode.val(customVal);
+            }
+            if ($billingPostcode.length && billingVal !== customVal) {
+                $billingPostcode.val(customVal);
+            }
+            return;
+        }
+
+        if (shippingVal && shippingVal !== DEFAULT_SEED_EIRCODE) {
+            $customEircode.val(shippingVal);
+            if ($billingPostcode.length && !billingVal) {
+                $billingPostcode.val(shippingVal);
+            }
+            return;
+        }
+
+        if (billingVal) {
+            $customEircode.val(billingVal);
+            if ($shippingPostcode.length) {
+                $shippingPostcode.val(billingVal);
+            }
+        }
+    }
+
+    function syncCheckoutAddressAutofill() {
+        normalizeIrishCountyField($('#shipping_state'));
+        normalizeIrishCountyField($('#billing_state'));
+        syncCustomEircodeToPostcodes();
     }
 
     function getWizardMessages() {
@@ -1562,7 +1628,7 @@
         applyFulfilmentMode();
         updateScheduleDateLabel();
         syncBillingFromShippingForStripe();
-        syncCustomEircodeToPostcodes();
+        syncCheckoutAddressAutofill();
         ensureStripePaymentVisible();
         updateScheduleUnavailableState();
         syncMobilePayBarTotal();
@@ -1673,11 +1739,11 @@
         refreshPickupUi();
     });
     $(document).on(
-        'change input',
-        '#customer_details input, #customer_details select, #custom_shipping_eircode',
+        'change input blur',
+        '#customer_details input, #customer_details select, #custom_shipping_eircode, #billing_state, #shipping_state, #billing_postcode, #shipping_postcode',
         function () {
             syncBillingFromShippingForStripe();
-            syncCustomEircodeToPostcodes();
+            syncCheckoutAddressAutofill();
         }
     );
     $(document).on('change', 'input.shipping_method', applyFulfilmentMode);

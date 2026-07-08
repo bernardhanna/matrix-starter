@@ -10,9 +10,9 @@ $event_button = matrix_rd_acf_link(get_field('event_button', $post_id));
 $gift_image   = matrix_rd_acf_image(get_field('giftcard_image', $post_id));
 $gift_button  = matrix_rd_acf_link(get_field('giftcard_button', $post_id));
 ?>
-<section class="w-full bg-white bg-cover bg-no-repeat bg-top" style="background-image:url('<?php echo esc_url($bg_url); ?>')">
+<section class="<?php echo esc_attr(matrix_rd_section_shell_classes('bg-white bg-cover bg-no-repeat bg-top')); ?>" style="background-image:url('<?php echo esc_url($bg_url); ?>')">
   <div class="py-16 lg:py-28">
-    <div class="flex flex-col md:flex-row lg:max-w-max-1584 mx-auto px-4">
+    <div class="<?php echo esc_attr(matrix_rd_section_inner_classes('flex flex-col md:flex-row')); ?>">
       <div class="md:w-1/2 text-left">
         <?php if ($event_image['url']) : ?>
         <img class="h-[325px] lg:max-w-max-95 lg:max-h-[32rem] lg:h-full lg:w-full object-cover border-4 border-black-full lg:border-none rounded-20px w-auto mx-auto shadow-small lg:shadow-none" src="<?php echo esc_url($event_image['url']); ?>" alt="<?php echo esc_attr($event_image['alt']); ?>" />
@@ -27,8 +27,8 @@ $gift_button  = matrix_rd_acf_link(get_field('giftcard_button', $post_id));
       </div>
     </div>
   </div>
-  <div class="pt-8 lg:pb-24 lg:pt-0 px-4">
-    <div class="flex flex-col md:flex-row-reverse lg:max-w-max-1552 mx-auto px-0 lg:px-4">
+  <div class="pt-8 lg:pb-24 lg:pt-0">
+    <div class="<?php echo esc_attr(matrix_rd_section_inner_classes('flex flex-col md:flex-row-reverse lg:px-4')); ?>">
       <div class="md:w-1/2">
         <?php if ($gift_image['url']) : ?>
         <img class="mx-auto w-full max-lg:max-w-max-358 max-w-[30rem]" src="<?php echo esc_url($gift_image['url']); ?>" alt="<?php echo esc_attr($gift_image['alt']); ?>" />
