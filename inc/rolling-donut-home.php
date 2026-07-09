@@ -169,3 +169,28 @@ function matrix_rd_home_featured_slider_overrides(): void {
     );
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_home_featured_slider_overrides', 110);
+
+/**
+ * QC overrides for the homepage hero slider.
+ */
+function matrix_rd_home_hero_slider_qc_overrides(): void {
+    if (is_admin() || (! is_front_page() && ! is_page('about-us'))) {
+        return;
+    }
+
+    $deps = [];
+    if (wp_style_is('matrix-rd-legacy', 'enqueued')) {
+        $deps[] = 'matrix-rd-legacy';
+    }
+    if (wp_style_is('matrix-starter', 'enqueued')) {
+        $deps[] = 'matrix-starter';
+    }
+
+    wp_register_style('matrix-rd-home-hero-slider-qc', false, $deps, '1');
+    wp_enqueue_style('matrix-rd-home-hero-slider-qc');
+    wp_add_inline_style(
+        'matrix-rd-home-hero-slider-qc',
+        '.home-hero-slider .home-hero-slide__cta:hover svg,.home-hero-slider .home-hero-slide__cta:hover svg path{fill:#000!important;color:#000!important}@media (min-width:1084px){.home-hero-slider.splide .splide__pagination,.home-hero-slider.splide .home-hero-slider__pagination{left:calc(50% - 96px)!important;right:auto!important;transform:none!important}}'
+    );
+}
+add_action('wp_enqueue_scripts', 'matrix_rd_home_hero_slider_qc_overrides', 120);

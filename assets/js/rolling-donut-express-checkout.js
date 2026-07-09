@@ -11,8 +11,7 @@
     var orderSummaryUserState = null;
 
     function orderSummaryDefaultOpen() {
-        // Collapsed by default on all devices; users expand to see line items.
-        return false;
+        return true;
     }
 
     function applyOrderSummaryState() {
@@ -361,14 +360,29 @@
         syncingBillingFromShipping = false;
     }
 
+    function ensureDefaultCountries() {
+        $('#billing_country, #shipping_country').each(function () {
+            var $country = $(this);
+
+            if (!$country.val()) {
+                $country.val('IE').trigger('change');
+            }
+        });
+    }
+
     function syncCustomEircodeToPostcodes() {
         var $customEircode = $('#custom_shipping_eircode');
+        var $form = $('form.checkout.rd-express-checkout-form');
 
         if (!$customEircode.length || !$customEircode.val()) {
             return;
         }
 
-        $('#billing_postcode, #shipping_postcode').val($customEircode.val());
+        $('#shipping_postcode').val($customEircode.val());
+
+        if ($form.hasClass('rd-fulfilment-delivery') && !$form.hasClass('rd-show-billing')) {
+            $('#billing_postcode').val($customEircode.val());
+        }
     }
 
     function getWizardMessages() {
@@ -1378,6 +1392,7 @@
     function refreshExpressCheckout() {
         decorateShippingOptions();
         applyFulfilmentMode();
+        ensureDefaultCountries();
         updateScheduleDateLabel();
         syncBillingFromShippingForStripe();
         syncCustomEircodeToPostcodes();
@@ -1470,6 +1485,7 @@
 
     $(window).on('load', function () {
         initCheckoutWizard();
+        ensureDefaultCountries();
         refreshExpressCheckout();
 
         if (filterSpecificMessages(collectCheckoutErrorMessages()).length) {
@@ -1478,6 +1494,7 @@
     });
     $(function () {
         initCheckoutWizard();
+        ensureDefaultCountries();
         refreshExpressCheckout();
         applyPickupAddresses();
     });

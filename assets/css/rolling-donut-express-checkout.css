@@ -51,10 +51,10 @@
     position: sticky;
     top: 1.5rem;
     align-self: start;
-    max-height: calc(100vh - 3rem);
-    overflow-y: auto;
+    min-height: calc(100vh - 3rem);
+    max-height: none;
+    overflow-y: visible;
     overflow-x: visible;
-    scrollbar-width: thin;
   }
 }
 
@@ -517,6 +517,13 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
    Capping them all to their field keeps the checkout from overflowing. */
 .rd-express-checkout-form .select2-container {
   max-width: 100% !important;
+}
+
+.rd-express-checkout-form .woocommerce-input-wrapper .input-text,
+.rd-express-checkout-form .woocommerce-input-wrapper textarea,
+.rd-express-checkout-form .woocommerce-input-wrapper select,
+.rd-express-checkout-form .select2-container--default .select2-selection--single .select2-selection__rendered {
+  font-size: 1rem !important;
 }
 
 /* If the pickup dropdown ever renders inline inside the step (e.g. Select2 is
