@@ -26,8 +26,7 @@
     var autoAdvanceEnabled = config.autoAdvance !== false;
 
     function orderSummaryDefaultOpen() {
-        // Collapsed by default on all devices; users expand to see line items.
-        return false;
+        return true;
     }
 
     function applyOrderSummaryState() {
@@ -566,6 +565,16 @@
 
     var DEFAULT_SEED_EIRCODE = 'D01 F5P2';
 
+    function ensureDefaultCountries() {
+        $('#billing_country, #shipping_country').each(function () {
+            var $country = $(this);
+
+            if (!$country.val()) {
+                $country.val('IE').trigger('change');
+            }
+        });
+    }
+
     function normalizeIrishCountyValue(raw) {
         var value = String(raw || '').trim();
         if (!value) {
@@ -595,6 +604,7 @@
         var $customEircode = $('#custom_shipping_eircode');
         var $shippingPostcode = $('#shipping_postcode');
         var $billingPostcode = $('#billing_postcode');
+        var $form = $('form.checkout.rd-express-checkout-form');
 
         if (!$customEircode.length) {
             return;
@@ -612,7 +622,12 @@
             if ($shippingPostcode.length && shippingVal !== customVal) {
                 $shippingPostcode.val(customVal);
             }
-            if ($billingPostcode.length && billingVal !== customVal) {
+            if (
+                $billingPostcode.length &&
+                billingVal !== customVal &&
+                $form.hasClass('rd-fulfilment-delivery') &&
+                !$form.hasClass('rd-show-billing')
+            ) {
                 $billingPostcode.val(customVal);
             }
             return;
@@ -620,7 +635,12 @@
 
         if (shippingVal && shippingVal !== DEFAULT_SEED_EIRCODE) {
             $customEircode.val(shippingVal);
-            if ($billingPostcode.length && !billingVal) {
+            if (
+                $billingPostcode.length &&
+                !billingVal &&
+                $form.hasClass('rd-fulfilment-delivery') &&
+                !$form.hasClass('rd-show-billing')
+            ) {
                 $billingPostcode.val(shippingVal);
             }
             return;
@@ -1750,6 +1770,7 @@
     function refreshExpressCheckout() {
         decorateShippingOptions();
         applyFulfilmentMode();
+        ensureDefaultCountries();
         updateScheduleDateLabel();
         syncBillingFromShippingForStripe();
         syncCheckoutAddressAutofill();
@@ -1955,6 +1976,7 @@
 
     $(window).on('load', function () {
         initCheckoutWizard();
+        ensureDefaultCountries();
         refreshExpressCheckout();
 
         if (filterSpecificMessages(collectCheckoutErrorMessages()).length) {
@@ -1963,6 +1985,7 @@
     });
     $(function () {
         initCheckoutWizard();
+        ensureDefaultCountries();
         refreshExpressCheckout();
         applyPickupAddresses();
         refreshPickupUi();

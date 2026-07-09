@@ -121,6 +121,7 @@ label[for="payment_method_stripe"]::after {
   box-shadow: none !important;
   padding-left: 2.75rem !important;
   border-radius: 200px;
+  font-size: 1rem !important;
 }
 
 .woocommerce-checkout .icon-address-2 .input-text,
@@ -171,7 +172,9 @@ label[for="payment_method_stripe"]::after {
 }
 
 .woocommerce-checkout .icon-city .woocommerce-input-wrapper::before,
-.woocommerce-checkout .icon-state .woocommerce-input-wrapper::before {
+.woocommerce-checkout .icon-state .woocommerce-input-wrapper::before,
+.woocommerce-checkout #billing_country_field .woocommerce-input-wrapper::before,
+.woocommerce-checkout #shipping_country_field .woocommerce-input-wrapper::before {
   content: url('https://api.iconify.design/ph/map-pin.svg?width=22&height=22');
   position: absolute;
   left: 1rem;
@@ -208,12 +211,16 @@ label[for="payment_method_stripe"]::after {
 }
 
 .woocommerce-checkout #billing_state_field .select2-container,
-.woocommerce-checkout #shipping_state_field .select2-container {
+.woocommerce-checkout #shipping_state_field .select2-container,
+.woocommerce-checkout #billing_country_field .select2-container,
+.woocommerce-checkout #shipping_country_field .select2-container {
   width: 100% !important;
 }
 
 .woocommerce-checkout #billing_state_field .select2-selection--single,
-.woocommerce-checkout #shipping_state_field .select2-selection--single {
+.woocommerce-checkout #shipping_state_field .select2-selection--single,
+.woocommerce-checkout #billing_country_field .select2-selection--single,
+.woocommerce-checkout #shipping_country_field .select2-selection--single {
   height: 3.5rem;
   border: none;
   border-radius: 200px;
@@ -223,4 +230,5 @@ label[for="payment_method_stripe"]::after {
 .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__rendered {
   padding-left: 2.75rem;
   line-height: 3.5rem;
+  font-size: 1rem !important;
 }

@@ -35,7 +35,7 @@ defined('ABSPATH') || exit;
         object-fit: cover;
     }
 </style>
-<details class="rd-order-summary w-full border-2 border-solid shop_table woocommerce-checkout-review-order-table border-black-full rounded-20px boxshadow">
+<details class="rd-order-summary w-full border-2 border-solid shop_table woocommerce-checkout-review-order-table border-black-full rounded-20px boxshadow" open>
     <summary class="rd-order-summary__bar" aria-label="<?php esc_attr_e('Order details', 'matrix-starter'); ?>">
         <span class="rd-order-summary__title text-base-font font-reg420"><?php esc_html_e('Order Details', 'matrix-starter'); ?></span>
         <span class="rd-order-summary__meta">

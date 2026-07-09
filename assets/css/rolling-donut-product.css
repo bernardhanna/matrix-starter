@@ -535,6 +535,20 @@ body.single-product form.cart .rd-bb-cta-row .rd-buy-now-button.disabled {
   }
 }
 
+@media (max-width: 768px) {
+  #simple-add-to-cart-form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #simple-add-to-cart-form .single_add_to_cart_button.button.alt,
+  #simple-add-to-cart-form .rd-buy-now-button {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
 /* ACF product add-ons (box-builder-woo) */
 #custom-product-addons {
   margin: 1rem 0;

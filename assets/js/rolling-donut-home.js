@@ -112,6 +112,14 @@
     updateSlideCounts(1);
   }
 
+  function initHeroCtaLinks() {
+    document.querySelectorAll('.home-hero-slide__cta').forEach(function (cta) {
+      if (cta.textContent.trim() === 'Build your custom box') {
+        cta.href = '/product/personalised-midi-sourdough-donuts-box-of-20/';
+      }
+    });
+  }
+
   function initHeroSlideBackgrounds() {
     const panels = document.querySelectorAll('.home-hero-slide__left[data-mobile-bg]');
     if (!panels.length) {
@@ -133,12 +141,13 @@
   }
 
   function replayHeroSlideMotion(splide) {
-    const slide = splide.Components.Slides.getAt(splide.index)?.slide;
-    if (!slide) {
+    const slide = splide.Components.Slides.getAt(splide.index);
+    const slideEl = slide && slide.slide;
+    if (!slideEl) {
       return;
     }
 
-    const inner = slide.querySelector('.home-hero-slide');
+    const inner = slideEl.querySelector('.home-hero-slide');
     if (!inner) {
       return;
     }
@@ -156,18 +165,17 @@
 
     const slideCount = hero.querySelectorAll('.splide__slide').length;
     const heroSplide = new Splide('#home-hero-slider', {
-      type: 'fade',
+      type: slideCount > 1 ? 'loop' : 'slide',
       perPage: 1,
       arrows: slideCount > 1,
       pagination: slideCount > 1 ? '#home-hero-slider-pagination' : false,
-      rewind: false,
       speed: 500,
       easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
       drag: slideCount > 1,
       autoplay: slideCount > 1,
-      interval: 4000,
-      pauseOnHover: true,
-      pauseOnFocus: true,
+      interval: 5000,
+      pauseOnHover: false,
+      pauseOnFocus: false,
       resetProgress: false,
     });
 
@@ -193,7 +201,7 @@
       placeHeroControls(heroSplide);
     });
 
-    var heroControlsResizeTimer;
+    let heroControlsResizeTimer;
     window.addEventListener('resize', function () {
       window.clearTimeout(heroControlsResizeTimer);
       heroControlsResizeTimer = window.setTimeout(function () {
@@ -202,17 +210,15 @@
     });
   }
 
-  var heroControlsHome = { parent: null, next: null };
+  const heroControlsHome = { parent: null, next: null };
 
-  // On mobile the slider chrome must sit in the slide flow directly under the
-  // CTA — not absolutely over it. Splide still owns the nodes; we only move them.
   function placeHeroControls(splide) {
-    var hero = document.getElementById('home-hero-slider');
+    const hero = document.getElementById('home-hero-slider');
     if (!hero) {
       return;
     }
 
-    var controls = hero.querySelector('.home-hero-slider__controls');
+    const controls = hero.querySelector('.home-hero-slider__controls');
     if (!controls) {
       return;
     }
@@ -230,14 +236,14 @@
       return;
     }
 
-    var slide = splide.Components.Slides.getAt(splide.index);
-    var slideEl = slide && slide.slide;
+    const slide = splide.Components.Slides.getAt(splide.index);
+    const slideEl = slide && slide.slide;
     if (!slideEl) {
       return;
     }
 
-    var target = slideEl.querySelector('.home-hero-slide__cta-wrap')
-      || slideEl.querySelector('.home-hero-slide__content');
+    const target =
+      slideEl.querySelector('.home-hero-slide__cta-wrap') || slideEl.querySelector('.home-hero-slide__content');
     if (!target) {
       return;
     }
@@ -276,6 +282,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     initServicesSlick();
+    initHeroCtaLinks();
 
     if (typeof Splide === 'undefined') {
       return;
