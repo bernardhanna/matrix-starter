@@ -214,6 +214,11 @@ function custom_woocommerce_form_field_args($args, $key, $value)
 
         case 'billing_country':
             $args['placeholder'] = 'Country';
+            $args['default'] = 'IE';
+            break;
+
+        case 'shipping_country':
+            $args['default'] = 'IE';
             break;
 
         case 'billing_address_1':

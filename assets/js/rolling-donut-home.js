@@ -112,6 +112,148 @@
     updateSlideCounts(1);
   }
 
+  function initHeroCtaLinks() {
+    document.querySelectorAll('.home-hero-slide__cta').forEach(function (cta) {
+      if (cta.textContent.trim() === 'Build your custom box') {
+        cta.href = '/product/personalised-midi-sourdough-donuts-box-of-20/';
+      }
+    });
+  }
+
+  function initHeroSlideBackgrounds() {
+    const panels = document.querySelectorAll('.home-hero-slide__left[data-mobile-bg]');
+    if (!panels.length) {
+      return;
+    }
+
+    const apply = function () {
+      const mobile = window.innerWidth < 1084;
+      panels.forEach(function (panel) {
+        const url = mobile ? panel.dataset.mobileBg : panel.dataset.desktopBg;
+        if (url) {
+          panel.style.backgroundImage = 'url("' + url + '")';
+        }
+      });
+    };
+
+    apply();
+    window.addEventListener('resize', apply);
+  }
+
+  function replayHeroSlideMotion(splide) {
+    const slide = splide.Components.Slides.getAt(splide.index);
+    const slideEl = slide && slide.slide;
+    if (!slideEl) {
+      return;
+    }
+
+    const inner = slideEl.querySelector('.home-hero-slide');
+    if (!inner) {
+      return;
+    }
+
+    inner.classList.remove('is-animating');
+    void inner.offsetWidth;
+    inner.classList.add('is-animating');
+  }
+
+  function initHeroSlider() {
+    const hero = document.getElementById('home-hero-slider');
+    if (!hero) {
+      return;
+    }
+
+    const slideCount = hero.querySelectorAll('.splide__slide').length;
+    const heroSplide = new Splide('#home-hero-slider', {
+      type: slideCount > 1 ? 'loop' : 'slide',
+      perPage: 1,
+      arrows: slideCount > 1,
+      pagination: slideCount > 1 ? '#home-hero-slider-pagination' : false,
+      speed: 500,
+      easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+      drag: slideCount > 1,
+      autoplay: slideCount > 1,
+      interval: 5000,
+      pauseOnHover: false,
+      pauseOnFocus: false,
+      resetProgress: false,
+    });
+
+    const splideExtensions = window.splide && window.splide.Extensions;
+    if (splideExtensions) {
+      heroSplide.mount(splideExtensions);
+    } else {
+      heroSplide.mount();
+    }
+
+    placeHeroControls(heroSplide);
+
+    heroSplide.on('mounted', function () {
+      replayHeroSlideMotion(heroSplide);
+      placeHeroControls(heroSplide);
+    });
+
+    heroSplide.on('move', function () {
+      replayHeroSlideMotion(heroSplide);
+    });
+
+    heroSplide.on('moved', function () {
+      placeHeroControls(heroSplide);
+    });
+
+    let heroControlsResizeTimer;
+    window.addEventListener('resize', function () {
+      window.clearTimeout(heroControlsResizeTimer);
+      heroControlsResizeTimer = window.setTimeout(function () {
+        placeHeroControls(heroSplide);
+      }, 150);
+    });
+  }
+
+  const heroControlsHome = { parent: null, next: null };
+
+  function placeHeroControls(splide) {
+    const hero = document.getElementById('home-hero-slider');
+    if (!hero) {
+      return;
+    }
+
+    const controls = hero.querySelector('.home-hero-slider__controls');
+    if (!controls) {
+      return;
+    }
+
+    if (!heroControlsHome.parent) {
+      heroControlsHome.parent = controls.parentElement;
+      heroControlsHome.next = controls.nextElementSibling;
+    }
+
+    if (window.innerWidth >= 1084) {
+      hero.classList.remove('home-hero-slider--controls-in-slide');
+      if (controls.parentElement !== heroControlsHome.parent) {
+        heroControlsHome.parent.insertBefore(controls, heroControlsHome.next);
+      }
+      return;
+    }
+
+    const slide = splide.Components.Slides.getAt(splide.index);
+    const slideEl = slide && slide.slide;
+    if (!slideEl) {
+      return;
+    }
+
+    const target =
+      slideEl.querySelector('.home-hero-slide__cta-wrap') || slideEl.querySelector('.home-hero-slide__content');
+    if (!target) {
+      return;
+    }
+
+    hero.classList.add('home-hero-slider--controls-in-slide');
+    if (controls.parentElement !== target) {
+      target.appendChild(controls);
+    }
+  }
+
   function initBestsellerSlider() {
     const bestseller = document.querySelector('.bestseller-splide');
     if (!bestseller) {
@@ -140,12 +282,15 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     initServicesSlick();
+    initHeroCtaLinks();
 
     if (typeof Splide === 'undefined') {
       return;
     }
 
     initFeaturedSlider();
+    initHeroSlideBackgrounds();
+    initHeroSlider();
     initBestsellerSlider();
   });
 
