@@ -517,18 +517,16 @@ function matrix_rd_checkout_footer_scripts(): void {
               $pickupSelect.select2('destroy');
             }
 
-            $pickupSelect.find('option').filter(function () {
-              return !$(this).attr('data-placeholder') && !$(this).val();
-            }).remove();
+            $pickupSelect.find('option[data-placeholder="true"]').remove();
 
-            if ($pickupSelect.find('option[data-placeholder="true"]').length === 0) {
-              $pickupSelect.prepend('<option value="" disabled selected data-placeholder="true">Select a Pickup location</option>');
+            if (!$pickupSelect.find('option[value=""]').length) {
+              $pickupSelect.prepend('<option value=""></option>');
             }
 
             if ($pickupSelect.hasClass('wc-enhanced-select')) {
               $pickupSelect.select2({
                 placeholder: 'Select a Pickup location',
-                allowClear: false,
+                allowClear: true,
                 width: '100%'
               });
             }

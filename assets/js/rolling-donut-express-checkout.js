@@ -15,6 +15,10 @@
     // restorePickupSelection). The guard stops a restore from re-entering itself.
     var rememberedPickup = '';
     var pickupRestoreGuard = false;
+    var pickupUserSelected = false;
+    // Brief window after opening the pickup dropdown where we ignore selections.
+    // Mobile Select2 can treat the open tap as a select of the first option.
+    var pickupOpenGuardUntil = 0;
     // Phase 1 auto-advance: the Method and Date steps are single-choice, so once
     // a valid choice is made we move the customer to the next step automatically.
     // The Continue buttons stay as a manual fallback. Can be disabled by the
@@ -104,6 +108,9 @@
 
             if (isSelectedPickup) {
                 refreshPickupSelect2($li);
+                window.setTimeout(function () {
+                    prepareVisiblePickupSelects($li);
+                }, 0);
             }
         });
     }
@@ -155,15 +162,112 @@
             return;
         }
 
-        var value = $select.val();
+        var value = pickupUserSelected ? $select.val() : '';
         var reinit = $.extend({}, instance.options.options, { dropdownParent: $wrap, width: '100%' });
 
         $wrap.css('position', 'relative');
         $select.select2('destroy');
         $select.select2(reinit);
 
-        if (value) {
+        if (value && pickupUserSelected) {
             $select.val(value).trigger('change.select2');
+        } else {
+            clearPickupSelectValue($select);
+        }
+    }
+
+    function isValidPickupSelection(value) {
+        return !!(value && String(value) !== '0');
+    }
+
+    function isGenuinePickupSelectEvent(event) {
+        return !!(event && event.params && event.params.originalEvent);
+    }
+
+    function ensurePickupPlaceholderOption($select) {
+        if (!$select.find('option[value=""]').length) {
+            $select.prepend('<option value=""></option>');
+        }
+    }
+
+    function clearPickupSelectValue($select) {
+        ensurePickupPlaceholderOption($select);
+        $select.val(null);
+
+        if ($select.find('option[value=""]').length) {
+            $select.val('');
+        }
+
+        if ($select.hasClass('select2-hidden-accessible')) {
+            $select.trigger('change.select2');
+        }
+
+        $select.trigger('change');
+    }
+
+    // Anchor the dropdown and clear any LPP/Select2 default before the customer opens it.
+    function prepareVisiblePickupSelects($scope) {
+        var $root = $scope && $scope.length ? $scope : $('#rd-checkout-step-method');
+
+        $root.find('select.pickup-location-lookup').each(function () {
+            var $select = $(this);
+
+            ensurePickupPlaceholderOption($select);
+
+            if ($select.hasClass('select2-hidden-accessible')) {
+                anchorPickupSelect($select);
+            }
+
+            if (!pickupUserSelected && isValidPickupSelection($select.val())) {
+                pickupRestoreGuard = true;
+                clearPickupSelectValue($select);
+                window.setTimeout(function () {
+                    pickupRestoreGuard = false;
+                }, 150);
+            }
+        });
+    }
+
+    function clearPickupLocationSelection() {
+        var $select = $('#rd-checkout-step-method select.pickup-location-lookup');
+
+        if (!$select.length) {
+            return;
+        }
+
+        pickupRestoreGuard = true;
+        clearPickupSelectValue($select);
+        rememberedPickup = '';
+        pickupUserSelected = false;
+
+        window.setTimeout(function () {
+            pickupRestoreGuard = false;
+        }, 150);
+    }
+
+    // LPP and Select2 can pre-select the first/default location when collection is
+    // chosen. Until the customer explicitly picks from the dropdown, keep the
+    // field empty so validation and auto-advance do not skip the Method step.
+    function enforcePickupRequiresUserChoice() {
+        if (!isPickupMethod(getChosenShippingMethod())) {
+            return;
+        }
+
+        var $select = $('#rd-checkout-step-method select.pickup-location-lookup');
+
+        if (!$select.length) {
+            return;
+        }
+
+        if (pickupUserSelected && rememberedPickup) {
+            if ($select.val() !== rememberedPickup && $select.find('option[value="' + rememberedPickup + '"]').length) {
+                restorePickupSelection();
+            }
+            return;
+        }
+
+        if (isValidPickupSelection($select.val())) {
+            clearPickupLocationSelection();
         }
     }
 
@@ -189,6 +293,7 @@
         }
 
         pickupRestoreGuard = true;
+        pickupUserSelected = true;
         $select.val(rememberedPickup);
 
         if ($select.hasClass('select2-hidden-accessible')) {
@@ -207,7 +312,13 @@
     // lazily at open time — see the select2:opening handler — because LPP may
     // re-init its picker after us, undoing an eager re-anchor.)
     function refreshPickupUi() {
-        window.setTimeout(restorePickupSelection, 0);
+        window.setTimeout(function () {
+            if (pickupUserSelected && rememberedPickup) {
+                restorePickupSelection();
+            } else {
+                enforcePickupRequiresUserChoice();
+            }
+        }, 0);
     }
 
     function ensureBillingToggle() {
@@ -877,15 +988,28 @@
 
         if (isPickupMethod(getChosenShippingMethod())) {
             var $pickup = $('#rd-checkout-step-method select.pickup-location-lookup');
-            var pickupVal = $pickup.length ? $pickup.val() : '';
+            var pickupVal = '';
 
-            // A still-in-flight order-review refresh can momentarily blank the
-            // <select>. Fall back to (and re-apply) the customer's remembered
-            // choice so the wizard doesn't block them over a transient reset —
-            // LPP reads the posted value at submit, so a populated field is valid.
-            if (!pickupVal && rememberedPickup) {
-                restorePickupSelection();
-                pickupVal = $pickup.val() || rememberedPickup;
+            if (!$pickup.length) {
+                if (applyHighlights) {
+                    $('#rd-checkout-step-method .rd-express-shipping-body').addClass('rd-field-error');
+                }
+
+                errors.push(messages.selectPickup || 'Choose a pickup location.');
+                return errors;
+            }
+
+            if (pickupUserSelected) {
+                pickupVal = rememberedPickup || ($pickup.length ? $pickup.val() : '');
+
+                // A still-in-flight order-review refresh can momentarily blank the
+                // <select>. Fall back to (and re-apply) the customer's remembered
+                // choice so the wizard doesn't block them over a transient reset —
+                // LPP reads the posted value at submit, so a populated field is valid.
+                if (!pickupVal && rememberedPickup) {
+                    restorePickupSelection();
+                    pickupVal = $pickup.val() || rememberedPickup;
+                }
             }
 
             if ($pickup.length && !pickupVal) {
@@ -1173,10 +1297,10 @@
 
         if ($amount.length) {
             var amountHtml = $amount.html();
-            var payLabel = config.mobilePayLabel || 'Pay';
+            var payLabel = config.mobilePayLabel || 'Place Order';
 
             $('.rd-mobile-pay-bar__amount').html(amountHtml);
-            $('.rd-mobile-pay-bar__button').text(payLabel + ' \u00b7 ' + $.trim($amount.text()));
+            $('.rd-mobile-pay-bar__button').text(payLabel);
         }
     }
 
@@ -1245,7 +1369,7 @@
             summary = $.trim($label.text().replace(/\s+/g, ' '));
         }
 
-        if (isPickupMethod(getChosenShippingMethod())) {
+        if (isPickupMethod(getChosenShippingMethod()) && pickupUserSelected) {
             var $pickup = $('#rd-checkout-step-method select.pickup-location-lookup');
             var pickupText = '';
 
@@ -1674,25 +1798,49 @@
 
     // Remember every genuine pickup-location choice so a later order-review
     // refresh that blanks the field can't lose it (see restorePickupSelection).
-    $(document).on('select2:select change', '#rd-checkout-step-method select.pickup-location-lookup', function () {
-        var value = $(this).val();
-        if (value) {
-            rememberedPickup = value;
+    $(document).on('select2:select', '#rd-checkout-step-method select.pickup-location-lookup', function (event) {
+        if (pickupRestoreGuard || !isGenuinePickupSelectEvent(event)) {
+            return;
         }
+
+        var value = $(this).val();
+
+        if (!isValidPickupSelection(value)) {
+            return;
+        }
+
+        rememberedPickup = value;
+        pickupUserSelected = true;
     });
 
     // Auto-advance off the Method step when a pickup location is chosen. Bound to
     // the genuine user-selection event (select2:select) only — never the generic
     // `change` — so programmatic restores/order-review refreshes can't push the
     // customer forward. Guarded against restores for belt-and-braces.
-    $(document).on('select2:select', '#rd-checkout-step-method select.pickup-location-lookup', function () {
-        if (pickupRestoreGuard || !$(this).val()) {
+    $(document).on('select2:select', '#rd-checkout-step-method select.pickup-location-lookup', function (event) {
+        if (
+            pickupRestoreGuard ||
+            !isGenuinePickupSelectEvent(event) ||
+            !isValidPickupSelection($(this).val())
+        ) {
             return;
         }
 
         window.setTimeout(function () {
             maybeAutoAdvanceStep(0);
         }, 0);
+    });
+
+    // Mobile Select2 can commit the first option from the same tap that opens the
+    // menu. Block selections briefly after open until the customer taps an option.
+    $(document).on('select2:selecting', '#rd-checkout-step-method select.pickup-location-lookup', function (event) {
+        if (pickupRestoreGuard || pickupUserSelected) {
+            return;
+        }
+
+        if (pickupOpenGuardUntil && Date.now() < pickupOpenGuardUntil) {
+            event.preventDefault();
+        }
     });
 
     // Guarantee the menu is anchored at the instant it opens, regardless of when
@@ -1704,6 +1852,16 @@
     $(document).on('select2:opening', '#rd-checkout-step-method select.pickup-location-lookup', function (event) {
         var $select = $(this);
         var $wrap = $select.closest('.pickup-location-field');
+
+        pickupOpenGuardUntil = Date.now() + 350;
+
+        if (!pickupUserSelected && isValidPickupSelection($select.val())) {
+            pickupRestoreGuard = true;
+            clearPickupSelectValue($select);
+            window.setTimeout(function () {
+                pickupRestoreGuard = false;
+            }, 150);
+        }
 
         if (!$wrap.length || pickupDropdownAnchored($select, $wrap)) {
             return;
@@ -1737,6 +1895,10 @@
         updateWizardSummaries();
         applyPickupAddresses();
         refreshPickupUi();
+        window.setTimeout(function () {
+            prepareVisiblePickupSelects();
+            enforcePickupRequiresUserChoice();
+        }, 0);
     });
     $(document).on(
         'change input blur',
@@ -1753,7 +1915,14 @@
     // the pickup-location handler below). Deferred so applyFulfilmentMode and any
     // Local Pickup Plus DOM work settle before we evaluate validity.
     $(document).on('change', 'input.shipping_method', function () {
+        var methodId = $(this).val();
+
         window.setTimeout(function () {
+            if (isPickupMethod(methodId)) {
+                enforcePickupRequiresUserChoice();
+                return;
+            }
+
             maybeAutoAdvanceStep(0);
         }, 0);
     });

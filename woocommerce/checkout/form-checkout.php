@@ -637,7 +637,7 @@ if (! $checkout->is_registration_enabled() && $checkout->is_registration_require
                 <strong class="rd-mobile-pay-bar__amount" aria-live="polite"></strong>
             </div>
             <button type="button" class="rd-mobile-pay-bar__button button alt">
-                <?php esc_html_e('Pay', 'matrix-starter'); ?>
+                <?php esc_html_e('Place Order', 'matrix-starter'); ?>
             </button>
         </div>
     </div>

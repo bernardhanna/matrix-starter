@@ -220,7 +220,7 @@ function matrix_rd_express_checkout_enqueue_assets(): void {
                 'acceptTerms'     => __('Tick the box to accept the terms and conditions.', 'matrix-starter'),
                 'errorsTitle'     => __('What\'s missing', 'matrix-starter'),
             ],
-            'mobilePayLabel'   => __('Pay', 'matrix-starter'),
+            'mobilePayLabel'   => __('Place Order', 'matrix-starter'),
             'pickupAddresses'  => matrix_rd_express_checkout_pickup_addresses(),
         ]);
     }

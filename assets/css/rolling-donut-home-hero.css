@@ -287,12 +287,6 @@
   line-height: 30px;
 }
 
-.home-hero-slide__heading + .home-hero-slide__body,
-.home-hero-slide__title-image + .home-hero-slide__body {
-  margin-top: 0;
-  padding-bottom: 32px;
-}
-
 .home-hero-slide__cta-wrap {
   display: flex;
   justify-content: center;

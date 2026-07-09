@@ -718,6 +718,11 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   body.woocommerce-checkout.rd-has-mobile-pay-bar {
     padding-bottom: 5.5rem;
   }
+
+  /* Scroll-to-top sits bottom-right and covers the centred Pay button. */
+  body.woocommerce-checkout.rd-has-mobile-pay-bar #scrollToTopButton {
+    display: none !important;
+  }
 }
 
 /* Single Eircode field — hide any leftover WC postcode row */
@@ -923,19 +928,26 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
 }
 
 .rd-mobile-pay-bar__inner {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: center;
+  min-height: 3rem;
   max-width: 40rem;
   margin: 0 auto;
+  padding-right: 0.25rem;
 }
 
 .rd-mobile-pay-bar__total {
+  position: absolute;
+  left: 0;
+  top: 50%;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
   min-width: 0;
+  max-width: 42%;
+  transform: translateY(-50%);
 }
 
 .rd-mobile-pay-bar__label {
@@ -953,10 +965,23 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
 
 .rd-mobile-pay-bar__button {
   flex-shrink: 0;
-  min-width: 8.5rem;
+  min-width: 10rem;
   margin: 0 !important;
-  padding: 0.85rem 1.25rem !important;
+  padding: 0.85rem 2rem !important;
   height: auto !important;
+  border-radius: 999px !important;
+  border: 3px solid #000 !important;
+  background: #ffed56 !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  box-shadow: 0 2px 0 #000;
+}
+
+.rd-mobile-pay-bar__button:hover,
+.rd-mobile-pay-bar__button:focus-visible {
+  background: #fff6a7 !important;
+  color: #000 !important;
 }
 
 @media (min-width: 1024px) {
