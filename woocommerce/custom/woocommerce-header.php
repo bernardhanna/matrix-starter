@@ -101,6 +101,12 @@ if ($is_archive_header) {
   .rd-woo-header--archive .rd-woo-header__subtitle {
     margin: 0;
     max-width: 90%;
+    color: #fff !important;
+  }
+
+  .rd-woo-header--archive .rd-woo-header__subtitle p {
+    margin: 0;
+    color: inherit !important;
   }
 
   .rd-woo-header--archive .rd-woo-header__titlewrap {
@@ -198,6 +204,15 @@ if ($is_archive_header) {
     text-align: center;
     font-size: 2rem;
     line-height: 1.15;
+  }
+
+  .rd-woo-header--archive .rd-woo-header__subtitle {
+    color: #fff !important;
+  }
+
+  .rd-woo-header--archive .rd-woo-header__subtitle p {
+    margin: 0;
+    color: inherit !important;
   }
 
   .rd-woo-header--has-filter .rd-woo-filter__panel {
@@ -300,20 +315,20 @@ if ($is_archive_header) {
       </div>
 
       <?php if (is_page('donut-box') && has_excerpt()) : ?>
-      <p class="rd-woo-header__subtitle hidden w-2/3 px-2 text-center text-white md:block text-base-font font-lighter laptop:font-light font-laca">
-        <?php the_excerpt(); ?>
+      <p class="rd-woo-header__subtitle w-2/3 max-w-2xl px-2 text-center text-white text-base-font font-lighter laptop:font-light font-laca">
+        <?php echo esc_html(wp_strip_all_tags(get_the_excerpt())); ?>
       </p>
       <?php elseif ($is_product_archive) : ?>
-      <p class="rd-woo-header__subtitle hidden w-[90%] px-2 text-center text-white md:block text-base-font font-lighter laptop:font-light font-laca">
+      <p class="rd-woo-header__subtitle w-[90%] max-w-3xl px-2 text-center text-white text-base-font font-lighter laptop:font-light font-laca">
         <?php esc_html_e('Our latest flavours are listed below. Donuts can be purchased as part of a box.', 'matrix-starter'); ?>
       </p>
       <?php elseif ($is_merch_page) : ?>
       <?php
       $merch_desc = has_excerpt()
-          ? get_the_excerpt()
+          ? wp_strip_all_tags(get_the_excerpt())
           : __('Show your love for The Rolling Donut with our official merchandise.', 'matrix-starter');
       ?>
-      <p class="rd-woo-header__subtitle hidden w-2/3 px-2 text-center text-white md:block text-base-font font-lighter laptop:font-light font-laca">
+      <p class="rd-woo-header__subtitle w-2/3 max-w-2xl px-2 text-center text-white text-base-font font-lighter laptop:font-light font-laca">
         <?php echo esc_html($merch_desc); ?>
       </p>
       <?php endif; ?>

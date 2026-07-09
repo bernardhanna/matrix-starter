@@ -678,6 +678,65 @@ form.cart .quantity_input .qty {
   letter-spacing: 0.02em;
 }
 
+/* Collapsible "Please note" callout above custom dropdown groups. */
+#custom-product-addons .rd-addon-note-accordion {
+  margin: 0.75rem 0 1rem;
+  border: 2px solid #000;
+  border-left-width: 6px;
+  border-radius: 8px;
+  background: #fff8d4;
+  overflow: hidden;
+}
+
+#custom-product-addons .rd-addon-note-accordion__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: #000;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+#custom-product-addons .rd-addon-note-accordion__chevron {
+  flex: 0 0 auto;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  margin-top: -0.15rem;
+  transition: transform 0.15s ease;
+}
+
+#custom-product-addons .rd-addon-note-accordion:not(.is-collapsed) .rd-addon-note-accordion__chevron {
+  transform: rotate(-135deg);
+  margin-top: 0.1rem;
+}
+
+#custom-product-addons .rd-addon-note-accordion.is-collapsed .rd-addon-note-accordion__panel {
+  display: none;
+}
+
+#custom-product-addons .rd-addon-note-accordion .rd-addon-note {
+  margin: 0;
+  padding: 0 0.85rem 0.85rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-weight: 500;
+}
+
 .summary .woocommerce-product-details__short-description {
   display: none;
 }

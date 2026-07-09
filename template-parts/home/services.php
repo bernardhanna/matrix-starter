@@ -20,19 +20,17 @@ if ($services === []) {
 $is_box_page = is_page('donut-box');
 $pb_class    = $is_box_page ? 'pb-8 max-md:pb-4' : 'pb-20 max-md:pb-12';
 
-// On the donut-box page show the services as a 2-column grid at every width
-// (the Slick carousel JS that 1-ups this below 1084px only loads on the home /
-// about pages, so there's nothing to conflict with here). The `lg:flex` rules
-// keep the existing desktop row layout — `grid` only governs below `lg`.
+// On the donut-box page show delivery/collection as a responsive grid (2-up, 1-up
+// on very narrow screens). Desktop keeps the legacy side-by-side row.
 $inner_class = $is_box_page
-    ? 'grid grid-cols-2 gap-x-4 gap-y-6 items-start w-full lg:flex lg:items-center lg:justify-center lg:flex-row'
+    ? 'rd-box-services-grid items-start w-full'
     : 'items-center w-full services-slick lg:flex lg:justify-center lg:flex-row';
 ?>
 <style>
   .slick-initialized .slick-slide { display: flex; }
   .slick-track { display: flex; }
 </style>
-<section class="<?php echo esc_attr(matrix_rd_section_shell_classes('services')); ?>">
+<section class="<?php echo esc_attr(matrix_rd_section_shell_classes($is_box_page ? 'services rd-box-services-section' : 'services')); ?>">
   <div class="<?php echo esc_attr(matrix_rd_section_inner_classes('px-8')); ?>">
   <div class="relative w-full pt-16 <?php echo esc_attr($pb_class); ?>">
     <div class="lg:flex lg:justify-center lg:w-full">

@@ -379,6 +379,16 @@ function matrix_rd_pages_enqueue_assets(): void {
         wp_enqueue_style('leaflet');
         wp_enqueue_script('leaflet');
     }
+
+    if (is_page('donut-box')
+        && is_readable(get_template_directory() . '/assets/css/rolling-donut-box-archive.css')) {
+        wp_enqueue_style(
+            'matrix-rd-box-archive',
+            get_template_directory_uri() . '/assets/css/rolling-donut-box-archive.css',
+            ['matrix-rd-legacy', 'matrix-starter'],
+            $theme_version
+        );
+    }
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_pages_enqueue_assets', 30);
 

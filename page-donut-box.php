@@ -24,7 +24,7 @@ while (have_posts()) {
     <?php get_template_part('template-parts/home/services'); ?>
 
     <div class="px-2 pb-20 mx-auto mobile:px-4 lg:max-w-max-100">
-      <ul class="flex flex-row flex-wrap justify-between filter products columns-3">
+      <ul class="rd-box-products-grid filter products columns-3">
         <?php
         if ($ordered_categories !== []) {
             foreach ($ordered_categories as $product_category) {

@@ -1,0 +1,107 @@
+/**
+ * Donut-box archive page — mobile header flow and responsive product grid.
+ */
+
+/* The archive header inner is absolutely positioned over the hero image. When the
+ * filter toolbar is present it is taller than the image band, so it overlaps the
+ * services row and product grid on small screens. Let the header grow in flow. */
+@media (max-width: 767px) {
+  .rd-woo-header--box.rd-woo-header--archive .rd-woo-header__inner {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .rd-box-services-section .relative.w-full.pt-16 {
+    padding-top: 2rem;
+  }
+}
+
+/* Delivery / collection row: 2-up on mobile, 1-up on very narrow screens. */
+.rd-box-services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1rem;
+  width: 100%;
+}
+
+@media (max-width: 360px) {
+  .rd-box-services-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1084px) {
+  .rd-box-services-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+  }
+}
+
+/* Legacy Woo `.columns-3` sets `column-count: 3` and breaks grid/flex layouts. */
+.woocommerce[data-product-type="Box"] ul.rd-box-products-grid {
+  column-count: auto !important;
+  -moz-columns: auto !important;
+  columns: auto !important;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.woocommerce[data-product-type="Box"] ul.rd-box-products-grid > .product-category-title,
+.woocommerce[data-product-type="Box"] ul.rd-box-products-grid > .category-description,
+.woocommerce[data-product-type="Box"] ul.rd-box-products-grid > li.w-full {
+  width: 100%;
+}
+
+/* Desktop: 3-column grid with even gaps (avoids space-between stretching 2-up rows). */
+@media (min-width: 1084px) {
+  .woocommerce[data-product-type="Box"] ul.rd-box-products-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem 1rem;
+  }
+
+  .woocommerce[data-product-type="Box"] ul.rd-box-products-grid > .product-category-title,
+  .woocommerce[data-product-type="Box"] ul.rd-box-products-grid > .category-description,
+  .woocommerce[data-product-type="Box"] ul.rd-box-products-grid > li.w-full {
+    grid-column: 1 / -1;
+  }
+
+  .woocommerce[data-product-type="Box"] ul.rd-box-products-grid > li.product {
+    width: 100% !important;
+    max-width: none;
+  }
+}
+
+/* Mobile/tablet: 2-up grid; cards fill their cell. */
+@media (max-width: 1083px) {
+  .woocommerce[data-product-type="Box"] ul.rd-box-products-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .woocommerce[data-product-type="Box"] ul.rd-box-products-grid > .product-category-title,
+  .woocommerce[data-product-type="Box"] ul.rd-box-products-grid > .category-description,
+  .woocommerce[data-product-type="Box"] ul.rd-box-products-grid > li.w-full {
+    grid-column: 1 / -1;
+  }
+
+  .woocommerce[data-product-type="Box"] ul.rd-box-products-grid > li.product {
+    width: 100% !important;
+    max-width: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .woocommerce[data-product-type="Box"] ul.rd-box-products-grid {
+    grid-template-columns: 1fr;
+  }
+}
