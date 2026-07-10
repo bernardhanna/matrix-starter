@@ -35,16 +35,17 @@ defined('ABSPATH') || exit;
         object-fit: cover;
     }
 </style>
-<details class="rd-order-summary w-full border-2 border-solid shop_table woocommerce-checkout-review-order-table border-black-full rounded-20px boxshadow" open>
-    <summary class="rd-order-summary__bar" aria-label="<?php esc_attr_e('Order details', 'matrix-starter'); ?>">
+<div class="rd-order-summary rd-order-summary--collapsed w-full border-2 border-solid shop_table woocommerce-checkout-review-order-table border-black-full rounded-20px boxshadow" role="region" aria-labelledby="rd-order-summary-title">
+    <div class="rd-order-summary__bar" id="rd-order-summary-title" aria-expanded="false" aria-controls="rd-order-summary-panel">
         <span class="rd-order-summary__title text-base-font font-reg420"><?php esc_html_e('Order Details', 'matrix-starter'); ?></span>
         <span class="rd-order-summary__meta">
             <span class="rd-order-summary__total"><?php wc_cart_totals_order_total_html(); ?></span>
             <span class="rd-order-summary__chevron" aria-hidden="true"></span>
         </span>
-    </summary>
+        <span class="screen-reader-text"><?php esc_html_e('Show or hide order details', 'matrix-starter'); ?></span>
+    </div>
 
-    <div class="rd-order-summary__body">
+    <div class="rd-order-summary__body" id="rd-order-summary-panel">
     <div class="bg-gray-disabled bg-grey-disabled relative flex justify-between  px-2 mobile:px-8 pt-4">
         <div class="w-1/2 text-left product-name bg-grey-disabled text-base-font font-reg420"><?php esc_html_e('Product', 'woocommerce'); ?></div>
         <div class="product-total text-right bg-grey-disabled text-base-font font-reg420 py-[8px] px-2 w-1/2"><?php esc_html_e('Subtotal', 'woocommerce'); ?></div>
@@ -154,4 +155,4 @@ defined('ABSPATH') || exit;
     <?php do_action('woocommerce_review_order_after_order_total'); ?>
 
     </div>
-</details>
+</div>

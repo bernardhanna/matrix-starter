@@ -20,16 +20,55 @@
     // Mobile Select2 can treat the open tap as a select of the first option.
     var pickupOpenGuardUntil = 0;
     var pickupLoadingPollId = null;
-    var pickupLoadingShowTimer = null;
     var pickupFieldSnapshotHtml = '';
+    var pickupLocationsReady = false;
+    var pickupWarmupTimer = null;
     // Phase 1 auto-advance: the Method and Date steps are single-choice, so once
     // a valid choice is made we move the customer to the next step automatically.
     // The Continue buttons stay as a manual fallback. Can be disabled by the
     // server via `autoAdvance: false`.
     var autoAdvanceEnabled = config.autoAdvance !== false;
 
-    function orderSummaryDefaultOpen() {
-        return true;
+    function isDesktopOrderSummary() {
+        return window.matchMedia('(min-width: 1024px)').matches;
+    }
+
+    function syncMobileOrderSummaryPlacement() {
+        var $grid = $('.rd-express-checkout');
+        var $summary = $('.rd-express-checkout__summary');
+        var $payBody = $('#rd-checkout-step-pay .rd-checkout-step__body');
+        var isMobile = window.matchMedia('(max-width: 1023px)').matches;
+        var onPayStep = getWizardStepIndex('pay') === currentWizardStep;
+
+        if (!$grid.length || !$summary.length || !$payBody.length) {
+            return;
+        }
+
+        if (isMobile && onPayStep) {
+            if (!$summary.hasClass('rd-order-summary--mobile-inline')) {
+                $payBody.prepend($summary);
+                $summary.addClass('rd-order-summary--mobile-inline');
+            }
+
+            return;
+        }
+
+        if ($summary.hasClass('rd-order-summary--mobile-inline')) {
+            $grid.append($summary);
+            $summary.removeClass('rd-order-summary--mobile-inline');
+        }
+    }
+
+    function rememberOrderSummaryOpenState() {
+        if (isDesktopOrderSummary()) {
+            return;
+        }
+
+        var $summary = $('.rd-order-summary');
+
+        if ($summary.length && !$summary.hasClass('rd-order-summary--collapsed')) {
+            orderSummaryUserState = true;
+        }
     }
 
     function applyOrderSummaryState() {
@@ -39,8 +78,35 @@
             return;
         }
 
-        var shouldOpen = orderSummaryUserState === null ? orderSummaryDefaultOpen() : orderSummaryUserState;
-        $summary.prop('open', shouldOpen);
+        var $bar = $summary.find('.rd-order-summary__bar').first();
+
+        syncMobileOrderSummaryPlacement();
+
+        if (isDesktopOrderSummary()) {
+            $summary.removeClass('rd-order-summary--collapsed');
+            $bar.attr('aria-expanded', 'true');
+            return;
+        }
+
+        var shouldOpen = orderSummaryUserState === true;
+
+        $summary.toggleClass('rd-order-summary--collapsed', !shouldOpen);
+        $bar.attr('aria-expanded', shouldOpen ? 'true' : 'false');
+    }
+
+    function clearOrderReviewBlockUi() {
+        var $reviewTable = $('.woocommerce-checkout-review-order-table');
+        var $orderReview = $('#order_review');
+
+        if ($reviewTable.length) {
+            $reviewTable.unblock();
+            $reviewTable.find('.blockUI.blockOverlay').remove();
+        }
+
+        if ($orderReview.length) {
+            $orderReview.unblock();
+            $orderReview.find('.blockUI.blockOverlay').remove();
+        }
     }
 
     function getChosenShippingMethod() {
@@ -81,6 +147,88 @@
             return false;
         }
 
+        if (!pickupSelectHasLocations($select)) {
+            return false;
+        }
+
+        if (!$select.hasClass('select2-hidden-accessible')) {
+            return false;
+        }
+
+        var $container = $select.nextAll('.select2-container').first();
+        var $rendered = $container.find('.select2-selection__rendered');
+
+        if (!$container.length || !$rendered.length) {
+            return false;
+        }
+
+        // Do not use offsetWidth while the loading state hides the field — that
+        // created a catch-22 where the spinner never cleared.
+        if ($select.closest('.rd-pickup-loading').length) {
+            return true;
+        }
+
+        return $container[0].offsetWidth > 20 && $.trim($rendered.text()) !== '';
+    }
+
+    function isPickupFieldPopulated($select) {
+        return pickupSelectHasLocations($select);
+    }
+
+    function markPickupLocationsReady($context) {
+        var $li = $context && $context.length
+            ? ($context.is('li') ? $context : $context.closest('li'))
+            : getPickupOptionLi();
+        var $select = $li.find('select.pickup-location-lookup').first();
+
+        if (isPickupFieldPopulated($select)) {
+            pickupLocationsReady = true;
+        }
+    }
+
+    function resetPickupLocationsReady() {
+        pickupLocationsReady = false;
+    }
+
+    function sanitizePickupSnapshotHtml(html) {
+        if (!html) {
+            return '';
+        }
+
+        var $temp = $('<div></div>').html(html);
+
+        $temp.find('.select2-container').remove();
+        $temp.find('select.pickup-location-lookup').each(function () {
+            var $select = $(this);
+
+            $select.removeClass('select2-hidden-accessible');
+            $select.removeAttr('data-select2-id aria-hidden tabindex');
+        });
+
+        return $temp.html();
+    }
+
+    function destroyPickupSelect2($select) {
+        if (!$select || !$select.length || !$.fn.select2) {
+            return;
+        }
+
+        if ($select.hasClass('select2-hidden-accessible')) {
+            try {
+                $select.select2('destroy');
+            } catch (error) {
+                $select.removeClass('select2-hidden-accessible');
+            }
+        }
+
+        $select.nextAll('.select2-container').remove();
+    }
+
+    function pickupSelectHasLocations($select) {
+        if (!$select || !$select.length) {
+            return false;
+        }
+
         var hasLocations = false;
 
         $select.find('option').each(function () {
@@ -90,23 +238,112 @@
             }
         });
 
-        if (!hasLocations) {
-            return false;
-        }
-
-        if ($select.hasClass('select2-hidden-accessible')) {
-            var $container = $select.nextAll('.select2-container').first();
-            return $container.length > 0 && $container[0].offsetWidth > 20;
-        }
-
-        return $select.is(':visible') && $select[0].offsetWidth > 20;
+        return hasLocations;
     }
 
-    function stopPickupLoadingShowTimer() {
-        if (pickupLoadingShowTimer) {
-            window.clearTimeout(pickupLoadingShowTimer);
-            pickupLoadingShowTimer = null;
+    function consolidatePickupLocationFields($li) {
+        if (!$li || !$li.length) {
+            return;
         }
+
+        decorateShippingOptions();
+
+        var $wraps = $li.children('.rd-shipping-option-pickup');
+
+        if ($wraps.length > 1) {
+            var $primary = $wraps.first();
+
+            $wraps.slice(1).each(function () {
+                $(this).children().appendTo($primary);
+                $(this).remove();
+            });
+        }
+
+        $li.children('.pickup-location-field, .pickup-location-lookup-field, .wc-local-pickup-plus-pickup-details').appendTo(
+            $li.children('.rd-shipping-option-pickup').first()
+        );
+
+        var $wrap = $li.children('.rd-shipping-option-pickup').first();
+
+        if (!$wrap.length) {
+            return;
+        }
+
+        var $selects = $wrap.find('select.pickup-location-lookup');
+        var $keeper = $selects.filter(function () {
+            return pickupSelectHasLocations($(this));
+        }).first();
+
+        if (!$keeper.length) {
+            $keeper = $selects.first();
+        }
+
+        $selects.each(function () {
+            var $select = $(this);
+
+            if ($select.is($keeper)) {
+                return;
+            }
+
+            destroyPickupSelect2($select);
+            $select.closest('.pickup-location-field, .pickup-location-lookup-field').remove();
+        });
+
+        if ($keeper.length) {
+            $keeper.nextAll('.select2-container').slice(1).remove();
+        }
+
+        $wrap.find('.rd-pickup-location-loading').not(':first').remove();
+    }
+
+    function getPickupWrapForLi($li, createIfMissing) {
+        if (!$li || !$li.length) {
+            return $();
+        }
+
+        decorateShippingOptions();
+
+        var $wrap = $li.children('.rd-shipping-option-pickup');
+
+        if (!$wrap.length && createIfMissing) {
+            $li.append('<div class="rd-shipping-option-pickup rd-pickup-pending"></div>');
+            $wrap = $li.children('.rd-shipping-option-pickup');
+        }
+
+        return $wrap.first();
+    }
+
+    function getPickupWrapContext($context) {
+        if ($context && $context.length) {
+            if ($context.is('.rd-shipping-option-pickup')) {
+                return $context;
+            }
+
+            if ($context.is('li')) {
+                return getPickupWrapForLi($context, false);
+            }
+
+            var $wrap = $context.find('.rd-shipping-option-pickup').first();
+
+            if ($wrap.length) {
+                return $wrap;
+            }
+        }
+
+        return getSelectedPickupWrap();
+    }
+
+    function isPickupContextActive($context) {
+        if ($context && $context.length) {
+            var $li = $context.is('li') ? $context : $context.closest('li');
+            var $radio = $li.find('input.shipping_method').first();
+
+            if ($radio.length && isPickupMethod($radio.val())) {
+                return $radio.is(':checked') || $li.hasClass('rd-pickup-pending') || $li.find('.rd-pickup-pending').length > 0;
+            }
+        }
+
+        return isPickupMethod(getChosenShippingMethod());
     }
 
     function getPickupOptionLi() {
@@ -132,7 +369,7 @@
         var $select = $wrap.find('select.pickup-location-lookup').first();
 
         if (isPickupLocationSelectReady($select)) {
-            pickupFieldSnapshotHtml = $wrap.html();
+            pickupFieldSnapshotHtml = sanitizePickupSnapshotHtml($wrap.html());
         }
     }
 
@@ -141,22 +378,24 @@
             return;
         }
 
+        consolidatePickupLocationFields($li);
+
         var $select = $li.find('select.pickup-location-lookup').first();
 
-        if (isPickupLocationSelectReady($select)) {
+        if ($select.length && (isPickupLocationSelectReady($select) || pickupSelectHasLocations($select))) {
             return;
         }
 
-        var $wrap = $li.children('.rd-shipping-option-pickup');
+        var $wrap = getPickupWrapForLi($li, true);
+        var sanitized = sanitizePickupSnapshotHtml(pickupFieldSnapshotHtml);
 
-        if (!$wrap.length) {
-            $li.append('<div class="rd-shipping-option-pickup rd-pickup-pending">' + pickupFieldSnapshotHtml + '</div>');
+        if (!sanitized) {
             return;
         }
 
-        if (!$select.length || !isPickupLocationSelectReady($select)) {
-            $wrap.html(pickupFieldSnapshotHtml);
-        }
+        destroyPickupSelect2($wrap.find('select.pickup-location-lookup'));
+        $wrap.html(sanitized);
+        consolidatePickupLocationFields($li);
     }
 
     function warmupPickupLocationFields() {
@@ -168,10 +407,17 @@
 
         decorateShippingOptions();
         $li.addClass('rd-pickup-warmup');
-        restorePickupSnapshotIfNeeded($li);
+        consolidatePickupLocationFields($li);
+
+        if (!$li.find('select.pickup-location-lookup').length) {
+            restorePickupSnapshotIfNeeded($li);
+        }
+
         prepareVisiblePickupSelects($li);
         applyPickupAddresses();
+        consolidatePickupLocationFields($li);
         $li.removeClass('rd-pickup-warmup');
+        markPickupLocationsReady($li);
         cachePickupFieldSnapshot();
     }
 
@@ -180,13 +426,32 @@
             return;
         }
 
-        $('#rd-checkout-step-method .rd-pickup-pending').removeClass('rd-pickup-pending');
-        decorateShippingOptions();
-        restorePickupSnapshotIfNeeded($li);
-        $li.find('.rd-shipping-option-pickup, .pickup-location-field').addClass('rd-pickup-pending');
+        $('#rd-checkout-step-method .rd-pickup-pending')
+            .not($li.find('.rd-pickup-pending'))
+            .removeClass('rd-pickup-pending');
+
+        var $wrap = getPickupWrapForLi($li, false);
+
+        if ($wrap.length) {
+            $wrap.addClass('rd-pickup-pending');
+        } else {
+            $li.addClass('rd-pickup-pending');
+        }
+
+        consolidatePickupLocationFields($li);
+
+        if (!$li.find('select.pickup-location-lookup').length) {
+            restorePickupSnapshotIfNeeded($li);
+        }
+
+        $li.find('.pickup-location-field').addClass('rd-pickup-pending');
         prepareVisiblePickupSelects($li);
-        stopPickupLoadingShowTimer();
-        setPickupLocationLoading(false);
+
+        if (pickupLocationsReady) {
+            setPickupLocationLoading(false, $li);
+        } else {
+            syncPickupLocationLoading($li);
+        }
     }
 
     function stopPickupLoadingPoll() {
@@ -196,18 +461,33 @@
         }
     }
 
-    function setPickupLocationLoading(loading) {
-        var $wrap = getSelectedPickupWrap();
+    function setPickupLocationLoading(loading, $context) {
+        var $wrap = getPickupWrapContext($context);
+
+        if (!$wrap.length && loading) {
+            var $li = $context && $context.is('li') ? $context : ($context && $context.length ? $context.closest('li') : $());
+
+            if (!$li.length && isPickupMethod(getChosenShippingMethod())) {
+                $li = $('#rd-checkout-step-method input.shipping_method:checked').closest('li');
+            }
+
+            if ($li.length) {
+                $wrap = getPickupWrapForLi($li, true);
+            }
+        }
 
         if (!$wrap.length) {
-            stopPickupLoadingPoll();
+            if (!loading) {
+                stopPickupLoadingPoll();
+            }
+
             return;
         }
 
         if (!loading) {
             stopPickupLoadingPoll();
-            stopPickupLoadingShowTimer();
             $wrap.removeClass('rd-pickup-loading');
+            $wrap.find('.rd-pickup-location-loading').remove();
             return;
         }
 
@@ -215,6 +495,7 @@
 
         if (!$wrap.find('.rd-pickup-location-loading').length) {
             var message = getWizardMessages().pickupLoading || 'Please wait… loading collection locations.';
+
             $wrap.prepend(
                 '<div class="rd-pickup-location-loading" role="status" aria-live="polite">' +
                     '<span class="rd-pickup-location-loading__spinner" aria-hidden="true"></span>' +
@@ -225,47 +506,69 @@
         }
     }
 
-    function syncPickupLocationLoading() {
-        if (!isPickupMethod(getChosenShippingMethod())) {
-            setPickupLocationLoading(false);
+    function syncPickupLocationLoading($context) {
+        if (!isPickupContextActive($context)) {
+            setPickupLocationLoading(false, $context);
             return;
         }
 
-        var $select = getSelectedPickupWrap().find('select.pickup-location-lookup').first();
+        var $wrap = getPickupWrapContext($context);
+        var $li = $context && $context.is('li') ? $context : $wrap.closest('li');
 
-        if (isPickupLocationSelectReady($select) || $('#rd-checkout-step-method .rd-pickup-pending').length) {
-            setPickupLocationLoading(false);
+        if ($li.length) {
+            consolidatePickupLocationFields($li);
+        }
+
+        $wrap = getPickupWrapContext($context);
+        var $select = $wrap.find('select.pickup-location-lookup').first();
+
+        if (isPickupLocationSelectReady($select) || isPickupFieldPopulated($select) || pickupLocationsReady) {
+            markPickupLocationsReady($context);
+            prepareVisiblePickupSelects($li.length ? $li : null);
+            setPickupLocationLoading(false, $context);
             return;
         }
 
-        stopPickupLoadingShowTimer();
+        setPickupLocationLoading(true, $context);
 
-        pickupLoadingShowTimer = window.setTimeout(function () {
-            pickupLoadingShowTimer = null;
-            $select = getSelectedPickupWrap().find('select.pickup-location-lookup').first();
+        if (pickupLoadingPollId) {
+            return;
+        }
 
-            if (isPickupLocationSelectReady($select) || $('#rd-checkout-step-method .rd-pickup-pending').length) {
-                setPickupLocationLoading(false);
-                return;
-            }
+        var attempts = 0;
 
-            setPickupLocationLoading(true);
+        pickupLoadingPollId = window.setInterval(function () {
+            attempts += 1;
+            $wrap = getPickupWrapContext($context);
+            $select = $wrap.find('select.pickup-location-lookup').first();
 
-            if (pickupLoadingPollId) {
-                return;
-            }
-
-            var attempts = 0;
-
-            pickupLoadingPollId = window.setInterval(function () {
-                attempts += 1;
-                $select = getSelectedPickupWrap().find('select.pickup-location-lookup').first();
-
-                if (isPickupLocationSelectReady($select) || attempts > 50) {
-                    setPickupLocationLoading(false);
+            if (isPickupLocationSelectReady($select) || isPickupFieldPopulated($select) || attempts > 100) {
+                if (isPickupFieldPopulated($select)) {
+                    markPickupLocationsReady($context);
                 }
-            }, 150);
-        }, 450);
+                setPickupLocationLoading(false, $context);
+            }
+        }, 100);
+    }
+
+    function schedulePickupWarmup() {
+        if (pickupLocationsReady) {
+            return;
+        }
+
+        warmupPickupLocationFields();
+
+        if (pickupWarmupTimer) {
+            window.clearTimeout(pickupWarmupTimer);
+        }
+
+        pickupWarmupTimer = window.setTimeout(function () {
+            pickupWarmupTimer = null;
+
+            if (!pickupLocationsReady) {
+                warmupPickupLocationFields();
+            }
+        }, 400);
     }
 
     function decorateShippingOptions() {
@@ -318,11 +621,13 @@
 
             if (isSelectedPickup) {
                 $pickupFields.removeClass('rd-pickup-pending');
+                consolidatePickupLocationFields($li);
                 refreshPickupSelect2($li);
                 window.setTimeout(function () {
                     prepareVisiblePickupSelects($li);
+                    consolidatePickupLocationFields($li);
                     cachePickupFieldSnapshot();
-                    syncPickupLocationLoading();
+                    syncPickupLocationLoading($li);
                 }, 0);
             }
         });
@@ -330,10 +635,12 @@
         $('#rd-checkout-step-method .rd-pickup-pending').not('.rd-pickup-visible').removeClass('rd-pickup-pending');
 
         if (!isPickup) {
+            resetPickupLocationsReady();
             setPickupLocationLoading(false);
             $('#rd-checkout-step-method .rd-pickup-pending').removeClass('rd-pickup-pending');
+            $('#rd-checkout-step-method li.rd-pickup-pending').removeClass('rd-pickup-pending');
         } else {
-            syncPickupLocationLoading();
+            syncPickupLocationLoading($('#rd-checkout-step-method input.shipping_method:checked').closest('li'));
         }
     }
 
@@ -380,12 +687,44 @@
             return;
         }
 
+        normalizePickupSelectOptions($select);
+
         if (pickupDropdownAnchored($select, $wrap)) {
+            syncPickupSelectDisplay($select);
             return;
         }
 
         var value = pickupUserSelected ? $select.val() : '';
-        var reinit = $.extend({}, instance.options.options, { dropdownParent: $wrap, width: '100%' });
+        var existingTemplateResult = instance.options.options.templateResult;
+        var existingTemplateSelection = instance.options.options.templateSelection;
+        var reinit = $.extend({}, instance.options.options, {
+            dropdownParent: $wrap,
+            width: '100%',
+            allowClear: false,
+            placeholder: getPickupPlaceholderText(),
+            templateResult: function (data, container) {
+                if (!data.id && data.id !== 0) {
+                    return null;
+                }
+
+                if (typeof existingTemplateResult === 'function') {
+                    return existingTemplateResult(data, container);
+                }
+
+                return data.text;
+            },
+            templateSelection: function (data, container) {
+                if (!data.id && data.id !== 0) {
+                    return getPickupPlaceholderText();
+                }
+
+                if (typeof existingTemplateSelection === 'function') {
+                    return existingTemplateSelection(data, container);
+                }
+
+                return data.text;
+            },
+        });
 
         $wrap.css('position', 'relative');
         $select.select2('destroy');
@@ -396,6 +735,59 @@
         } else {
             clearPickupSelectValue($select);
         }
+
+        syncPickupSelectDisplay($select);
+    }
+
+    function getPickupPlaceholderText() {
+        return getWizardMessages().selectPickupPlaceholder || 'Select a collection location';
+    }
+
+    function getActivePickupSelect() {
+        var $li = $('#rd-checkout-step-method input.shipping_method:checked').closest('li');
+
+        if (!$li.length) {
+            $li = getPickupOptionLi();
+        }
+
+        if ($li.length) {
+            consolidatePickupLocationFields($li);
+            return $li.find('select.pickup-location-lookup').first();
+        }
+
+        return $('#rd-checkout-step-method select.pickup-location-lookup').first();
+    }
+
+    function recordPickupUserSelection(value, $select) {
+        if (!isValidPickupSelection(value)) {
+            return false;
+        }
+
+        rememberedPickup = value;
+        pickupUserSelected = true;
+        clearStepErrors('method');
+
+        if ($select && $select.length) {
+            syncPickupSelectDisplay($select);
+        }
+
+        return true;
+    }
+
+    function getResolvedPickupValue($select) {
+        $select = $select && $select.length ? $select : getActivePickupSelect();
+
+        if (!$select.length || !pickupUserSelected) {
+            return '';
+        }
+
+        if (isValidPickupSelection(rememberedPickup)) {
+            return rememberedPickup;
+        }
+
+        var current = $select.val();
+
+        return isValidPickupSelection(current) ? current : '';
     }
 
     function isValidPickupSelection(value) {
@@ -406,22 +798,110 @@
         return !!(event && event.params && event.params.originalEvent);
     }
 
+    function isEmptyPickupOption($option) {
+        var value = $.trim(String($option.attr('value') || ''));
+        var text = $.trim($option.text() || '');
+
+        return (!value || value === '0') && !text;
+    }
+
+    function normalizePickupSelectOptions($select) {
+        if (!$select || !$select.length) {
+            return;
+        }
+
+        var placeholderText = getPickupPlaceholderText();
+        var selectedValue = isValidPickupSelection($select.val()) ? String($select.val()) : '';
+        var locationOptions = [];
+
+        $select.find('option').each(function () {
+            var $option = $(this);
+            var value = $.trim(String($option.attr('value') || ''));
+
+            if (isEmptyPickupOption($option)) {
+                return;
+            }
+
+            if ($option.attr('data-placeholder') === 'true' || $option.attr('data-placeholder') === true) {
+                return;
+            }
+
+            if (!isValidPickupSelection(value)) {
+                return;
+            }
+
+            locationOptions.push(this);
+        });
+
+        $select.empty();
+        $select.append(
+            $('<option>', {
+                value: '',
+                'data-placeholder': 'true',
+                text: placeholderText,
+            })
+        );
+
+        if (locationOptions.length) {
+            $select.append(locationOptions);
+        }
+
+        if (selectedValue && pickupUserSelected && $select.find('option[value="' + selectedValue + '"]').length) {
+            $select.val(selectedValue);
+        } else {
+            $select.val('');
+        }
+    }
+
     function ensurePickupPlaceholderOption($select) {
-        if (!$select.find('option[value=""]').length) {
-            $select.prepend('<option value=""></option>');
+        normalizePickupSelectOptions($select);
+    }
+
+    function ensurePickupSelectPlaceholder($select) {
+        if (!$select || !$select.length) {
+            return;
+        }
+
+        normalizePickupSelectOptions($select);
+
+        if ($select.hasClass('select2-hidden-accessible')) {
+            var instance = $select.data('select2');
+            var options = instance && instance.options ? instance.options.options : null;
+
+            if (options) {
+                options.placeholder = getPickupPlaceholderText();
+                options.allowClear = false;
+            }
+        }
+    }
+
+    function syncPickupSelectDisplay($select) {
+        if (!$select || !$select.length || !$select.hasClass('select2-hidden-accessible')) {
+            return;
+        }
+
+        var value = $select.val();
+        var $rendered = $select.nextAll('.select2-container').first().find('.select2-selection__rendered');
+
+        if (!$rendered.length) {
+            return;
+        }
+
+        if (!isValidPickupSelection(value)) {
+            $rendered.text(getPickupPlaceholderText());
+            $rendered.addClass('select2-selection__placeholder');
+        } else {
+            $rendered.removeClass('select2-selection__placeholder');
         }
     }
 
     function clearPickupSelectValue($select) {
         ensurePickupPlaceholderOption($select);
-        $select.val(null);
-
-        if ($select.find('option[value=""]').length) {
-            $select.val('');
-        }
+        $select.val('');
 
         if ($select.hasClass('select2-hidden-accessible')) {
-            $select.trigger('change.select2');
+            $select.val(null).trigger('change.select2');
+            syncPickupSelectDisplay($select);
         }
 
         $select.trigger('change');
@@ -431,10 +911,14 @@
     function prepareVisiblePickupSelects($scope) {
         var $root = $scope && $scope.length ? $scope : $('#rd-checkout-step-method');
 
+        if ($scope && $scope.is('li')) {
+            consolidatePickupLocationFields($scope);
+        }
+
         $root.find('select.pickup-location-lookup').each(function () {
             var $select = $(this);
 
-            ensurePickupPlaceholderOption($select);
+            ensurePickupSelectPlaceholder($select);
 
             if ($select.hasClass('select2-hidden-accessible')) {
                 anchorPickupSelect($select);
@@ -449,11 +933,11 @@
             }
         });
 
-        syncPickupLocationLoading();
+        syncPickupLocationLoading($scope && $scope.is('li') ? $scope : null);
     }
 
     function clearPickupLocationSelection() {
-        var $select = $('#rd-checkout-step-method select.pickup-location-lookup');
+        var $select = getActivePickupSelect();
 
         if (!$select.length) {
             return;
@@ -477,7 +961,7 @@
             return;
         }
 
-        var $select = $('#rd-checkout-step-method select.pickup-location-lookup');
+        var $select = getActivePickupSelect();
 
         if (!$select.length) {
             return;
@@ -506,7 +990,7 @@
             return;
         }
 
-        var $select = $('#rd-checkout-step-method select.pickup-location-lookup');
+        var $select = getActivePickupSelect();
 
         if (!$select.length || $select.val()) {
             return;
@@ -664,6 +1148,8 @@
 
         $billingHeading.text('Billing address');
         $('#ship-to-different-address').hide();
+        $('#shipping_phone_field, #shipping_email_field').closest('.single-field-wrapper').remove();
+        $('#shipping_phone_field, #shipping_email_field').remove();
     }
 
     function ensureDeliveryShipFlag() {
@@ -718,6 +1204,10 @@
         decorateShippingOptions();
         syncPickupVisibility();
         updateFulfilmentLabels();
+
+        if (isDesktopOrderSummary()) {
+            applyOrderSummaryState();
+        }
     }
 
     // Swap any element carrying both data-rd-label-delivery and
@@ -976,6 +1466,7 @@
         if (slug) {
             getStepErrorsBox(slug).empty().prop('hidden', true);
             getStepElement(slug).removeClass('rd-checkout-step--has-error');
+            syncAriaInvalidStates(getStepElement(slug));
 
             if (slug === 'method') {
                 $('#rd-checkout-step-method .rd-express-shipping-body').removeClass('rd-field-error');
@@ -987,6 +1478,24 @@
         $('.rd-checkout-step__errors').empty().prop('hidden', true);
         $('.rd-checkout-step').removeClass('rd-checkout-step--has-error');
         $('#rd-checkout-step-method .rd-express-shipping-body').removeClass('rd-field-error');
+        syncAriaInvalidStates($('form.checkout'));
+    }
+
+    function syncAriaInvalidStates($scope) {
+        if (!$scope || !$scope.length) {
+            return;
+        }
+
+        $scope.find('input, select, textarea').each(function () {
+            var $input = $(this);
+            var $row = $input.closest('.woocommerce-invalid');
+
+            if ($row.length && !$input.is('[type="hidden"]')) {
+                $input.attr('aria-invalid', 'true');
+            } else {
+                $input.removeAttr('aria-invalid');
+            }
+        });
     }
 
     function getGenericErrorPhrases() {
@@ -1045,6 +1554,7 @@
             )
             .prop('hidden', false);
         $step.addClass('rd-checkout-step--has-error');
+        syncAriaInvalidStates($step);
 
         if (options.scroll !== false) {
             window.setTimeout(function () {
@@ -1266,8 +1776,8 @@
         }
 
         if (isPickupMethod(getChosenShippingMethod())) {
-            var $pickup = $('#rd-checkout-step-method select.pickup-location-lookup');
-            var pickupVal = '';
+            var $pickup = getActivePickupSelect();
+            var pickupVal = getResolvedPickupValue($pickup);
 
             if (!$pickup.length) {
                 if (applyHighlights) {
@@ -1278,20 +1788,12 @@
                 return errors;
             }
 
-            if (pickupUserSelected) {
-                pickupVal = rememberedPickup || ($pickup.length ? $pickup.val() : '');
-
-                // A still-in-flight order-review refresh can momentarily blank the
-                // <select>. Fall back to (and re-apply) the customer's remembered
-                // choice so the wizard doesn't block them over a transient reset —
-                // LPP reads the posted value at submit, so a populated field is valid.
-                if (!pickupVal && rememberedPickup) {
-                    restorePickupSelection();
-                    pickupVal = $pickup.val() || rememberedPickup;
-                }
+            if (!pickupVal && rememberedPickup) {
+                restorePickupSelection();
+                pickupVal = getResolvedPickupValue($pickup);
             }
 
-            if ($pickup.length && !pickupVal) {
+            if (!pickupVal) {
                 if (applyHighlights) {
                     $pickup
                         .closest('.form-row, .pickup-location-field, .pickup-location-lookup-field')
@@ -1671,7 +2173,7 @@
         }
 
         if (isPickupMethod(getChosenShippingMethod()) && pickupUserSelected) {
-            var $pickup = $('#rd-checkout-step-method select.pickup-location-lookup');
+            var $pickup = getActivePickupSelect();
             var pickupText = '';
 
             if ($pickup.length) {
@@ -1688,7 +2190,162 @@
     }
 
     function getScheduleSummaryText() {
-        return $.trim($('#jckwds-delivery-date').val() || '');
+        var date = $.trim($('#jckwds-delivery-date').val() || '');
+        var time = getScheduleTimeSummaryText();
+        var parts = [];
+
+        if (date) {
+            parts.push(date);
+        }
+
+        if (time) {
+            parts.push(time);
+        }
+
+        return parts.join(' · ');
+    }
+
+    function getPickupLocationSummaryText() {
+        if (!isPickupMethod(getChosenShippingMethod()) || !pickupUserSelected) {
+            return '';
+        }
+
+        var $pickup = getActivePickupSelect();
+
+        if (!$pickup.length) {
+            return '';
+        }
+
+        var $option = $pickup.find('option:selected');
+        var name = $.trim(String($option.data('name') || ''));
+
+        if (!name) {
+            name = $.trim($option.text() || '');
+        }
+
+        if (!name || /select|search/i.test(name)) {
+            return '';
+        }
+
+        return name.replace(/\s+/g, ' ');
+    }
+
+    function stripRateLabelSuffix(label) {
+        var cleaned = String(label || '').replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+
+        return cleaned || String(label || '').trim();
+    }
+
+    function getDeliveryEircodeSummaryText() {
+        if (isPickupMethod(getChosenShippingMethod())) {
+            return '';
+        }
+
+        var eircode = $.trim($('#custom_shipping_eircode').val() || '');
+
+        if (!eircode) {
+            eircode = $.trim($('#shipping_postcode').val() || '');
+        }
+
+        if (!eircode) {
+            eircode = $.trim($('#billing_postcode').val() || '');
+        }
+
+        if (!eircode || eircode === DEFAULT_SEED_EIRCODE) {
+            return '';
+        }
+
+        return eircode.replace(/\s+/g, ' ');
+    }
+
+    function formatDeliveryMethodSummaryText(rateLabel) {
+        var baseLabel = stripRateLabelSuffix(rateLabel);
+        var eircode = getDeliveryEircodeSummaryText();
+
+        if (eircode) {
+            return baseLabel + ' (' + eircode + ')';
+        }
+
+        return baseLabel;
+    }
+
+    function getFulfilmentLocationSummaryText() {
+        if (!isPickupMethod(getChosenShippingMethod())) {
+            return '';
+        }
+
+        return getPickupLocationSummaryText();
+    }
+
+    function updateFulfilmentMethodSummary() {
+        var $method = $('.rd-fulfilment-summary__method');
+
+        if (!$method.length) {
+            return;
+        }
+
+        if (isPickupMethod(getChosenShippingMethod())) {
+            $method.text('Collection');
+            return;
+        }
+
+        var $checked = $('input.shipping_method:checked');
+
+        if (!$checked.length) {
+            return;
+        }
+
+        var $label = $checked.closest('li').find('label').first();
+        var summary = formatDeliveryMethodSummaryText($.trim($label.text().replace(/\s+/g, ' ')));
+
+        if (summary) {
+            $method.text(summary);
+        }
+    }
+
+    function getScheduleTimeSummaryText() {
+        var $timeSelect = $('#jckwds-delivery-time');
+
+        if (!$timeSelect.length) {
+            return '';
+        }
+
+        var time = $.trim($timeSelect.find('option:selected').text() || '');
+
+        if (!time || /choose|select/i.test(time)) {
+            return '';
+        }
+
+        return time;
+    }
+
+    function updateFulfilmentScheduleSummary() {
+        var $location = $('.rd-fulfilment-summary__location');
+        var $schedule = $('.rd-fulfilment-summary__schedule');
+
+        updateFulfilmentMethodSummary();
+
+        if ($location.length) {
+            var detailText = getFulfilmentLocationSummaryText();
+
+            if (detailText) {
+                $location.text(detailText).prop('hidden', false);
+            } else {
+                $location.text('').prop('hidden', true);
+            }
+        }
+
+        if (!$schedule.length) {
+            return;
+        }
+
+        var summary = getScheduleSummaryText();
+
+        if (summary) {
+            $schedule.text(summary).prop('hidden', false);
+        } else {
+            $schedule.text('').prop('hidden', true);
+        }
     }
 
     function getDetailsSummaryText() {
@@ -1715,6 +2372,7 @@
         $('[data-rd-summary="method"]').text(getMethodSummaryText());
         $('[data-rd-summary="schedule"]').text(getScheduleSummaryText());
         $('[data-rd-summary="details"]').text(getDetailsSummaryText());
+        updateFulfilmentScheduleSummary();
     }
 
     function refreshWizardStepStates() {
@@ -1741,6 +2399,7 @@
             var $item = $(this);
             var slug = $item.data('rd-progress');
             var index = getWizardStepIndex(slug);
+            var $trigger = $item.find('.rd-checkout-progress__trigger');
 
             if (index === -1) {
                 return;
@@ -1748,6 +2407,12 @@
 
             $item.toggleClass('rd-checkout-progress__item--active', index === currentWizardStep);
             $item.toggleClass('rd-checkout-progress__item--complete', index < currentWizardStep);
+
+            if ($trigger.length) {
+                var canNavigate = index <= currentWizardStep;
+                $trigger.prop('disabled', !canNavigate);
+                $trigger.attr('aria-current', index === currentWizardStep ? 'step' : null);
+            }
         });
 
         updateWizardSummaries();
@@ -1768,6 +2433,8 @@
 
         currentWizardStep = index;
         refreshWizardStepStates();
+        syncMobileOrderSummaryPlacement();
+        applyOrderSummaryState();
 
         if (options.scroll !== false) {
             var $target = $('[data-rd-step="' + wizardSteps[index] + '"]');
@@ -1775,6 +2442,18 @@
             if ($target.length) {
                 $('html, body').animate({ scrollTop: $target.offset().top - 24 }, 250);
             }
+        }
+
+        if (options.focus !== false) {
+            window.setTimeout(function () {
+                var $heading = $('[data-rd-step="' + wizardSteps[index] + '"]')
+                    .find('.rd-checkout-step__title')
+                    .first();
+
+                if ($heading.length) {
+                    $heading.attr('tabindex', '-1').trigger('focus');
+                }
+            }, options.scroll === false ? 0 : 280);
         }
     }
 
@@ -1912,7 +2591,7 @@
     function bindCheckoutWizardEvents() {
         $(document).on(
             'click',
-            '.rd-checkout-step__continue, .rd-checkout-progress__item--pay, .rd-mobile-pay-bar__button, #place_order',
+            '.rd-checkout-step__continue, .rd-checkout-progress__trigger[data-rd-progress="pay"], .rd-mobile-pay-bar__button, #place_order',
             function () {
                 armCheckoutValidation();
             }
@@ -1949,7 +2628,7 @@
             goToWizardStep(getWizardStepIndex(slug), { force: true });
         });
 
-        $(document).on('click', '.rd-checkout-progress__item:not(.rd-checkout-progress__item--pay)', function (event) {
+        $(document).on('click', '.rd-checkout-progress__trigger:not(:disabled)', function (event) {
             event.preventDefault();
 
             var slug = $(this).data('rd-progress');
@@ -1959,12 +2638,12 @@
                 return;
             }
 
-            goToWizardStep(index, { force: true });
-        });
+            if (slug === 'pay') {
+                goToPayment();
+                return;
+            }
 
-        $(document).on('click', '.rd-checkout-progress__item--pay', function (event) {
-            event.preventDefault();
-            goToPayment();
+            goToWizardStep(index, { force: true });
         });
 
         $(document).on(
@@ -2037,7 +2716,7 @@
         updateScheduleUnavailableState();
         syncMobilePayBarTotal();
         refreshWizardStepStates();
-        warmupPickupLocationFields();
+        schedulePickupWarmup();
     }
 
     // Show each pickup location's address beneath its name in the dropdown.
@@ -2050,6 +2729,10 @@
         $('#rd-checkout-step-method select.pickup-location-lookup option').each(function () {
             var $option = $(this);
             var value = $option.attr('value');
+
+            if (isEmptyPickupOption($option) || $option.attr('data-placeholder') === 'true') {
+                return;
+            }
 
             if (!value || !addresses[value]) {
                 return;
@@ -2066,33 +2749,92 @@
 
     bindCheckoutWizardEvents();
 
+    $(document.body).on('update_checkout', function () {
+        var $li = $('#rd-checkout-step-method .rd-pickup-pending').closest('li');
+
+        if (!$li.length && isPickupMethod(getChosenShippingMethod())) {
+            $li = $('#rd-checkout-step-method input.shipping_method:checked').closest('li');
+        }
+
+        if (!$li.length || !isPickupMethod($li.find('input.shipping_method').first().val())) {
+            return;
+        }
+
+        var $select = $li.find('select.pickup-location-lookup').first();
+
+        if (pickupLocationsReady || isPickupFieldPopulated($select)) {
+            return;
+        }
+
+        getPickupWrapForLi($li, false).addClass('rd-pickup-pending');
+        setPickupLocationLoading(true, $li);
+    });
+
     $(document.body).on('updated_checkout', function () {
+        clearOrderReviewBlockUi();
         refreshExpressCheckout();
         updateScheduleDateLabel();
         syncMobilePayBarTotal();
         applyPickupAddresses();
         refreshPickupUi();
-        window.setTimeout(syncPickupLocationLoading, 0);
-        // The order review table is re-rendered on every AJAX refresh, which
-        // resets the <details> accordion. Re-apply the user's chosen state.
-        applyOrderSummaryState();
+        window.setTimeout(function () {
+            var $li = $('#rd-checkout-step-method input.shipping_method:checked').closest('li');
+
+            if (!$li.length) {
+                $li = getPickupOptionLi();
+            }
+
+            if ($li.length) {
+                consolidatePickupLocationFields($li);
+            }
+
+            syncPickupLocationLoading($li.length ? $li : null);
+        }, 0);
+        updateFulfilmentScheduleSummary();
+
+        if (typeof window.rdRefreshBoxContentsScroll === 'function') {
+            window.setTimeout(window.rdRefreshBoxContentsScroll, 0);
+        }
     });
 
     // Remember every genuine pickup-location choice so a later order-review
     // refresh that blanks the field can't lose it (see restorePickupSelection).
     $(document).on('select2:select', '#rd-checkout-step-method select.pickup-location-lookup', function (event) {
-        if (pickupRestoreGuard || !isGenuinePickupSelectEvent(event)) {
+        if (pickupRestoreGuard) {
             return;
         }
 
-        var value = $(this).val();
+        var $select = $(this);
+
+        if ($select[0] !== getActivePickupSelect()[0]) {
+            return;
+        }
+
+        var value = $select.val();
 
         if (!isValidPickupSelection(value)) {
             return;
         }
 
-        rememberedPickup = value;
-        pickupUserSelected = true;
+        // Accept deliberate user picks (mouse/keyboard). Ignore LPP auto-selects
+        // that fire without an originating DOM event.
+        if (isGenuinePickupSelectEvent(event)) {
+            recordPickupUserSelection(value, $select);
+        }
+    });
+
+    $(document).on('change', '#rd-checkout-step-method select.pickup-location-lookup', function (event) {
+        if (pickupRestoreGuard || (event && event.isTrigger)) {
+            return;
+        }
+
+        var $select = $(this);
+
+        if ($select[0] !== getActivePickupSelect()[0]) {
+            return;
+        }
+
+        recordPickupUserSelection($select.val(), $select);
     });
 
     // Auto-advance off the Method step when a pickup location is chosen. Bound to
@@ -2114,15 +2856,24 @@
     });
 
     // Mobile Select2 can commit the first option from the same tap that opens the
-    // menu. Block selections briefly after open until the customer taps an option.
+    // menu. Block only that spurious open-tap selection — not deliberate option
+    // clicks (mouseup/click), which must always be allowed through.
     $(document).on('select2:selecting', '#rd-checkout-step-method select.pickup-location-lookup', function (event) {
         if (pickupRestoreGuard || pickupUserSelected) {
             return;
         }
 
-        if (pickupOpenGuardUntil && Date.now() < pickupOpenGuardUntil) {
-            event.preventDefault();
+        if (!pickupOpenGuardUntil || Date.now() >= pickupOpenGuardUntil) {
+            return;
         }
+
+        var original = event.params && event.params.originalEvent;
+
+        if (!original || original.type === 'mouseup' || original.type === 'click') {
+            return;
+        }
+
+        event.preventDefault();
     });
 
     // Guarantee the menu is anchored at the instant it opens, regardless of when
@@ -2135,7 +2886,7 @@
         var $select = $(this);
         var $wrap = $select.closest('.pickup-location-field');
 
-        pickupOpenGuardUntil = Date.now() + 350;
+        pickupOpenGuardUntil = Date.now() + 200;
 
         if (!pickupUserSelected && isValidPickupSelection($select.val())) {
             pickupRestoreGuard = true;
@@ -2157,15 +2908,29 @@
         }, 0);
     });
 
-    // Record genuine user toggles so AJAX refreshes don't override their choice.
-    $(document).on('click', '.rd-order-summary__bar', function () {
+    // Mobile accordion only — desktop order details are always expanded.
+    $(document).on('click', '.rd-order-summary__bar', function (event) {
+        if (isDesktopOrderSummary()) {
+            return;
+        }
+
         var $summary = $(this).closest('.rd-order-summary');
-        window.setTimeout(function () {
-            orderSummaryUserState = $summary.prop('open');
-        }, 0);
+
+        $summary.toggleClass('rd-order-summary--collapsed');
+
+        var isOpen = !$summary.hasClass('rd-order-summary--collapsed');
+
+        orderSummaryUserState = isOpen;
+        $(this).attr('aria-expanded', isOpen ? 'true' : 'false');
     });
 
-    applyOrderSummaryState();
+    $(document.body).on('update_checkout', rememberOrderSummaryOpenState);
+
+    // Re-open after WooCommerce swaps the order review fragment (deferred so we
+    // run after LPP/pickup handlers in the same updated_checkout turn).
+    $(document.body).on('updated_checkout', function () {
+        window.setTimeout(applyOrderSummaryState, 0);
+    });
 
     $(document.body).on('checkout_error', function () {
         window.setTimeout(routeCheckoutErrors, 0);
@@ -2181,7 +2946,19 @@
             prepareVisiblePickupSelects();
             enforcePickupRequiresUserChoice();
             cachePickupFieldSnapshot();
-            syncPickupLocationLoading();
+
+            var $li = $('#rd-checkout-step-method input.shipping_method:checked').closest('li');
+
+            if (!$li.length) {
+                $li = getPickupOptionLi();
+            }
+
+            if ($li.length) {
+                consolidatePickupLocationFields($li);
+                markPickupLocationsReady($li);
+            }
+
+            syncPickupLocationLoading($li.length ? $li : null);
         }, 0);
     });
     $(document).on(
@@ -2192,9 +2969,10 @@
             syncCheckoutAddressAutofill();
         }
     );
-    $(document).on('input', '#custom_shipping_eircode', function () {
+    $(document).on('input change', '#custom_shipping_eircode', function () {
         $(this).data('rd-user-touched', true);
         syncCustomEircodeToPostcodes();
+        updateFulfilmentScheduleSummary();
     });
     $(document).on(
         'focus',
@@ -2227,6 +3005,12 @@
     $(document).on('change', 'input.shipping_method', function () {
         var methodId = $(this).val();
 
+        resetPickupLocationsReady();
+
+        if (!isPickupMethod(methodId)) {
+            setPickupLocationLoading(false);
+        }
+
         window.setTimeout(function () {
             if (isPickupMethod(methodId)) {
                 enforcePickupRequiresUserChoice();
@@ -2250,6 +3034,31 @@
             syncBillingFromShippingForStripe();
         }
     });
+    function openScheduleDatePicker() {
+        var $date = $('#jckwds-delivery-date');
+
+        if (!$date.length || $date.is(':disabled') || !$date.is(':visible')) {
+            return;
+        }
+
+        $date.trigger('focus');
+
+        if ($date.hasClass('hasDatepicker') && typeof $date.datepicker === 'function') {
+            $date.datepicker('show');
+        }
+    }
+
+    // Iconic binds the datepicker to the input only; theme pill styling and blockUI
+    // overlays can swallow clicks on the placeholder / label / wrapper area.
+    $(document).on('click', '#rd-checkout-step-schedule #jckwds-delivery-date-wrapper, #rd-checkout-step-schedule #jckwds-delivery-date_field, #rd-checkout-step-schedule label[for="jckwds-delivery-date"]', function (event) {
+        if ($(event.target).closest('#jckwds-delivery-time, #jckwds_timeslot_field').length) {
+            return;
+        }
+
+        event.preventDefault();
+        openScheduleDatePicker();
+    });
+
     // Auto-advance off the Date step once a date is chosen. The Iconic datepicker
     // sets #jckwds-delivery-date and fires change; deferred so its value (and any
     // updated_checkout refresh it kicks off) settles before we validate. When no
@@ -2258,10 +3067,21 @@
     $(document).on('change', '#jckwds-delivery-date', function () {
         window.setTimeout(function () {
             maybeAutoAdvanceStep(1);
+            updateFulfilmentScheduleSummary();
         }, 0);
     });
 
-    $(window).on('resize', updateMobilePayBarVisibility);
+    $(document).on('change', '#jckwds-delivery-time', function () {
+        window.setTimeout(updateFulfilmentScheduleSummary, 0);
+    });
+
+    function handleCheckoutResize() {
+        updateMobilePayBarVisibility();
+        syncMobileOrderSummaryPlacement();
+        applyOrderSummaryState();
+    }
+
+    $(window).on('resize', handleCheckoutResize);
 
     $(window).on('load', function () {
         initCheckoutWizard();
@@ -2280,5 +3100,6 @@
         refreshExpressCheckout();
         applyPickupAddresses();
         refreshPickupUi();
+        applyOrderSummaryState();
     });
 })(jQuery);

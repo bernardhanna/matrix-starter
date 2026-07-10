@@ -27,7 +27,7 @@ const CHECKOUT_PATH = process.env.CHECKOUT_PATH || '/checkout/';
 const ADD_BTN = 'form.cart .single_add_to_cart_button';
 const STEPPER = '.rd-bb-cart-stepper--main';
 
-const ORDER_SUMMARY = 'details.rd-order-summary';
+const ORDER_SUMMARY = '.rd-order-summary';
 const SUMMARY_BAR = `${ORDER_SUMMARY} .rd-order-summary__bar`;
 const ACC = `${ORDER_SUMMARY} .rd-bb-cart-acc`;
 const ACC_TOGGLE = `${ACC} .rd-bb-cart-acc-toggle`;
@@ -96,9 +96,12 @@ async function openBoxAccordion(page) {
     return false;
   }
 
-  // The order summary is a native <details>; open it if collapsed.
+  // Open the mobile order summary accordion when collapsed (desktop stays expanded).
   const summary = page.locator(ORDER_SUMMARY).first();
-  if (!(await summary.evaluate((el) => el.hasAttribute('open')).catch(() => true))) {
+  const isCollapsed = await summary
+    .evaluate((el) => el.classList.contains('rd-order-summary--collapsed'))
+    .catch(() => false);
+  if (isCollapsed) {
     await page.locator(SUMMARY_BAR).first().click({ force: true }).catch(() => {});
   }
 

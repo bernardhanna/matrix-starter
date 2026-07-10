@@ -146,7 +146,7 @@ function matrix_rd_checkout_heading_styles(): void {
             position: relative;
             display: flex;
             align-items: center;
-            min-height: 3rem;
+            min-height: 6rem;
             margin-bottom: 1rem;
         }
         .rd-checkout-heading-title {
@@ -161,13 +161,16 @@ function matrix_rd_checkout_heading_styles(): void {
             line-height: 0;
         }
         .rd-checkout-heading-logo img {
-            height: 3rem;
+            height: 6rem;
             width: auto;
             display: block;
         }
         @media (max-width: 575px) {
             .rd-checkout-heading-logo img {
-                height: 2.25rem;
+                height: 4.5rem;
+            }
+            .rd-checkout-heading-row {
+                min-height: 4.5rem;
             }
         }
     </style>
@@ -318,6 +321,7 @@ function matrix_rd_checkout_order_notes_placeholder(array $fields): array {
     if (isset($fields['order']['order_comments'])) {
         $fields['order']['order_comments']['placeholder'] = __('Note to delivery driver', 'matrix-starter');
         $fields['order']['order_comments']['label']       = __('Note to delivery driver', 'matrix-starter');
+        $fields['order']['order_comments']['class'][]     = 'icon-order-note';
     }
 
     return $fields;
@@ -496,26 +500,334 @@ function matrix_rd_checkout_pickup_field_collect_at(string $field_html, $package
 add_filter('wc_local_pickup_plus_get_pickup_location_package_field_html', 'matrix_rd_checkout_pickup_field_collect_at', 10, 3);
 
 /**
- * Iconic delivery slots: preserve selected time across county/AJAX refresh.
+ * One labelled placeholder option for pickup location selects (mobile + Select2).
  */
-function matrix_rd_checkout_save_delivery_slots_to_session(): void {
+function matrix_rd_checkout_pickup_select_normalize_options(string $field_html, $package_id, $package): string {
+    if (strpos($field_html, 'pickup-location-lookup') === false) {
+        return $field_html;
+    }
+
+    $placeholder = esc_html__('Select a collection location', 'matrix-starter');
+
+    $field_html = preg_replace('/<option[^>]*data-placeholder=["\']true["\'][^>]*>.*?<\/option>/is', '', $field_html);
+    $field_html = preg_replace('/<option(?![^>]*\bvalue=)[^>]*>\s*<\/option>/i', '', $field_html);
+    $field_html = preg_replace('/<option[^>]*value=["\']?["\'][^>]*>\s*<\/option>/i', '', $field_html);
+
+    if (strpos($field_html, 'data-placeholder="true"') === false) {
+        $field_html = preg_replace(
+            '/(<select[^>]*class="[^"]*pickup-location-lookup[^"]*"[^>]*>)/i',
+            '$1<option value="" data-placeholder="true">' . $placeholder . '</option>',
+            $field_html,
+            1
+        );
+    }
+
+    $field_html = str_replace(
+        'data-placeholder="' . esc_attr__('Search locations&hellip;', 'woocommerce-shipping-local-pickup-plus') . '"',
+        'data-placeholder="' . esc_attr__('Select a collection location', 'matrix-starter') . '"',
+        $field_html
+    );
+
+    return $field_html;
+}
+add_filter('wc_local_pickup_plus_get_pickup_location_package_field_html', 'matrix_rd_checkout_pickup_select_normalize_options', 20, 3);
+
+/**
+ * Resolve a human-readable timeslot label from Iconic WDS value/id.
+ */
+function matrix_rd_checkout_resolve_timeslot_label(string $time_value): string {
+    $time_value = trim($time_value);
+
+    if ($time_value === '') {
+        return '';
+    }
+
+    if (preg_match('/\d{1,2}:\d{2}/', $time_value)) {
+        return $time_value;
+    }
+
+    if (function_exists('iconic_wds')) {
+        $wds = iconic_wds();
+
+        if ($wds && method_exists($wds, 'get_timeslot_data')) {
+            $data = $wds->get_timeslot_data($time_value);
+
+            if (! empty($data['formatted'])) {
+                return (string) $data['formatted'];
+            }
+        }
+    }
+
+    return $time_value;
+}
+
+/**
+ * Selected delivery/collection date and time for checkout summaries.
+ *
+ * @return array{date: string, time: string}
+ */
+function matrix_rd_checkout_get_schedule_summary_parts(): array {
+    $date = '';
+    $time = '';
+
+    if (WC()->session) {
+        $date = (string) WC()->session->get('iconic_delivery_date', '');
+        $time = (string) WC()->session->get('iconic_delivery_time_label', '');
+
+        if ($time === '') {
+            $time = matrix_rd_checkout_resolve_timeslot_label((string) WC()->session->get('iconic_delivery_time', ''));
+        }
+    }
+
+    return [
+        'date' => trim($date),
+        'time' => trim($time),
+    ];
+}
+
+/**
+ * Resolve a pickup location display name from its ID.
+ */
+function matrix_rd_checkout_resolve_pickup_location_name(int $location_id): string {
+    if ($location_id <= 0 || ! function_exists('wc_local_pickup_plus_get_pickup_location')) {
+        return '';
+    }
+
+    $location = wc_local_pickup_plus_get_pickup_location($location_id);
+
+    if (! $location || ! is_object($location) || ! method_exists($location, 'get_name')) {
+        return '';
+    }
+
+    $name = trim((string) $location->get_name());
+
+    if ($name !== '') {
+        return $name;
+    }
+
+    if (method_exists($location, 'get_formatted_name')) {
+        return trim((string) $location->get_formatted_name());
+    }
+
+    return '';
+}
+
+/**
+ * Selected pickup store name for checkout summaries.
+ */
+function matrix_rd_checkout_get_selected_pickup_location_name(): string {
+    if (! WC()->session) {
+        return '';
+    }
+
+    $location_id = 0;
+    $post_data   = isset($_POST['post_data']) && is_string($_POST['post_data'])
+        ? wp_unslash($_POST['post_data'])
+        : '';
+    $parsed      = matrix_rd_checkout_parse_order_review_post_data($post_data);
+
+    if (! empty($parsed['_shipping_method_pickup_location_id'])) {
+        $ids         = $parsed['_shipping_method_pickup_location_id'];
+        $location_id = is_array($ids) ? (int) reset($ids) : (int) $ids;
+    }
+
+    if ($location_id <= 0 && function_exists('wc_local_pickup_plus')) {
+        $plugin = wc_local_pickup_plus();
+
+        if ($plugin && method_exists($plugin, 'get_session_instance')) {
+            $pickup_data = $plugin->get_session_instance()->get_package_pickup_data(0);
+
+            if (is_array($pickup_data) && ! empty($pickup_data['pickup_location_id'])) {
+                $location_id = (int) $pickup_data['pickup_location_id'];
+            }
+        }
+    }
+
+    if ($location_id <= 0) {
+        $location_id = (int) WC()->session->get('matrix_rd_pickup_location_id', 0);
+    }
+
+    $name = $location_id > 0 ? matrix_rd_checkout_resolve_pickup_location_name($location_id) : '';
+
+    if ($name === '') {
+        $name = trim((string) WC()->session->get('matrix_rd_pickup_location_name', ''));
+    }
+
+    return $name;
+}
+
+/**
+ * Default seed Eircode used before the customer enters their own.
+ */
+function matrix_rd_checkout_get_default_seed_eircode(): string {
+    return 'D01 F5P2';
+}
+
+/**
+ * Strip zone suffixes like "(Dublin only)" from shipping rate labels.
+ */
+function matrix_rd_checkout_strip_rate_label_suffix(string $label): string {
+    $clean = trim(preg_replace('/\s*\([^)]*\)\s*/', '', $label));
+
+    return $clean !== '' ? $clean : trim($label);
+}
+
+/**
+ * Format delivery method label with the customer's Eircode when available.
+ */
+function matrix_rd_checkout_format_delivery_method_label(string $rate_label): string {
+    $base_label = matrix_rd_checkout_strip_rate_label_suffix($rate_label);
+    $eircode    = matrix_rd_checkout_get_delivery_eircode();
+
+    if ($eircode !== '') {
+        return $base_label . ' (' . $eircode . ')';
+    }
+
+    return $base_label;
+}
+
+/**
+ * Selected delivery Eircode for checkout summaries.
+ */
+function matrix_rd_checkout_get_delivery_eircode(): string {
+    $default_seed = matrix_rd_checkout_get_default_seed_eircode();
+    $eircode      = '';
+
+    $post_data = isset($_POST['post_data']) && is_string($_POST['post_data'])
+        ? wp_unslash($_POST['post_data'])
+        : '';
+    $parsed    = matrix_rd_checkout_parse_order_review_post_data($post_data);
+
+    if (! empty($parsed['custom_shipping_eircode'])) {
+        $eircode = trim(sanitize_text_field((string) $parsed['custom_shipping_eircode']));
+    } elseif (! empty($parsed['shipping_postcode'])) {
+        $eircode = trim(sanitize_text_field((string) $parsed['shipping_postcode']));
+    } elseif (! empty($parsed['billing_postcode'])) {
+        $eircode = trim(sanitize_text_field((string) $parsed['billing_postcode']));
+    }
+
+    if ($eircode === '' && WC()->session) {
+        $eircode = trim((string) WC()->session->get('matrix_rd_delivery_eircode', ''));
+    }
+
+    if ($eircode === '' && WC()->customer) {
+        $eircode = trim((string) WC()->customer->get_shipping_postcode());
+
+        if ($eircode === '') {
+            $eircode = trim((string) WC()->customer->get_billing_postcode());
+        }
+    }
+
+    if ($eircode === $default_seed) {
+        return '';
+    }
+
+    return $eircode;
+}
+
+/**
+ * Parse checkout post_data from AJAX order-review updates.
+ *
+ * @return array<string, mixed>
+ */
+function matrix_rd_checkout_parse_order_review_post_data($post_data = ''): array {
+    $parsed = [];
+
+    if (is_string($post_data) && $post_data !== '') {
+        parse_str($post_data, $parsed);
+    }
+
+    return is_array($parsed) ? $parsed : [];
+}
+
+/**
+ * Iconic delivery slots: preserve selected time across county/AJAX refresh.
+ *
+ * @param string $post_data Serialized checkout field data from AJAX.
+ */
+function matrix_rd_checkout_save_delivery_slots_to_session($post_data = ''): void {
     if (! WC()->session) {
         return;
     }
 
-    if (isset($_POST['jckwds-delivery-time'])) {
-        WC()->session->set('iconic_delivery_time', sanitize_text_field(wp_unslash($_POST['jckwds-delivery-time'])));
+    $data = matrix_rd_checkout_parse_order_review_post_data($post_data);
+
+    if (isset($data['jckwds-delivery-time'])) {
+        $time = sanitize_text_field((string) $data['jckwds-delivery-time']);
+        WC()->session->set('iconic_delivery_time', $time);
+        WC()->session->set('iconic_delivery_time_label', matrix_rd_checkout_resolve_timeslot_label($time));
     }
 
-    if (isset($_POST['jckwds-delivery-date'])) {
-        WC()->session->set('iconic_delivery_date', sanitize_text_field(wp_unslash($_POST['jckwds-delivery-date'])));
+    if (isset($data['jckwds-delivery-date'])) {
+        WC()->session->set('iconic_delivery_date', sanitize_text_field((string) $data['jckwds-delivery-date']));
     }
 
-    if (isset($_POST['jckwds-delivery-date-ymd'])) {
-        WC()->session->set('iconic_delivery_date_ymd', sanitize_text_field(wp_unslash($_POST['jckwds-delivery-date-ymd'])));
+    if (isset($data['jckwds-delivery-date-ymd'])) {
+        WC()->session->set('iconic_delivery_date_ymd', sanitize_text_field((string) $data['jckwds-delivery-date-ymd']));
     }
 }
 add_action('woocommerce_checkout_update_order_review', 'matrix_rd_checkout_save_delivery_slots_to_session');
+
+/**
+ * Preserve selected pickup location across checkout AJAX refreshes.
+ *
+ * @param string $post_data Serialized checkout field data from AJAX.
+ */
+function matrix_rd_checkout_save_pickup_location_to_session($post_data = ''): void {
+    if (! WC()->session) {
+        return;
+    }
+
+    $data = matrix_rd_checkout_parse_order_review_post_data($post_data);
+
+    if (empty($data['_shipping_method_pickup_location_id'])) {
+        return;
+    }
+
+    $ids         = $data['_shipping_method_pickup_location_id'];
+    $location_id = is_array($ids) ? (int) reset($ids) : (int) $ids;
+
+    if ($location_id <= 0) {
+        return;
+    }
+
+    WC()->session->set('matrix_rd_pickup_location_id', $location_id);
+    WC()->session->set(
+        'matrix_rd_pickup_location_name',
+        matrix_rd_checkout_resolve_pickup_location_name($location_id)
+    );
+}
+add_action('woocommerce_checkout_update_order_review', 'matrix_rd_checkout_save_pickup_location_to_session');
+
+/**
+ * Preserve entered delivery Eircode across checkout AJAX refreshes.
+ *
+ * @param string $post_data Serialized checkout field data from AJAX.
+ */
+function matrix_rd_checkout_save_delivery_eircode_to_session($post_data = ''): void {
+    if (! WC()->session) {
+        return;
+    }
+
+    $data         = matrix_rd_checkout_parse_order_review_post_data($post_data);
+    $default_seed = matrix_rd_checkout_get_default_seed_eircode();
+    $eircode      = '';
+
+    if (! empty($data['custom_shipping_eircode'])) {
+        $eircode = trim(sanitize_text_field((string) $data['custom_shipping_eircode']));
+    } elseif (! empty($data['shipping_postcode'])) {
+        $eircode = trim(sanitize_text_field((string) $data['shipping_postcode']));
+    } elseif (! empty($data['billing_postcode'])) {
+        $eircode = trim(sanitize_text_field((string) $data['billing_postcode']));
+    }
+
+    if ($eircode === '' || $eircode === $default_seed) {
+        return;
+    }
+
+    WC()->session->set('matrix_rd_delivery_eircode', $eircode);
+}
+add_action('woocommerce_checkout_update_order_review', 'matrix_rd_checkout_save_delivery_eircode_to_session');
 
 function matrix_rd_checkout_restore_delivery_slots_from_session(): void {
     if (! WC()->session) {
@@ -619,8 +931,13 @@ function matrix_rd_checkout_footer_scripts(): void {
         $('#shipping_phone_field label, #shipping_email_field label').removeClass('screen-reader-text');
 
         function setPickupLocationPlaceholder() {
+          if ($('.rd-express-checkout-form').length) {
+            return;
+          }
+
           $('#rd-checkout-step-method select.pickup-location-lookup').each(function () {
             var $pickupSelect = $(this);
+            var placeholder = 'Select a collection location';
 
             if ($pickupSelect.hasClass('select2-hidden-accessible')) {
               $pickupSelect.select2('destroy');
@@ -629,12 +946,20 @@ function matrix_rd_checkout_footer_scripts(): void {
             $pickupSelect.find('option[data-placeholder="true"]').remove();
 
             if (!$pickupSelect.find('option[value=""]').length) {
-              $pickupSelect.prepend('<option value=""></option>');
+              $pickupSelect.prepend('<option value="" data-placeholder="true">' + placeholder + '</option>');
             }
 
-            if ($pickupSelect.hasClass('wc-enhanced-select')) {
+            $pickupSelect.find('option[value=""]').first().attr('data-placeholder', 'true').text(placeholder);
+            $pickupSelect.find('option[value=""]').slice(1).remove();
+            $pickupSelect.find('option').filter(function () {
+              var value = String($(this).attr('value') || '');
+              var text = $.trim($(this).text() || '');
+              return (!value || value === '0') && !text;
+            }).remove();
+
+            if ($pickupSelect.hasClass('wc-enhanced-select') || $pickupSelect.hasClass('pickup-location-lookup')) {
               $pickupSelect.select2({
-                placeholder: 'Select a Pickup location',
+                placeholder: placeholder,
                 allowClear: true,
                 width: '100%'
               });
@@ -697,6 +1022,19 @@ function matrix_rd_checkout_footer_scripts(): void {
           // swallows every click. Clear it here once the update has settled.
           $payment.unblock();
           $payment.find('.blockUI.blockOverlay').remove();
+
+          var $reviewTable = $('.woocommerce-checkout-review-order-table');
+          var $orderReview = $('#order_review');
+
+          if ($reviewTable.length) {
+            $reviewTable.unblock();
+            $reviewTable.find('.blockUI.blockOverlay').remove();
+          }
+
+          if ($orderReview.length) {
+            $orderReview.unblock();
+            $orderReview.find('.blockUI.blockOverlay').remove();
+          }
         });
       });
     </script>

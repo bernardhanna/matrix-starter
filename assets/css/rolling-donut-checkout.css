@@ -15,6 +15,24 @@ label[for="payment_method_stripe"]::after {
   background: #fff !important;
 }
 
+/* Iconic's blockUI overlay is visual only — it must not swallow taps on the
+   date field (placeholder text, label, or pill area). */
+.woocommerce-checkout .iconic-wds-fields .blockUI.blockOverlay,
+.rd-express-checkout-form .iconic-wds-fields .blockUI.blockOverlay,
+#rd-checkout-step-schedule .blockUI.blockOverlay {
+  pointer-events: none !important;
+}
+
+/* Same issue on the order review table: WooCommerce blocks
+   .woocommerce-checkout-review-order-table during update_order_review and the
+   faint overlay intercepts clicks on "View box details" and other controls. */
+.woocommerce-checkout .woocommerce-checkout-review-order-table .blockUI.blockOverlay,
+.woocommerce-checkout #order_review .blockUI.blockOverlay,
+.rd-express-checkout-form .woocommerce-checkout-review-order-table .blockUI.blockOverlay,
+.rd-express-checkout-form #order_review .blockUI.blockOverlay {
+  pointer-events: none !important;
+}
+
 /* Keep payment visible below the order summary after AJAX fragment updates */
 .woocommerce-checkout #order_review > .woocommerce-checkout-payment,
 .woocommerce-checkout #payment.woocommerce-checkout-payment {
@@ -103,17 +121,28 @@ label[for="payment_method_stripe"]::after {
 
 .woocommerce-checkout .woocommerce-input-wrapper {
   width: 100%;
+  max-width: 100%;
   position: relative;
   display: flex;
   align-items: center;
   border-radius: 200px;
   border: 1px solid #d8d7ce;
   height: 3.5rem;
+  box-sizing: border-box;
+}
+
+.woocommerce-checkout .select2-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
 }
 
 .woocommerce-checkout .woocommerce-input-wrapper .input-text,
 .woocommerce-checkout .woocommerce-input-wrapper select,
-.woocommerce-checkout .woocommerce-input-wrapper .select2-selection--single {
+.woocommerce-checkout .woocommerce-input-wrapper .select2-selection--single,
+:is(.woocommerce-checkout, .rd-express-checkout-form, .woocommerce-account) .woocommerce-input-wrapper .input-text,
+:is(.woocommerce-checkout, .rd-express-checkout-form, .woocommerce-account) .woocommerce-input-wrapper select,
+:is(.woocommerce-checkout, .rd-express-checkout-form, .woocommerce-account) .woocommerce-input-wrapper .select2-selection--single {
   width: 100% !important;
   height: 100% !important;
   border: none !important;
@@ -124,12 +153,8 @@ label[for="payment_method_stripe"]::after {
   font-size: 1rem !important;
 }
 
-.woocommerce-checkout .icon-address-2 .input-text,
-.woocommerce-checkout .icon-postcode .input-text,
-.woocommerce-checkout #billing_address_2,
-.woocommerce-checkout #shipping_address_2,
-.woocommerce-checkout #custom_shipping_eircode {
-  padding-left: 1.5rem !important;
+:is(.woocommerce-checkout, .rd-express-checkout-form, .woocommerce-account) .woocommerce-input-wrapper {
+  position: relative;
 }
 
 /* Delivery/collection is local only, so the shipping country stays hidden
@@ -206,8 +231,71 @@ label[for="payment_method_stripe"]::after {
   pointer-events: none;
 }
 
-.woocommerce-checkout .icon-address-2 .woocommerce-input-wrapper::before {
-  display: none;
+.woocommerce-checkout .icon-address-2 .woocommerce-input-wrapper::before,
+.woocommerce-checkout #billing_address_2_field .woocommerce-input-wrapper::before,
+.woocommerce-checkout #shipping_address_2_field .woocommerce-input-wrapper::before,
+.rd-express-checkout-form .icon-address-2 .woocommerce-input-wrapper::before,
+.rd-express-checkout-form #billing_address_2_field .woocommerce-input-wrapper::before,
+.rd-express-checkout-form #shipping_address_2_field .woocommerce-input-wrapper::before,
+.woocommerce-account .icon-address-2 .woocommerce-input-wrapper::before,
+.woocommerce-account #billing_address_2_field .woocommerce-input-wrapper::before,
+.woocommerce-account #shipping_address_2_field .woocommerce-input-wrapper::before {
+  content: url('https://api.iconify.design/ph/building-apartment.svg?width=22&height=22');
+  position: absolute;
+  left: 1rem;
+  z-index: 1;
+  width: 19.5px;
+  height: 19.5px;
+  pointer-events: none;
+}
+
+.woocommerce-checkout .icon-postcode .woocommerce-input-wrapper::before,
+.woocommerce-checkout #custom_shipping_eircode_field .woocommerce-input-wrapper::before,
+.woocommerce-checkout #billing_postcode_field .woocommerce-input-wrapper::before,
+.woocommerce-checkout #shipping_postcode_field .woocommerce-input-wrapper::before,
+.rd-express-checkout-form .icon-postcode .woocommerce-input-wrapper::before,
+.rd-express-checkout-form #custom_shipping_eircode_field .woocommerce-input-wrapper::before,
+.rd-express-checkout-form #billing_postcode_field .woocommerce-input-wrapper::before,
+.woocommerce-account .icon-postcode .woocommerce-input-wrapper::before,
+.woocommerce-account #billing_postcode_field .woocommerce-input-wrapper::before,
+.woocommerce-account #shipping_postcode_field .woocommerce-input-wrapper::before {
+  content: url('https://api.iconify.design/mdi/mailbox-outline.svg?width=22&height=22');
+  position: absolute;
+  left: 1rem;
+  z-index: 1;
+  width: 19.5px;
+  height: 19.5px;
+  pointer-events: none;
+}
+
+.woocommerce-checkout .icon-order-note .woocommerce-input-wrapper::before,
+.woocommerce-checkout #order_comments_field .woocommerce-input-wrapper::before,
+.rd-express-checkout-form .icon-order-note .woocommerce-input-wrapper::before,
+.rd-express-checkout-form #order_comments_field .woocommerce-input-wrapper::before {
+  content: url('https://api.iconify.design/ph/truck.svg?width=22&height=22');
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 1;
+  width: 19.5px;
+  height: 19.5px;
+  pointer-events: none;
+}
+
+.woocommerce-checkout .icon-order-note .woocommerce-input-wrapper,
+.woocommerce-checkout #order_comments_field .woocommerce-input-wrapper,
+.rd-express-checkout-form .icon-order-note .woocommerce-input-wrapper,
+.rd-express-checkout-form #order_comments_field .woocommerce-input-wrapper {
+  height: auto;
+  min-height: 6.5rem;
+  align-items: flex-start;
+}
+
+.woocommerce-checkout #order_comments,
+.rd-express-checkout-form #order_comments {
+  min-height: 6.5rem;
+  padding: 0.85rem 1rem 0.85rem 2.75rem !important;
+  resize: vertical;
 }
 
 .woocommerce-checkout #billing_state_field .select2-container,

@@ -2,6 +2,18 @@
  * Express checkout — hybrid step layout.
  */
 
+body.woocommerce-checkout {
+  overflow-x: clip;
+}
+
+.rd-express-checkout-page,
+.rd-express-checkout-form,
+.rd-express-checkout {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .rd-express-checkout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -21,6 +33,9 @@
   flex-direction: column;
   gap: 2rem;
   min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .rd-express-checkout__summary {
@@ -28,13 +43,15 @@
 }
 
 @media (min-width: 1024px) {
-  /* overflow-hidden on page wrappers breaks position: sticky */
+  /* overflow-hidden on page wrappers breaks position: sticky — clip horizontal
+     bleed only so the order summary column can still stick vertically. */
   body.woocommerce-checkout #main-content,
   body.woocommerce-checkout .site-main,
   body.woocommerce-checkout .rd-express-checkout-page,
   body.woocommerce-checkout form.checkout.rd-express-checkout-form,
   body.woocommerce-checkout .rd-express-checkout {
-    overflow: visible;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 }
 
@@ -48,13 +65,15 @@
     align-self: start;
     max-height: calc(100vh - 3rem);
     overflow-y: auto;
-    overflow-x: visible;
+    overflow-x: clip;
   }
 }
 
 /* Progress bar — full-width row above both columns */
 .rd-checkout-progress {
   margin-bottom: 2rem;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .rd-checkout-progress__list {
@@ -64,23 +83,55 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  max-width: 100%;
 }
 
 .rd-checkout-progress__item {
+  position: relative;
+}
+
+.rd-checkout-progress__trigger {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
   text-align: center;
-  position: relative;
+  font: inherit;
+  color: inherit;
+  cursor: default;
+}
+
+.rd-checkout-progress__trigger:not(:disabled) {
+  cursor: pointer;
+}
+
+.rd-checkout-progress__trigger:disabled {
+  cursor: default;
+}
+
+.rd-checkout-progress__trigger:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 3px;
+  border-radius: 0.35rem;
+}
+
+.rd-checkout-progress__trigger[aria-current="step"] .rd-checkout-progress__number {
+  box-shadow: 0 0 0 2px #000;
 }
 
 .rd-checkout-progress__item:not(:last-child)::after {
   content: "";
   position: absolute;
   top: 1rem;
-  left: calc(50% + 1.1rem);
-  width: calc(100% - 2.2rem);
+  left: calc(50% + 1rem);
+  /* Span this cell's right half, the grid gap, and the next step's left half
+     so the line meets each circle (grid gap is 0.5rem on __list). */
+  width: calc(100% + 0.5rem - 2rem);
   height: 2px;
   background: #d9d9d9;
   z-index: 0;
@@ -117,27 +168,52 @@
   font-weight: 350;
 }
 
-.rd-checkout-progress__item {
-  cursor: default;
+.rd-checkout-step__title:focus {
+  outline: none;
 }
 
-.rd-checkout-progress__item--complete,
-.rd-checkout-progress__item--pay,
-.rd-checkout-progress__item--active {
-  cursor: pointer;
+.rd-checkout-step__title:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 4px;
+  border-radius: 0.35rem;
 }
 
-.rd-checkout-progress__item--pay {
-  cursor: pointer;
+.rd-checkout-step__continue:focus-visible,
+.rd-checkout-step__back:focus-visible,
+.rd-checkout-step__change:focus-visible,
+.rd-bb-cart-acc-toggle:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 3px;
 }
 
-/* Step cards */
+/* Step cards — clip horizontal bleed only so open Select2 menus (pickup
+   locations) are not cut off vertically. */
 .rd-checkout-step {
   border: 2px solid #000;
   border-radius: 1.25rem;
   padding: 0;
   background: #fff;
   transition: opacity 0.2s ease, box-shadow 0.2s ease;
+  max-width: 100%;
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+/* Method step hosts the pickup location menu — keep the whole card and its
+   shipping rows as an open stacking context while Select2 is open. */
+#rd-checkout-step-method.rd-checkout-step,
+#rd-checkout-step-method .rd-checkout-step__shell,
+#rd-checkout-step-method .rd-express-shipping-body,
+#rd-checkout-step-method ul.woocommerce-shipping-methods,
+#rd-checkout-step-method ul.woocommerce-shipping-methods > li,
+#rd-checkout-step-method .rd-shipping-option-pickup,
+#rd-checkout-step-method .pickup-location-field {
+  overflow: visible;
+}
+
+#rd-checkout-step-method ul.woocommerce-shipping-methods > li:has(.select2-container--open) {
+  position: relative;
+  z-index: 5;
 }
 
 .rd-checkout-step__shell {
@@ -490,7 +566,8 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
 
 /* Show immediately on pointer-down, before the radio change + AJAX round-trip. */
 #rd-checkout-step-method .rd-shipping-option-pickup.rd-pickup-pending,
-#rd-checkout-step-method .pickup-location-field.rd-pickup-pending {
+#rd-checkout-step-method .pickup-location-field.rd-pickup-pending,
+#rd-checkout-step-method .rd-shipping-option.rd-pickup-pending .rd-shipping-option-pickup {
   display: block !important;
 }
 
@@ -537,7 +614,16 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   box-sizing: border-box;
 }
 
+#rd-checkout-step-method .pickup-location-field .select2-selection__rendered.select2-selection__placeholder,
+#rd-checkout-step-method .pickup-location-field .select2-selection__placeholder {
+  color: #767676;
+}
+
 /* Shown while Local Pickup Plus / Select2 initialises after choosing collection. */
+#rd-checkout-step-method .rd-shipping-option-pickup.rd-pickup-loading {
+  min-height: 3.5rem;
+}
+
 #rd-checkout-step-method .rd-pickup-location-loading {
   display: none;
   align-items: center;
@@ -554,6 +640,10 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
 
 #rd-checkout-step-method .rd-shipping-option-pickup.rd-pickup-loading .rd-pickup-location-loading {
   display: flex;
+}
+
+#rd-checkout-step-method .rd-shipping-option-pickup.rd-pickup-loading > :not(.rd-pickup-location-loading) {
+  display: none !important;
 }
 
 #rd-checkout-step-method .rd-shipping-option-pickup.rd-pickup-loading .pickup-location-field,
@@ -582,8 +672,33 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
    with its column. On some widths that baked width is wider than the field, so
    the container spills past the column and the whole page scrolls sideways.
    Capping them all to their field keeps the checkout from overflowing. */
-.rd-express-checkout-form .select2-container {
+.rd-express-checkout-form .select2-container,
+.woocommerce-checkout .select2-container {
+  width: 100% !important;
   max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.rd-express-checkout-form #customer_details,
+.rd-express-checkout-form .rd-checkout-details-fields,
+.rd-express-checkout-form .woocommerce-billing-fields__field-wrapper,
+.rd-express-checkout-form .woocommerce-shipping-fields__field-wrapper,
+.rd-express-checkout-form .woocommerce-additional-fields__field-wrapper,
+.rd-express-checkout-form #rd-delivery-contact,
+.rd-express-checkout-form .rd-express-shipping-body,
+.rd-express-checkout-form .rd-checkout-shipping-table,
+.rd-express-checkout-form .rd-order-summary,
+.rd-express-checkout-form #order_review {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.rd-express-checkout-form .form-row,
+.rd-express-checkout-form .single-field-wrapper,
+.rd-express-checkout-form .woocommerce-input-wrapper {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .rd-express-checkout-form .woocommerce-input-wrapper .input-text,
@@ -617,6 +732,25 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   right: auto !important;
   bottom: auto !important;
   margin-top: 0.25rem !important;
+  z-index: 6;
+}
+
+#rd-checkout-step-method .pickup-location-field .select2-dropdown {
+  z-index: 7;
+  width: 100% !important;
+  border: 1px solid #d8d7ce;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+#rd-checkout-step-method .pickup-location-field .select2-results__options {
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+#rd-checkout-step-method .pickup-location-field .select2-results__option {
+  padding: 0.65rem 1rem;
+  line-height: 1.35;
 }
 
 #rd-checkout-step-method .select2-container--default .select2-selection--single {
@@ -650,6 +784,7 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
 }
 
 #order_comments_field .woocommerce-input-wrapper {
+  position: relative;
   border-radius: 0.625rem;
 }
 
@@ -727,6 +862,48 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
 #rd-checkout-step-schedule .jckwds-delivery-date > label,
 #rd-checkout-step-schedule #jckwds-delivery-date-wrapper label {
   margin-left: 0.5rem;
+  cursor: pointer;
+}
+
+/* Collection / delivery date — full pill should open the calendar, not just
+   empty padding at the edges. */
+#rd-checkout-step-schedule.rd-checkout-step,
+#rd-checkout-step-schedule .rd-checkout-step__shell,
+#rd-checkout-step-schedule .iconic-wds-fields,
+#rd-checkout-step-schedule #jckwds-fields {
+  overflow: visible;
+}
+
+#rd-checkout-step-schedule #jckwds-delivery-date-wrapper .woocommerce-input-wrapper,
+#rd-checkout-step-schedule #jckwds-delivery-date_field .woocommerce-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: stretch !important;
+  min-height: 3.5rem;
+  cursor: pointer;
+}
+
+#rd-checkout-step-schedule #jckwds-delivery-date-wrapper .woocommerce-input-wrapper::before,
+#rd-checkout-step-schedule .wds-fieldbox-sub-field .woocommerce-input-wrapper::before,
+#rd-checkout-step-schedule .wds-block-field-wrapper--date::before {
+  pointer-events: none;
+}
+
+#rd-checkout-step-schedule #jckwds-delivery-date {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100% !important;
+  min-width: 0;
+  min-height: 3.5rem;
+  height: 100% !important;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+#rd-checkout-step-schedule #jckwds-delivery-date_field {
+  margin: 0;
 }
 
 .rd-express-checkout-form.rd-fulfilment-collection .rd-delivery-hint,
@@ -757,7 +934,15 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
 }
 
 .rd-express-checkout-form .rd-delivery-contact {
-  margin-top: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.rd-express-checkout-form.rd-fulfilment-delivery .woocommerce-additional-fields {
+  margin-top: 1.5rem;
+}
+
+.rd-express-checkout-form.rd-fulfilment-delivery #order_comments_field label {
+  margin-top: 0.25rem;
 }
 
 .rd-express-checkout-form .rd-bill-different-row {
@@ -789,8 +974,14 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 1rem;
-    row-gap: 1rem;
+    row-gap: 1.25rem;
     align-items: stretch;
+  }
+
+  .rd-express-checkout-form.rd-fulfilment-delivery .woocommerce-shipping-fields__field-wrapper,
+  .rd-express-checkout-form.rd-fulfilment-delivery #rd-delivery-contact,
+  .rd-express-checkout-form.rd-fulfilment-delivery .woocommerce-additional-fields__field-wrapper {
+    row-gap: 1.5rem;
   }
 
   .rd-express-checkout-form .woocommerce-billing-fields__field-wrapper .single-field-wrapper,
@@ -820,6 +1011,7 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
     padding: 0 !important;
     line-height: 1.3;
     min-height: 1.3em;
+    color: #000;
   }
 
   .rd-express-checkout-form .single-field-wrapper .woocommerce-input-wrapper {
@@ -842,7 +1034,11 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
 
   /* Hide duplicate / unused shipping fields in delivery mode. */
   .rd-express-checkout-form .single-field-wrapper:has(#shipping_country_field),
-  .rd-express-checkout-form .single-field-wrapper:has(#shipping_postcode_field) {
+  .rd-express-checkout-form .single-field-wrapper:has(#shipping_postcode_field),
+  .rd-express-checkout-form .single-field-wrapper:has(#shipping_phone_field),
+  .rd-express-checkout-form .single-field-wrapper:has(#shipping_email_field),
+  .rd-express-checkout-form.rd-fulfilment-delivery #shipping_phone_field,
+  .rd-express-checkout-form.rd-fulfilment-delivery #shipping_email_field {
     display: none !important;
   }
 
@@ -855,21 +1051,14 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   .rd-express-checkout-form #rd-delivery-contact:empty {
     display: none !important;
   }
-
-  .rd-express-checkout-form.rd-fulfilment-delivery #rd-delivery-contact {
-    margin-top: 0;
-  }
 }
 
 @media (max-width: 1023px) {
-  /* Keep natural source order on mobile: progress → steps (method, date,
-     details, payment) → order summary. */
-  .rd-express-checkout__main {
+  /* Order details move inside the payment step only once that step is active. */
+  .rd-express-checkout__summary.rd-order-summary--mobile-inline {
     order: 0;
-  }
-
-  .rd-express-checkout__summary {
-    order: 1;
+    width: 100%;
+    margin-bottom: 1rem;
   }
 
   body.woocommerce-checkout.rd-has-mobile-pay-bar {
@@ -999,9 +1188,11 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   z-index: 1001;
 }
 
-/* Order details accordion (checkout order review table) */
+/* Order details panel (checkout order review table) */
 .rd-order-summary {
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
+  border-radius: 1.25rem;
 }
 
 .rd-order-summary__bar {
@@ -1011,12 +1202,121 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   gap: 1rem;
   padding: 1rem 1.25rem;
   cursor: pointer;
-  list-style: none;
   background: #eaeaea;
+  /* Inset from the 2px outer border so the grey header follows the card curve. */
+  border-radius: calc(1.25rem - 2px);
 }
 
-.rd-order-summary__bar::-webkit-details-marker {
-  display: none;
+.rd-order-summary:not(.rd-order-summary--collapsed) .rd-order-summary__bar {
+  border-radius: calc(1.25rem - 2px) calc(1.25rem - 2px) 0 0;
+}
+
+@media (max-width: 1023px) {
+  .rd-order-summary.rd-order-summary--collapsed .rd-order-summary__body {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Desktop: static panel — never collapses. */
+  .rd-express-checkout-form .rd-order-summary__bar {
+    pointer-events: none;
+    cursor: default;
+    border-radius: calc(1.25rem - 2px) calc(1.25rem - 2px) 0 0;
+  }
+
+  .rd-express-checkout-form .rd-order-summary__body {
+    display: block !important;
+  }
+
+  .rd-express-checkout-form .rd-order-summary__chevron {
+    display: none !important;
+  }
+}
+
+.rd-order-summary .rd-bb-cart-acc {
+  position: relative;
+  z-index: 2;
+}
+
+.rd-order-summary .rd-bb-cart-acc-toggle {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 100%;
+  text-align: left;
+  pointer-events: auto;
+}
+
+.rd-order-summary .rd-bb-cart-acc-body[hidden] {
+  display: none !important;
+}
+
+/* Box contents — show three donut rows, scroll the rest (e.g. 24-item boxes). */
+.rd-order-summary .rd-bb-cart-contents-wrap {
+  position: relative;
+}
+
+.rd-order-summary .rd-bb-cart-contents-scroll {
+  max-height: calc((0.9rem * 1.35 * 3) + (0.2rem * 2));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.35rem;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #8a8a8a #ececec;
+}
+
+.rd-order-summary .rd-bb-cart-contents-scroll::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+.rd-order-summary .rd-bb-cart-contents-scroll::-webkit-scrollbar-track {
+  background: #ececec;
+  border-radius: 999px;
+}
+
+.rd-order-summary .rd-bb-cart-contents-scroll::-webkit-scrollbar-thumb {
+  background: #8a8a8a;
+  border-radius: 999px;
+  border: 2px solid #ececec;
+}
+
+.rd-order-summary .rd-bb-cart-contents-scroll:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+/* Fade + hint when more items sit below the fold. */
+.rd-order-summary .rd-bb-cart-contents-scroll.is-scrollable:not(.is-at-end)::after {
+  content: "";
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: block;
+  height: 1.25rem;
+  margin-top: -1.25rem;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(250, 250, 250, 0) 0%, #fafafa 88%);
+}
+
+.rd-order-summary .rd-bb-cart-scroll-hint {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: #555;
+  text-align: right;
+}
+
+.rd-order-summary .rd-bb-cart-contents {
+  margin: 0;
+}
+
+.rd-order-summary__bar {
+  user-select: none;
 }
 
 .rd-order-summary__title {
@@ -1061,14 +1361,16 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   transform: rotate(45deg);
 }
 
-.rd-order-summary[open] .rd-order-summary__chevron {
+.rd-order-summary:not(.rd-order-summary--collapsed) .rd-order-summary__chevron {
   transform: rotate(180deg);
 }
 
 /* The total is already surfaced in the open body, so avoid duplicating it in
-   the bar while expanded. */
-.rd-order-summary[open] .rd-order-summary__total {
-  display: none;
+   the bar while expanded (mobile accordion only). */
+@media (max-width: 1023px) {
+  .rd-order-summary:not(.rd-order-summary--collapsed) .rd-order-summary__total {
+    display: none;
+  }
 }
 
 /* Keep product thumbnails and prices pinned to the top when box details expand. */

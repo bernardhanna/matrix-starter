@@ -272,17 +272,19 @@ function add_custom_shipping_eircode_field($fields) {
         // IE locale filter above. WooCommerce only validates shipping fields when a
         // shipping address is actually needed, so collection orders are unaffected.
         'required'    => true,
-        'priority'    => 71, // Set priority just after County (typically priority 70)
+        'priority'    => 71, // Between Town (70) and County (80) for the 3-column row.
         'autocomplete' => 'postal-code',
     );
 
-    // Reorder fields to ensure custom Eircode appears right after the County field
+    // Reorder fields so Town, Eircode and County render on one row (city → eircode → county).
+    $eircode_field = $fields['shipping']['custom_shipping_eircode'];
+    unset($fields['shipping']['custom_shipping_eircode']);
+
     $ordered_shipping_fields = array();
     foreach ($fields['shipping'] as $key => $field) {
-        // Insert the custom Eircode field right after `shipping_state`
         $ordered_shipping_fields[$key] = $field;
-        if ($key === 'shipping_state') {
-            $ordered_shipping_fields['custom_shipping_eircode'] = $fields['shipping']['custom_shipping_eircode'];
+        if ($key === 'shipping_city') {
+            $ordered_shipping_fields['custom_shipping_eircode'] = $eircode_field;
         }
     }
     $fields['shipping'] = $ordered_shipping_fields;
@@ -482,10 +484,10 @@ function change_woocommerce_field_markup($field, $key, $args, $value)
     // Wrap each field with a div
     $field = '<div class="w-full single-field-wrapper" data-priority="' . $args['priority'] . '">' . $field . '</div>';
 
-    // Wrap first and last name fields together for both billing and shipping
+    // Wrap first and last name fields together for both billing and shipping.
     if ($key === 'billing_first_name' || $key === 'shipping_first_name') {
         $field = '<div class="flex flex-col w-full name-field xl:flex-row xl:justify-between">' . $field;
-    } else if ($key === 'billing_last_name' || $key === 'shipping_last_name') {
+    } elseif ($key === 'billing_last_name' || $key === 'shipping_last_name') {
         $field = $field . '</div>';
     }
 
@@ -592,6 +594,26 @@ function customize_checkout_shipping_fields($shipping_fields)
 
         // Add custom class to all labels
         $shipping_fields[$key]['label_class'][] = 'mt-4 ml-2 text-mob-xs-font font-reg420';
+
+        if ('shipping_address_2' === $key) {
+            if (! isset($shipping_fields[ $key ]['class']) || ! is_array($shipping_fields[ $key ]['class'])) {
+                $shipping_fields[ $key ]['class'] = array();
+            }
+
+            if (! in_array('icon-address-2', $shipping_fields[ $key ]['class'], true)) {
+                $shipping_fields[ $key ]['class'][] = 'icon-address-2';
+            }
+        }
+
+        if ('custom_shipping_eircode' === $key) {
+            if (! isset($shipping_fields[ $key ]['class']) || ! is_array($shipping_fields[ $key ]['class'])) {
+                $shipping_fields[ $key ]['class'] = array();
+            }
+
+            if (! in_array('icon-postcode', $shipping_fields[ $key ]['class'], true)) {
+                $shipping_fields[ $key ]['class'][] = 'icon-postcode';
+            }
+        }
 
         // If there's a custom placeholder for this field, use it
         if (isset($custom_placeholders[$key])) {

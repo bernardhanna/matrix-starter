@@ -69,6 +69,26 @@ function matrix_rd_express_checkout_remove_visible_postcode(array $fields): arra
 add_filter('woocommerce_checkout_fields', 'matrix_rd_express_checkout_remove_visible_postcode', 100);
 
 /**
+ * Phone and email live in the delivery contact block (billing fields). WooCommerce
+ * also outputs shipping_phone on the address via default address fields — hide the
+ * duplicates so customers only see one working phone field.
+ *
+ * @param array<string, mixed> $fields Checkout fields.
+ *
+ * @return array<string, mixed>
+ */
+function matrix_rd_express_checkout_hide_shipping_contact_fields(array $fields): array {
+    if (! function_exists('is_checkout') || ! is_checkout() || is_wc_endpoint_url('order-received')) {
+        return $fields;
+    }
+
+    unset($fields['shipping']['shipping_phone'], $fields['shipping']['shipping_email']);
+
+    return $fields;
+}
+add_filter('woocommerce_checkout_fields', 'matrix_rd_express_checkout_hide_shipping_contact_fields', 101);
+
+/**
  * Hidden shipping postcode synced from custom Eircode for WooCommerce validation.
  */
 function matrix_rd_express_checkout_hidden_shipping_postcode(): void {
@@ -215,6 +235,7 @@ function matrix_rd_express_checkout_enqueue_assets(): void {
             'wizardMessages' => [
                 'selectMethod'    => __('Choose delivery or collection.', 'matrix-starter'),
                 'selectPickup'    => __('Choose a pickup location.', 'matrix-starter'),
+                'selectPickupPlaceholder' => __('Select a collection location', 'matrix-starter'),
                 'pickupLoading'   => __('Please wait… loading collection locations.', 'matrix-starter'),
                 'selectDate'      => __('Choose a delivery or collection date.', 'matrix-starter'),
                 'noScheduleDates' => __('No dates are available for this method. Try collection or change your delivery method.', 'matrix-starter'),
@@ -343,15 +364,40 @@ function matrix_rd_express_checkout_summary_fulfilment_line(): void {
     if ($is_pickup) {
         $label = __('Collection', 'matrix-starter');
     } elseif ($method && ! empty($packages[0]['rates'][$method])) {
-        $label = $packages[0]['rates'][$method]->get_label();
+        $label = function_exists('matrix_rd_checkout_format_delivery_method_label')
+            ? matrix_rd_checkout_format_delivery_method_label((string) $packages[0]['rates'][$method]->get_label())
+            : wp_strip_all_tags($packages[0]['rates'][$method]->get_label());
     } else {
         return;
     }
 
+    $schedule       = function_exists('matrix_rd_checkout_get_schedule_summary_parts')
+        ? matrix_rd_checkout_get_schedule_summary_parts()
+        : ['date' => '', 'time' => ''];
+    $schedule_parts = array_filter([$schedule['date'] ?? '', $schedule['time'] ?? '']);
+    $schedule_text  = implode(' · ', $schedule_parts);
+    $location_detail = $is_pickup && function_exists('matrix_rd_checkout_get_selected_pickup_location_name')
+        ? matrix_rd_checkout_get_selected_pickup_location_name()
+        : '';
+
     ?>
     <div class="flex justify-between px-2 py-3 border-b mobile:px-8 rd-fulfilment-summary border-grey-border">
         <div class="font-laca font-regular text-sm-font"><?php esc_html_e('Fulfilment', 'matrix-starter'); ?></div>
-        <div class="font-laca font-regular text-sm-font text-right"><?php echo esc_html(wp_strip_all_tags($label)); ?></div>
+        <div class="font-laca font-regular text-sm-font text-right">
+            <div class="rd-fulfilment-summary__method"><?php echo esc_html(wp_strip_all_tags($label)); ?></div>
+            <?php if ($is_pickup) : ?>
+                <?php if ($location_detail !== '') : ?>
+                    <div class="rd-fulfilment-summary__location mt-1 text-xs-font opacity-80"><?php echo esc_html($location_detail); ?></div>
+                <?php else : ?>
+                    <div class="rd-fulfilment-summary__location mt-1 text-xs-font opacity-80" hidden></div>
+                <?php endif; ?>
+            <?php endif; ?>
+            <?php if ($schedule_text !== '') : ?>
+                <div class="rd-fulfilment-summary__schedule mt-1 text-xs-font opacity-80"><?php echo esc_html($schedule_text); ?></div>
+            <?php else : ?>
+                <div class="rd-fulfilment-summary__schedule mt-1 text-xs-font opacity-80" hidden></div>
+            <?php endif; ?>
+        </div>
     </div>
     <?php
 }
@@ -460,6 +506,15 @@ function matrix_rd_express_checkout_sync_billing_from_shipping(array $data): arr
     if (! empty($data['custom_shipping_eircode'])) {
         $data['billing_postcode']  = $data['custom_shipping_eircode'];
         $data['shipping_postcode'] = $data['custom_shipping_eircode'];
+    }
+
+    foreach (array('phone', 'email') as $contact_key) {
+        $billing_field  = 'billing_' . $contact_key;
+        $shipping_field = 'shipping_' . $contact_key;
+
+        if (! empty($data[ $billing_field ])) {
+            $data[ $shipping_field ] = $data[ $billing_field ];
+        }
     }
 
     $data['ship_to_different_address'] = 1;

@@ -489,20 +489,28 @@ if (! $checkout->is_registration_enabled() && $checkout->is_registration_require
             <nav class="rd-checkout-progress" aria-label="<?php esc_attr_e('Checkout progress', 'matrix-starter'); ?>">
                 <ol class="rd-checkout-progress__list">
                     <li class="rd-checkout-progress__item rd-checkout-progress__item--active" data-rd-progress="method">
-                        <span class="rd-checkout-progress__number">1</span>
-                        <span class="rd-checkout-progress__label"><?php esc_html_e('Method', 'matrix-starter'); ?></span>
+                        <button type="button" class="rd-checkout-progress__trigger" data-rd-progress="method">
+                            <span class="rd-checkout-progress__number" aria-hidden="true">1</span>
+                            <span class="rd-checkout-progress__label"><?php esc_html_e('Method', 'matrix-starter'); ?></span>
+                        </button>
                     </li>
                     <li class="rd-checkout-progress__item" data-rd-progress="schedule">
-                        <span class="rd-checkout-progress__number">2</span>
-                        <span class="rd-checkout-progress__label"><?php esc_html_e('Date', 'matrix-starter'); ?></span>
+                        <button type="button" class="rd-checkout-progress__trigger" data-rd-progress="schedule" disabled>
+                            <span class="rd-checkout-progress__number" aria-hidden="true">2</span>
+                            <span class="rd-checkout-progress__label"><?php esc_html_e('Date', 'matrix-starter'); ?></span>
+                        </button>
                     </li>
                     <li class="rd-checkout-progress__item" data-rd-progress="details">
-                        <span class="rd-checkout-progress__number">3</span>
-                        <span class="rd-checkout-progress__label"><?php esc_html_e('Details', 'matrix-starter'); ?></span>
+                        <button type="button" class="rd-checkout-progress__trigger" data-rd-progress="details" disabled>
+                            <span class="rd-checkout-progress__number" aria-hidden="true">3</span>
+                            <span class="rd-checkout-progress__label"><?php esc_html_e('Details', 'matrix-starter'); ?></span>
+                        </button>
                     </li>
                     <li class="rd-checkout-progress__item rd-checkout-progress__item--pay" data-rd-progress="pay">
-                        <span class="rd-checkout-progress__number">4</span>
-                        <span class="rd-checkout-progress__label"><?php esc_html_e('Payment', 'matrix-starter'); ?></span>
+                        <button type="button" class="rd-checkout-progress__trigger" data-rd-progress="pay" disabled>
+                            <span class="rd-checkout-progress__number" aria-hidden="true">4</span>
+                            <span class="rd-checkout-progress__label"><?php esc_html_e('Payment', 'matrix-starter'); ?></span>
+                        </button>
                     </li>
                 </ol>
             </nav>
