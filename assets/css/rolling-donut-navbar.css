@@ -102,6 +102,11 @@ header.relative.z-\[200\] {
   overflow: visible;
 }
 
+#site-nav > .relative.mx-auto {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 #site-nav nav#menu {
   overflow: visible;
 }
@@ -562,6 +567,70 @@ header.relative.z-\[200\] {
 
   #site-nav ul.nav-combined {
     display: none !important;
+  }
+
+  #site-nav nav#menu {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.35rem, 0.9vw, 1rem);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  #site-nav nav#menu > div:first-of-type,
+  #site-nav nav#menu > div:last-of-type {
+    flex: 1 1 0%;
+    width: auto !important;
+    min-width: 0;
+  }
+
+  #site-nav .nav-center {
+    flex: 0 0 auto;
+    width: auto !important;
+    max-width: 152px;
+    margin-inline: clamp(0.35rem, 1vw, 1.25rem);
+  }
+
+  #site-nav ul.nav-left {
+    justify-content: flex-end;
+    gap: clamp(0.5rem, 1.1vw, 1.35rem);
+  }
+
+  #site-nav ul.nav-right {
+    justify-content: flex-start;
+    gap: clamp(0.5rem, 1.1vw, 1.35rem);
+    flex-wrap: nowrap;
+  }
+
+  #site-nav ul.nav-left > li,
+  #site-nav ul.nav-right > li {
+    padding-inline: clamp(0.25rem, 0.55vw, 0.75rem);
+  }
+
+  #site-nav .top-nav {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+}
+
+@media (min-width: 1250px) and (max-width: 1799.98px) {
+  #site-nav .btn-menu {
+    min-width: 0;
+    max-width: 12.5rem;
+    width: auto;
+    height: 52px;
+    padding: 12px 18px;
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  #site-nav .btn-menu::before {
+    width: 26px;
+    height: 26px;
+    margin-right: 0.3rem;
   }
 }
 

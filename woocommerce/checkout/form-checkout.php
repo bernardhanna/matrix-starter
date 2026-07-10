@@ -502,7 +502,7 @@ if (! $checkout->is_registration_enabled() && $checkout->is_registration_require
                     </li>
                     <li class="rd-checkout-progress__item rd-checkout-progress__item--pay" data-rd-progress="pay">
                         <span class="rd-checkout-progress__number">4</span>
-                        <span class="rd-checkout-progress__label"><?php esc_html_e('Pay', 'matrix-starter'); ?></span>
+                        <span class="rd-checkout-progress__label"><?php esc_html_e('Payment', 'matrix-starter'); ?></span>
                     </li>
                 </ol>
             </nav>
@@ -606,6 +606,32 @@ if (! $checkout->is_registration_enabled() && $checkout->is_registration_require
                                     </button>
                                     <button type="button" class="rd-checkout-step__continue rd-checkout-step__continue--pay button alt">
                                         <?php esc_html_e('Continue to payment', 'matrix-starter'); ?>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="rd-checkout-step-pay" class="rd-checkout-step rd-checkout-step--upcoming" data-rd-step="pay" aria-labelledby="rd-checkout-step-pay-heading">
+                        <div class="rd-checkout-step__shell">
+                            <div class="rd-checkout-step__header">
+                                <span class="rd-checkout-step__number" aria-hidden="true">4</span>
+                                <div class="rd-checkout-step__heading">
+                                    <h2 id="rd-checkout-step-pay-heading" class="rd-checkout-step__title text-base-font font-reg420">
+                                        <?php esc_html_e('Payment method', 'matrix-starter'); ?>
+                                    </h2>
+                                    <p class="rd-checkout-step__summary" data-rd-summary="pay" aria-live="polite"></p>
+                                </div>
+                                <button type="button" class="rd-checkout-step__change" data-rd-goto="pay" hidden>
+                                    <?php esc_html_e('Change', 'matrix-starter'); ?>
+                                </button>
+                            </div>
+                            <div class="rd-checkout-step__body" hidden>
+                                <div class="rd-checkout-step__errors" role="alert" aria-live="assertive" hidden></div>
+                                <?php woocommerce_checkout_payment(); ?>
+                                <div class="rd-checkout-step__actions">
+                                    <button type="button" class="rd-checkout-step__back" data-rd-goto="details">
+                                        <?php esc_html_e('Back', 'matrix-starter'); ?>
                                     </button>
                                 </div>
                             </div>

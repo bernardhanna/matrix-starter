@@ -165,10 +165,11 @@
 
     const slideCount = hero.querySelectorAll('.splide__slide').length;
     const heroSplide = new Splide('#home-hero-slider', {
-      type: slideCount > 1 ? 'loop' : 'slide',
+      type: 'fade',
       perPage: 1,
       arrows: slideCount > 1,
       pagination: slideCount > 1 ? '#home-hero-slider-pagination' : false,
+      rewind: slideCount > 1,
       speed: 500,
       easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
       drag: slideCount > 1,

@@ -65,8 +65,8 @@ defined('ABSPATH') || exit;
                 $product_permalink = apply_filters('woocommerce_cart_item_permalink', $_product->is_visible() ? $_product->get_permalink($cart_item) : '', $cart_item, $cart_item_key);
                 $thumbnail         = apply_filters('woocommerce_cart_item_thumbnail', $_product->get_image('h-[64px] w-[84px] rounded-normal object-cover'), $cart_item, $cart_item_key);
         ?>
-                <div class="<?php echo esc_attr(apply_filters('woocommerce_cart_item_class', 'cart_item flex justify-between items-center gap-4 px-2 mobile:px-8 py-8 w-full border-b border-grey-border', $cart_item, $cart_item_key)); ?>">
-                    <div class="flex items-center flex-1 min-w-0 gap-4">
+                <div class="<?php echo esc_attr(apply_filters('woocommerce_cart_item_class', 'cart_item flex justify-between items-start gap-4 px-2 mobile:px-8 py-8 w-full border-b border-grey-border', $cart_item, $cart_item_key)); ?>">
+                    <div class="flex items-start flex-1 min-w-0 gap-4">
                         <div class="checkout-product-thumbnail shrink-0">
                             <?php
                             if ($product_permalink) {

@@ -325,7 +325,9 @@ function matrix_rd_single_product_setup(): void
     add_action('woocommerce_single_product_summary', 'matrix_rd_single_visible_price', 7);
     add_action('woocommerce_single_product_summary', 'matrix_rd_woosb_sync_price_markup', 9);
     add_action('woocommerce_single_product_summary', 'matrix_rd_product_summary_header_close', 11);
-    add_action('woocommerce_after_add_to_cart_button', 'matrix_rd_single_product_description_after_allergens', 15);
+    // Priority 9 (registered on wp, after Buy Now at 9) so description sits above
+    // the allergen accordion (box-builder-woo hooks that at 10).
+    add_action('woocommerce_after_add_to_cart_button', 'matrix_rd_single_product_description_before_allergens', 9);
 }
 add_action('wp', 'matrix_rd_single_product_setup', 20);
 
@@ -486,9 +488,9 @@ function matrix_rd_product_summary_header_close(): void
 }
 
 /**
- * Product description below the allergen accordion (all single product pages).
+ * Product description above the allergen accordion (all single product pages).
  */
-function matrix_rd_single_product_description_after_allergens(): void
+function matrix_rd_single_product_description_before_allergens(): void
 {
     matrix_rd_single_product_description_below_header();
 }

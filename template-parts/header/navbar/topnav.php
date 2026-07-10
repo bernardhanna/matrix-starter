@@ -13,11 +13,11 @@ $account_url = wc_get_page_permalink('myaccount');
 $cart_url    = wc_get_cart_url();
 ?>
 <div
-  class="top-nav relative top-0 z-[1000] mx-auto hidden w-full max-w-max-1549 py-0 lg:mb-0 lg:mt-4 lg:flex md:justify-between lg:justify-end xl:max-w-max-95 laptop:my-4"
+  class="top-nav relative top-0 z-[1000] mx-auto hidden w-full max-w-full min-w-0 py-0 lg:mb-0 lg:mt-4 lg:flex md:justify-end lg:justify-end laptop:my-4"
 >
-  <div class="flex w-full flex-row items-center justify-end px-4 md:w-full md:items-center md:justify-between md:px-4">
+  <div class="flex min-w-0 flex-1 flex-row items-center justify-end gap-3 px-4 md:items-center md:justify-end md:px-4 lg:gap-4">
     <div class="hidden md:block md:pl-4" aria-hidden="true"></div>
-    <div class="z-50 flex w-full flex-row items-center justify-end gap-4 md:gap-5">
+    <div class="z-50 flex shrink-0 flex-row items-center justify-end gap-3 md:gap-4 lg:gap-4">
       <?php if ($telephone) : ?>
         <a
           class="reg-font relative z-50 hidden shrink-0 flex-row items-center gap-2 lg:flex"
@@ -54,7 +54,7 @@ $cart_url    = wc_get_cart_url();
   </div>
 
   <div
-    class="js-cart-header flex shrink-0 items-center justify-center px-4"
+    class="js-cart-header flex shrink-0 items-center justify-center pl-2 pr-0 md:pl-4"
     data-rd-cart
     data-initial-count="<?php echo (int) $cart['count']; ?>"
     data-initial-total="<?php echo (int) $cart['count'] > 0 ? esc_attr($cart['total_plain']) : ''; ?>"

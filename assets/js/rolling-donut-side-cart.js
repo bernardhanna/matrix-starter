@@ -136,7 +136,55 @@
     return refreshSideCartContent();
   }
 
-  async function clearCart() {
+  function clearWcCartFragmentStorage() {
+    if (typeof window.wc_cart_fragments_params === 'undefined') {
+      return;
+    }
+
+    try {
+      var ajaxUrl = window.wc_cart_fragments_params.ajax_url || '';
+      sessionStorage.removeItem('wc_fragments_' + ajaxUrl);
+      sessionStorage.removeItem('wc_cart_hash_' + ajaxUrl);
+    } catch (e) {
+      // Ignore storage errors (private mode, etc.).
+    }
+  }
+
+  function syncCartChrome(data) {
+    if (!data) {
+      return;
+    }
+
+    applyCartHeaderData(data);
+
+    if (typeof window.refreshAllCartHeaders === 'function') {
+      window.refreshAllCartHeaders();
+    }
+
+    window.dispatchEvent(new CustomEvent('matrix_rd_cart_updated'));
+
+    if (typeof jQuery !== 'undefined') {
+      jQuery(document.body).trigger('wc_fragment_refresh');
+      jQuery(document.body).trigger('removed_from_cart');
+    }
+  }
+
+  function parseAjaxJson(response) {
+    return response.text().then(function (text) {
+      var trimmed = (text || '').trim();
+      if (trimmed === '' || trimmed === '-1' || trimmed === '0') {
+        return null;
+      }
+
+      try {
+        return JSON.parse(trimmed);
+      } catch (e) {
+        return null;
+      }
+    });
+  }
+
+  async function clearCart(retryOnNonceFailure) {
     const inner = getInner();
     const cfg = getConfig();
     if (!inner || !cfg.ajaxUrl || !cfg.clearNonce) {
@@ -156,17 +204,42 @@
         },
         body: body.toString(),
       });
-      const result = await response.json();
-      if (!result.success || !result.data) {
+      const result = await parseAjaxJson(response);
+
+      if (!result) {
         return null;
       }
 
-      inner.innerHTML = result.data.html || '';
-      applyCartHeaderData(result.data);
+      if (!result.success) {
+        if (
+          !retryOnNonceFailure &&
+          result.data &&
+          result.data.clearNonce &&
+          window.matrixRdSideCart
+        ) {
+          window.matrixRdSideCart.clearNonce = result.data.clearNonce;
+          return clearCart(true);
+        }
 
-      if (typeof jQuery !== 'undefined') {
-        jQuery(document.body).trigger('removed_from_cart');
+        var errorMessage =
+          (result.data && result.data.message) ||
+          (cfg.i18n && cfg.i18n.clearFailed) ||
+          'Could not clear your cart. Please refresh the page and try again.';
+        window.alert(errorMessage);
+        return null;
       }
+
+      if (!result.data) {
+        return null;
+      }
+
+      if (result.data.clearNonce && window.matrixRdSideCart) {
+        window.matrixRdSideCart.clearNonce = result.data.clearNonce;
+      }
+
+      inner.innerHTML = result.data.html || '';
+      clearWcCartFragmentStorage();
+      syncCartChrome(result.data);
 
       return result.data;
     } catch (e) {

@@ -3,7 +3,7 @@
 
     var config = window.matrixRdExpressCheckout || {};
     var pickupMethodId = config.pickupMethodId || 'local_pickup_plus';
-    var wizardSteps = ['method', 'schedule', 'details'];
+    var wizardSteps = ['method', 'schedule', 'details', 'pay'];
     var currentWizardStep = 0;
     var wizardReady = false;
     var checkoutValidationArmed = false;
@@ -19,6 +19,9 @@
     // Brief window after opening the pickup dropdown where we ignore selections.
     // Mobile Select2 can treat the open tap as a select of the first option.
     var pickupOpenGuardUntil = 0;
+    var pickupLoadingPollId = null;
+    var pickupLoadingShowTimer = null;
+    var pickupFieldSnapshotHtml = '';
     // Phase 1 auto-advance: the Method and Date steps are single-choice, so once
     // a valid choice is made we move the customer to the next step automatically.
     // The Continue buttons stay as a manual fallback. Can be disabled by the
@@ -55,6 +58,214 @@
         }
 
         return methodId.indexOf('local_pickup') !== -1 || methodId === pickupMethodId;
+    }
+
+    function getSelectedPickupWrap() {
+        var $li = $('#rd-checkout-step-method ul.woocommerce-shipping-methods > li')
+            .filter(function () {
+                var $radio = $(this).find('input.shipping_method').first();
+                return $radio.is(':checked') && isPickupMethod($radio.val());
+            })
+            .first();
+
+        if (!$li.length) {
+            return $();
+        }
+
+        var $wrap = $li.children('.rd-shipping-option-pickup');
+        return $wrap.length ? $wrap : $li;
+    }
+
+    function isPickupLocationSelectReady($select) {
+        if (!$select.length) {
+            return false;
+        }
+
+        var hasLocations = false;
+
+        $select.find('option').each(function () {
+            if (isValidPickupSelection($(this).val())) {
+                hasLocations = true;
+                return false;
+            }
+        });
+
+        if (!hasLocations) {
+            return false;
+        }
+
+        if ($select.hasClass('select2-hidden-accessible')) {
+            var $container = $select.nextAll('.select2-container').first();
+            return $container.length > 0 && $container[0].offsetWidth > 20;
+        }
+
+        return $select.is(':visible') && $select[0].offsetWidth > 20;
+    }
+
+    function stopPickupLoadingShowTimer() {
+        if (pickupLoadingShowTimer) {
+            window.clearTimeout(pickupLoadingShowTimer);
+            pickupLoadingShowTimer = null;
+        }
+    }
+
+    function getPickupOptionLi() {
+        var $li = $();
+
+        $('#rd-checkout-step-method input.shipping_method').each(function () {
+            if (isPickupMethod($(this).val())) {
+                $li = $(this).closest('li');
+                return false;
+            }
+        });
+
+        return $li;
+    }
+
+    function cachePickupFieldSnapshot() {
+        var $wrap = getPickupOptionLi().children('.rd-shipping-option-pickup');
+
+        if (!$wrap.length) {
+            return;
+        }
+
+        var $select = $wrap.find('select.pickup-location-lookup').first();
+
+        if (isPickupLocationSelectReady($select)) {
+            pickupFieldSnapshotHtml = $wrap.html();
+        }
+    }
+
+    function restorePickupSnapshotIfNeeded($li) {
+        if (!pickupFieldSnapshotHtml || !$li || !$li.length) {
+            return;
+        }
+
+        var $select = $li.find('select.pickup-location-lookup').first();
+
+        if (isPickupLocationSelectReady($select)) {
+            return;
+        }
+
+        var $wrap = $li.children('.rd-shipping-option-pickup');
+
+        if (!$wrap.length) {
+            $li.append('<div class="rd-shipping-option-pickup rd-pickup-pending">' + pickupFieldSnapshotHtml + '</div>');
+            return;
+        }
+
+        if (!$select.length || !isPickupLocationSelectReady($select)) {
+            $wrap.html(pickupFieldSnapshotHtml);
+        }
+    }
+
+    function warmupPickupLocationFields() {
+        var $li = getPickupOptionLi();
+
+        if (!$li.length) {
+            return;
+        }
+
+        decorateShippingOptions();
+        $li.addClass('rd-pickup-warmup');
+        restorePickupSnapshotIfNeeded($li);
+        prepareVisiblePickupSelects($li);
+        applyPickupAddresses();
+        $li.removeClass('rd-pickup-warmup');
+        cachePickupFieldSnapshot();
+    }
+
+    function showPickupLocationOptimistically($li) {
+        if (!$li || !$li.length) {
+            return;
+        }
+
+        $('#rd-checkout-step-method .rd-pickup-pending').removeClass('rd-pickup-pending');
+        decorateShippingOptions();
+        restorePickupSnapshotIfNeeded($li);
+        $li.find('.rd-shipping-option-pickup, .pickup-location-field').addClass('rd-pickup-pending');
+        prepareVisiblePickupSelects($li);
+        stopPickupLoadingShowTimer();
+        setPickupLocationLoading(false);
+    }
+
+    function stopPickupLoadingPoll() {
+        if (pickupLoadingPollId) {
+            window.clearInterval(pickupLoadingPollId);
+            pickupLoadingPollId = null;
+        }
+    }
+
+    function setPickupLocationLoading(loading) {
+        var $wrap = getSelectedPickupWrap();
+
+        if (!$wrap.length) {
+            stopPickupLoadingPoll();
+            return;
+        }
+
+        if (!loading) {
+            stopPickupLoadingPoll();
+            stopPickupLoadingShowTimer();
+            $wrap.removeClass('rd-pickup-loading');
+            return;
+        }
+
+        $wrap.addClass('rd-pickup-loading');
+
+        if (!$wrap.find('.rd-pickup-location-loading').length) {
+            var message = getWizardMessages().pickupLoading || 'Please wait… loading collection locations.';
+            $wrap.prepend(
+                '<div class="rd-pickup-location-loading" role="status" aria-live="polite">' +
+                    '<span class="rd-pickup-location-loading__spinner" aria-hidden="true"></span>' +
+                    '<span class="rd-pickup-location-loading__text"></span>' +
+                '</div>'
+            );
+            $wrap.find('.rd-pickup-location-loading__text').text(message);
+        }
+    }
+
+    function syncPickupLocationLoading() {
+        if (!isPickupMethod(getChosenShippingMethod())) {
+            setPickupLocationLoading(false);
+            return;
+        }
+
+        var $select = getSelectedPickupWrap().find('select.pickup-location-lookup').first();
+
+        if (isPickupLocationSelectReady($select) || $('#rd-checkout-step-method .rd-pickup-pending').length) {
+            setPickupLocationLoading(false);
+            return;
+        }
+
+        stopPickupLoadingShowTimer();
+
+        pickupLoadingShowTimer = window.setTimeout(function () {
+            pickupLoadingShowTimer = null;
+            $select = getSelectedPickupWrap().find('select.pickup-location-lookup').first();
+
+            if (isPickupLocationSelectReady($select) || $('#rd-checkout-step-method .rd-pickup-pending').length) {
+                setPickupLocationLoading(false);
+                return;
+            }
+
+            setPickupLocationLoading(true);
+
+            if (pickupLoadingPollId) {
+                return;
+            }
+
+            var attempts = 0;
+
+            pickupLoadingPollId = window.setInterval(function () {
+                attempts += 1;
+                $select = getSelectedPickupWrap().find('select.pickup-location-lookup').first();
+
+                if (isPickupLocationSelectReady($select) || attempts > 50) {
+                    setPickupLocationLoading(false);
+                }
+            }, 150);
+        }, 450);
     }
 
     function decorateShippingOptions() {
@@ -106,12 +317,24 @@
             $pickupFields.css('display', '').toggleClass('rd-pickup-visible', isSelectedPickup);
 
             if (isSelectedPickup) {
+                $pickupFields.removeClass('rd-pickup-pending');
                 refreshPickupSelect2($li);
                 window.setTimeout(function () {
                     prepareVisiblePickupSelects($li);
+                    cachePickupFieldSnapshot();
+                    syncPickupLocationLoading();
                 }, 0);
             }
         });
+
+        $('#rd-checkout-step-method .rd-pickup-pending').not('.rd-pickup-visible').removeClass('rd-pickup-pending');
+
+        if (!isPickup) {
+            setPickupLocationLoading(false);
+            $('#rd-checkout-step-method .rd-pickup-pending').removeClass('rd-pickup-pending');
+        } else {
+            syncPickupLocationLoading();
+        }
     }
 
     // Select2 measures 0 width when it is initialised inside a hidden field, so
@@ -225,6 +448,8 @@
                 }, 150);
             }
         });
+
+        syncPickupLocationLoading();
     }
 
     function clearPickupLocationSelection() {
@@ -600,6 +825,11 @@
         }
     }
 
+    function isEircodeUserTouched() {
+        var $customEircode = $('#custom_shipping_eircode');
+        return $customEircode.length && $customEircode.data('rd-user-touched') === true;
+    }
+
     function syncCustomEircodeToPostcodes() {
         var $customEircode = $('#custom_shipping_eircode');
         var $shippingPostcode = $('#shipping_postcode');
@@ -610,6 +840,8 @@
             return;
         }
 
+        var customEl = $customEircode[0];
+        var customFocused = customEl && document.activeElement === customEl;
         var customVal = String($customEircode.val() || '').trim();
         var shippingVal = String($shippingPostcode.val() || '').trim();
         var billingVal = $billingPostcode.length ? String($billingPostcode.val() || '').trim() : '';
@@ -633,6 +865,23 @@
             return;
         }
 
+        // User cleared or is editing the visible field — never overwrite it from hidden
+        // postcode inputs (autofill often fills both, which made delete appear broken).
+        if (customFocused || isEircodeUserTouched()) {
+            if ($shippingPostcode.length && shippingVal && shippingVal !== DEFAULT_SEED_EIRCODE) {
+                $shippingPostcode.val('');
+            }
+            if (
+                $billingPostcode.length &&
+                billingVal &&
+                $form.hasClass('rd-fulfilment-delivery') &&
+                !$form.hasClass('rd-show-billing')
+            ) {
+                $billingPostcode.val('');
+            }
+            return;
+        }
+
         if (shippingVal && shippingVal !== DEFAULT_SEED_EIRCODE) {
             $customEircode.val(shippingVal);
             if (
@@ -652,6 +901,26 @@
                 $shippingPostcode.val(billingVal);
             }
         }
+    }
+
+    function placeCaretAtEndIfAutofilledAtStart(input) {
+        if (!input || !input.value) {
+            return;
+        }
+
+        var start = input.selectionStart;
+        var end = input.selectionEnd;
+
+        if (start !== 0 || end !== 0 || start !== end) {
+            return;
+        }
+
+        window.requestAnimationFrame(function () {
+            var length = input.value.length;
+            if (input.setSelectionRange) {
+                input.setSelectionRange(length, length);
+            }
+        });
     }
 
     function syncCheckoutAddressAutofill() {
@@ -700,21 +969,16 @@
     }
 
     function getStepErrorsBox(slug) {
-        if (slug === 'pay') {
-            return $('#payment .rd-checkout-step__errors');
-        }
-
-        return getStepElement(slug).find('.rd-checkout-step__errors');
+        return getStepElement(slug).find('.rd-checkout-step__errors').first();
     }
 
     function clearStepErrors(slug) {
         if (slug) {
             getStepErrorsBox(slug).empty().prop('hidden', true);
+            getStepElement(slug).removeClass('rd-checkout-step--has-error');
 
-            if (slug === 'pay') {
-                $('#payment').removeClass('rd-checkout-step--has-error');
-            } else {
-                getStepElement(slug).removeClass('rd-checkout-step--has-error');
+            if (slug === 'method') {
+                $('#rd-checkout-step-method .rd-express-shipping-body').removeClass('rd-field-error');
             }
 
             return;
@@ -763,7 +1027,7 @@
         }
 
         var $box = getStepErrorsBox(slug);
-        var $step = slug === 'pay' ? $('#payment') : getStepElement(slug);
+        var $step = getStepElement(slug);
         var title = getWizardMessages().errorsTitle || "What's missing";
         var items = list
             .map(function (message) {
@@ -791,7 +1055,7 @@
     }
 
     function focusFirstInvalidInStep(slug) {
-        var $step = slug === 'pay' ? $('#payment') : getStepElement(slug);
+        var $step = getStepElement(slug);
         var $input = $step
             .find('.woocommerce-invalid input, .woocommerce-invalid select, .woocommerce-invalid textarea')
             .not('[type="hidden"]')
@@ -813,7 +1077,7 @@
 
     function scrollToStepErrors(slug) {
         var $box = getStepErrorsBox(slug);
-        var $step = slug === 'pay' ? $('#payment') : getStepElement(slug);
+        var $step = getStepElement(slug);
         var $invalid = $step.find('.woocommerce-invalid, .rd-field-error').first();
         var $target = $box.length && !$box.prop('hidden') ? $box : $invalid.length ? $invalid : $step;
 
@@ -976,11 +1240,6 @@
     }
 
     function focusCheckoutStep(slug) {
-        if (slug === 'pay') {
-            scrollToPayment();
-            return;
-        }
-
         var index = getWizardStepIndex(slug);
 
         if (index === -1) {
@@ -1184,12 +1443,6 @@
             }
         }
 
-        errors = getStepErrorsForSlug('pay', applyHighlights);
-
-        if (errors.length) {
-            return { slug: 'pay', errors: errors };
-        }
-
         return null;
     }
 
@@ -1306,6 +1559,34 @@
         }
 
         goToWizardStep(0, { force: true });
+    }
+
+    var deliveryDefaultApplied = false;
+
+    function ensureDefaultDeliveryShipping() {
+        if (deliveryDefaultApplied) {
+            return;
+        }
+
+        deliveryDefaultApplied = true;
+
+        var $checked = $('input.shipping_method:checked');
+
+        if ($checked.length && !isPickupMethod($checked.val())) {
+            return;
+        }
+
+        var $delivery = $('input.shipping_method').filter(function () {
+            return !isPickupMethod($(this).val());
+        }).first();
+
+        if (!$delivery.length) {
+            return;
+        }
+
+        if (!$delivery.is(':checked')) {
+            $delivery.prop('checked', true).trigger('change');
+        }
     }
 
     function syncMobilePayBarTotal() {
@@ -1459,13 +1740,6 @@
         $('.rd-checkout-progress__item').each(function () {
             var $item = $(this);
             var slug = $item.data('rd-progress');
-
-            if (slug === 'pay') {
-                $item.toggleClass('rd-checkout-progress__item--active', currentWizardStep >= wizardSteps.length - 1);
-                $item.toggleClass('rd-checkout-progress__item--complete', currentWizardStep >= wizardSteps.length - 1);
-                return;
-            }
-
             var index = getWizardStepIndex(slug);
 
             if (index === -1) {
@@ -1536,45 +1810,30 @@
     }
 
     function scrollToPayment() {
-        var $payment = $('#payment.woocommerce-checkout-payment, #payment').first();
+        var $step = getStepElement('pay');
 
-        if ($payment.length) {
-            $('html, body').animate({ scrollTop: $payment.offset().top - 96 }, 320);
-            return;
-        }
-
-        var $summary = $('.rd-express-checkout__summary');
-
-        if ($summary.length) {
-            $('html, body').animate({ scrollTop: $summary.offset().top - 96 }, 320);
+        if ($step.length) {
+            $('html, body').animate({ scrollTop: $step.offset().top - 96 }, 320);
         }
     }
 
     function goToPayment(options) {
         options = options || {};
         var i;
+        var payIndex = getWizardStepIndex('pay');
 
         armCheckoutValidation();
 
-        for (i = 0; i < wizardSteps.length; i++) {
+        for (i = 0; i < payIndex; i++) {
             if (!validateWizardStep(i)) {
                 goToWizardStep(i, { force: true });
                 return false;
             }
         }
 
-        // Advance past the last wizard step so the final step (Your details)
-        // renders as completed/collapsed instead of staying active and open.
-        // The payment area lives outside the wizard steps, so it stays visible.
-        currentWizardStep = wizardSteps.length;
-        refreshWizardStepStates();
+        goToWizardStep(payIndex, { force: true, scroll: options.scroll !== false });
 
         if (options.scroll !== false) {
-            scrollToPayment();
-            // Activate the card field right away so the customer can start typing
-            // as soon as they land on payment. Wait for the scroll animation to
-            // settle first. Skipped on the final place-order/mobile-pay path
-            // (scroll === false) so submitting doesn't steal focus.
             window.setTimeout(focusPaymentCardField, 360);
         }
 
@@ -1778,6 +2037,7 @@
         updateScheduleUnavailableState();
         syncMobilePayBarTotal();
         refreshWizardStepStates();
+        warmupPickupLocationFields();
     }
 
     // Show each pickup location's address beneath its name in the dropdown.
@@ -1812,6 +2072,7 @@
         syncMobilePayBarTotal();
         applyPickupAddresses();
         refreshPickupUi();
+        window.setTimeout(syncPickupLocationLoading, 0);
         // The order review table is re-rendered on every AJAX refresh, which
         // resets the <details> accordion. Re-apply the user's chosen state.
         applyOrderSummaryState();
@@ -1919,17 +2180,45 @@
         window.setTimeout(function () {
             prepareVisiblePickupSelects();
             enforcePickupRequiresUserChoice();
+            cachePickupFieldSnapshot();
+            syncPickupLocationLoading();
         }, 0);
     });
     $(document).on(
-        'change input blur',
+        'change blur',
         '#customer_details input, #customer_details select, #custom_shipping_eircode, #billing_state, #shipping_state, #billing_postcode, #shipping_postcode',
         function () {
             syncBillingFromShippingForStripe();
             syncCheckoutAddressAutofill();
         }
     );
+    $(document).on('input', '#custom_shipping_eircode', function () {
+        $(this).data('rd-user-touched', true);
+        syncCustomEircodeToPostcodes();
+    });
+    $(document).on(
+        'focus',
+        '#custom_shipping_eircode, #customer_details input.input-text',
+        function () {
+            placeCaretAtEndIfAutofilledAtStart(this);
+        }
+    );
     $(document).on('change', 'input.shipping_method', applyFulfilmentMode);
+    $(document).on(
+        'mousedown',
+        '#rd-checkout-step-method .rd-shipping-option input.shipping_method, #rd-checkout-step-method .rd-shipping-option label',
+        function () {
+            var $radio = $(this).is('input.shipping_method')
+                ? $(this)
+                : $('#' + ($(this).attr('for') || ''));
+
+            if (!$radio.length || !isPickupMethod($radio.val())) {
+                return;
+            }
+
+            showPickupLocationOptimistically($radio.closest('li'));
+        }
+    );
     // Auto-advance off the Method step once a choice is made. Delivery validates
     // immediately, so it jumps to the Date step; collection needs a pickup
     // location first, so it's a silent no-op here until that's chosen (handled by
@@ -1976,6 +2265,7 @@
 
     $(window).on('load', function () {
         initCheckoutWizard();
+        ensureDefaultDeliveryShipping();
         ensureDefaultCountries();
         refreshExpressCheckout();
 
@@ -1985,6 +2275,7 @@
     });
     $(function () {
         initCheckoutWizard();
+        ensureDefaultDeliveryShipping();
         ensureDefaultCountries();
         refreshExpressCheckout();
         applyPickupAddresses();

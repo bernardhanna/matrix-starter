@@ -347,6 +347,115 @@ function matrix_rd_checkout_set_default_shipping_address(): void {
 }
 add_action('woocommerce_before_checkout_form', 'matrix_rd_checkout_set_default_shipping_address');
 
+/**
+ * Whether a shipping rate ID is collection / local pickup.
+ */
+function matrix_rd_checkout_is_pickup_rate_id(string $rate_id): bool {
+    if ($rate_id === '') {
+        return false;
+    }
+
+    if (false !== strpos($rate_id, 'local_pickup')) {
+        return true;
+    }
+
+    $pickup_id = function_exists('wc_local_pickup_plus_shipping_method_id')
+        ? wc_local_pickup_plus_shipping_method_id()
+        : 'local_pickup_plus';
+
+    return current(explode(':', $rate_id)) === $pickup_id;
+}
+
+/**
+ * First non-pickup rate ID from a package rates array.
+ *
+ * @param array<string, WC_Shipping_Rate> $rates Package rates.
+ */
+function matrix_rd_checkout_first_delivery_rate_id(array $rates): string {
+    foreach (array_keys($rates) as $rate_id) {
+        if (! matrix_rd_checkout_is_pickup_rate_id((string) $rate_id)) {
+            return (string) $rate_id;
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Prefer delivery when WooCommerce picks the default shipping method.
+ *
+ * @param string                           $default        Proposed default rate ID.
+ * @param array<string, WC_Shipping_Rate>  $rates          Available rates.
+ * @param string                           $chosen_method  Session chosen method.
+ */
+function matrix_rd_checkout_prefer_delivery_shipping_method(string $default, array $rates, string $chosen_method): string {
+    if (! is_checkout() || is_wc_endpoint_url('order-received') || empty($rates)) {
+        return $default;
+    }
+
+    if ($chosen_method && matrix_rd_checkout_is_pickup_rate_id($chosen_method) && isset($rates[$chosen_method])) {
+        return $chosen_method;
+    }
+
+    if ($default && ! matrix_rd_checkout_is_pickup_rate_id($default)) {
+        return $default;
+    }
+
+    $delivery = matrix_rd_checkout_first_delivery_rate_id($rates);
+
+    return $delivery !== '' ? $delivery : $default;
+}
+add_filter('woocommerce_shipping_chosen_method', 'matrix_rd_checkout_prefer_delivery_shipping_method', 10, 3);
+
+/**
+ * On checkout load, default to delivery instead of collection.
+ */
+function matrix_rd_checkout_ensure_delivery_default_shipping(): void {
+    if (! is_checkout() || is_wc_endpoint_url('order-received') || ! WC()->session || ! WC()->cart) {
+        return;
+    }
+
+    if (! WC()->cart->needs_shipping()) {
+        return;
+    }
+
+    static $done = false;
+
+    if ($done) {
+        return;
+    }
+
+    $done = true;
+
+    WC()->cart->calculate_shipping();
+
+    $packages = WC()->shipping()->get_packages();
+
+    if (empty($packages[0]['rates'])) {
+        return;
+    }
+
+    $delivery = matrix_rd_checkout_first_delivery_rate_id($packages[0]['rates']);
+
+    if ($delivery === '') {
+        return;
+    }
+
+    $chosen = WC()->session->get('chosen_shipping_methods', []);
+
+    if (! is_array($chosen)) {
+        $chosen = [];
+    }
+
+    $current = (string) ($chosen[0] ?? '');
+
+    if ($current === '' || matrix_rd_checkout_is_pickup_rate_id($current)) {
+        $chosen[0] = $delivery;
+        WC()->session->set('chosen_shipping_methods', $chosen);
+    }
+}
+add_action('woocommerce_before_checkout_form', 'matrix_rd_checkout_ensure_delivery_default_shipping', 15);
+
 function matrix_rd_checkout_use_billing_for_shipping(array $address, $customer): array {
     if ($customer && empty($customer->get_shipping_country())) {
         $address['country']    = $customer->get_billing_country();

@@ -265,8 +265,8 @@ function add_custom_shipping_eircode_field($fields) {
     // Define the new custom Eircode field for shipping
     $fields['shipping']['custom_shipping_eircode'] = array(
         'type'        => 'text',
-        'class'       => array('form-row-wide'),
-        'label'       => __('Eircode ', 'woocommerce'),
+        'class'       => array('form-row-wide', 'icon-postcode'),
+        'label'       => __('Eircode', 'woocommerce'),
         'placeholder' => __('Enter your Eircode'),
         // Required for delivery (shipping). Billing Eircode stays optional via the
         // IE locale filter above. WooCommerce only validates shipping fields when a

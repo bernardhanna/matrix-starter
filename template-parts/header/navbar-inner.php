@@ -54,13 +54,13 @@ if (function_exists('is_cart') && (is_cart() || is_checkout())) {
       role="navigation"
       aria-label="<?php esc_attr_e('Main navigation', 'matrix-starter'); ?>"
     >
-      <div class="max-lg:w-1/3 laptop:w-5/6">
+      <div class="max-lg:w-1/3 laptop:min-w-0 laptop:flex-1">
         <?php get_template_part('template-parts/header/navbar/mobile-toggle'); ?>
 
         <?php
         get_template_part('template-parts/header/navbar/desktop-menu', null, [
             'nav_items'     => $nav_split['left'],
-            'nav_ul_class'  => 'nav-left w-100 hidden laptop:flex lg:justify-around lg:items-center lg:ml-4 lg:relative xxl:-left-4 one-xl:ml-0',
+            'nav_ul_class'  => 'nav-left w-100 hidden laptop:flex lg:items-center lg:ml-4 lg:relative xxl:-left-4 one-xl:ml-0',
             'nav_max_items' => 4,
             'nav_tabindex_start' => 6,
         ]);
@@ -69,13 +69,13 @@ if (function_exists('is_cart') && (is_cart() || is_checkout())) {
 
       <?php get_template_part('template-parts/header/navbar/logo', null, ['logos' => $logos]); ?>
 
-      <div class="flex w-1/3 items-center justify-end max-lg:overflow-visible lg:w-full laptop:w-5/6 lg:justify-start">
+      <div class="flex w-1/3 min-w-0 items-center justify-end max-lg:overflow-visible lg:w-full laptop:flex-1 lg:justify-start">
         <?php get_template_part('template-parts/header/navbar/mobile-utilities'); ?>
 
         <?php
         get_template_part('template-parts/header/navbar/desktop-menu', null, [
             'nav_items'     => $nav_split['right'],
-            'nav_ul_class'  => 'nav-right hidden w-full items-center laptop:flex lg:hidden lg:justify-around lg:ml-4 lg:relative xxl:-right-4 one-xl:mr-0',
+            'nav_ul_class'  => 'nav-right hidden w-full items-center laptop:flex lg:hidden lg:ml-4 lg:relative xxl:-right-4 one-xl:mr-0',
             'nav_max_items' => 4,
             'nav_tabindex_start' => 7,
         ]);
@@ -85,7 +85,7 @@ if (function_exists('is_cart') && (is_cart() || is_checkout())) {
             'nav_ul_class'       => 'nav-combined hidden w-full lg:flex laptop:hidden lg:justify-between lg:items-center lg:ml-4 lg:relative laptop:-left-4 one-xl:ml-0 one-xl:mr-0',
             'nav_max_items'      => null,
             'nav_mark_last_cta'  => true,
-            'nav_item_li_class'  => 'group relative overflow-visible lg:px-2 laptop:px-6 one-xl:px-12',
+            'nav_item_li_class'  => 'group relative overflow-visible lg:px-2 laptop:px-4 one-xl:px-6',
         ]);
         ?>
       </div>

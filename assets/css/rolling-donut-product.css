@@ -99,6 +99,36 @@
   cursor: not-allowed !important;
 }
 
+/* Build Your Own Box toggle — must load after theme/legacy button resets. */
+body.single-product.woocommerce div.product form.cart button.rd-bb-toggle,
+body.single-product.woocommerce div.product form.cart .rd-bb-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.6rem;
+  background: #ffed56 !important;
+  color: #000 !important;
+  border: 4px solid #000 !important;
+  border-radius: 72px !important;
+  font-family: Edmondsans, sans-serif !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+body.single-product.woocommerce div.product form.cart button.rd-bb-toggle:hover,
+body.single-product.woocommerce div.product form.cart .rd-bb-toggle:hover {
+  background: #000 !important;
+  color: #ffed56 !important;
+  border-color: #000 !important;
+}
+
+body.single-product.woocommerce div.product form.cart button.rd-bb-toggle[aria-pressed="true"],
+body.single-product.woocommerce div.product form.cart .rd-bb-toggle[aria-pressed="true"] {
+  background: #ffed56 !important;
+  color: #000 !important;
+  border-color: #000 !important;
+}
+
 /* Product CTAs — Figma 6003:35549 (all single product pages). */
 body.single-product form.cart .rd-product-cta-row,
 body.single-product form.cart .rd-bb-cta-row {
@@ -536,6 +566,25 @@ body.single-product form.cart .rd-bb-cta-row .rd-buy-now-button.disabled {
 }
 
 @media (max-width: 768px) {
+  body.single-product form.cart .rd-product-cta-row,
+  body.single-product form.cart .rd-bb-cta-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.single-product form.cart .rd-product-cta-row .single_add_to_cart_button.button.alt,
+  body.single-product form.cart .rd-product-cta-row button.single_add_to_cart_button.button.alt,
+  body.single-product form.cart .rd-product-cta-row .rd-buy-now-button,
+  body.single-product form.cart .rd-product-cta-row button.rd-buy-now-button,
+  body.single-product form.cart .rd-bb-cta-row .single_add_to_cart_button.button.alt,
+  body.single-product form.cart .rd-bb-cta-row button.single_add_to_cart_button.button.alt,
+  body.single-product form.cart .rd-bb-cta-row .rd-buy-now-button,
+  body.single-product form.cart .rd-bb-cta-row button.rd-buy-now-button {
+    flex: none;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
   #simple-add-to-cart-form {
     display: flex;
     flex-direction: column;
@@ -1037,9 +1086,19 @@ body.single-product form.cart #allergen-info-open::before {
   pointer-events: none;
 }
 
+body.single-product form.cart .rd-product-cta-row:has(+ #info-open),
+body.single-product form.cart .rd-bb-cta-row:has(+ #info-open),
 body.single-product form.cart .rd-product-cta-row:has(+ #allergen-info-open),
 body.single-product form.cart .rd-bb-cta-row:has(+ #allergen-info-open) {
   margin-bottom: 0;
+}
+
+body.single-product form.cart #info-open {
+  margin-bottom: 0;
+}
+
+body.single-product form.cart #info-open + #allergen-info-open {
+  margin-top: 2.25rem !important;
 }
 
 /* Custom product option selects (Football Team / Special Occasion) set

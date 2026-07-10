@@ -22,9 +22,8 @@ if (!wp_doing_ajax()) {
     do_action('woocommerce_review_order_before_payment');
 }
 ?>
-<div id="payment" class="mt-6 woocommerce-checkout-payment">
+<div id="payment" class="woocommerce-checkout-payment">
     <?php if (WC()->cart->needs_payment()) : ?>
-        <h3 class="mb-4 text-md-font font-reg420">Payment method</h3>
         <ul class="p-6 border-2 border-solid wc_payment_methods payment_methods methods border-black-full rounded-20px">
             <?php
             if (!empty($available_gateways)) {
@@ -47,8 +46,6 @@ if (!wp_doing_ajax()) {
             ?>
             <br /><button type="submit" class="btn text-black-full hover:text-yellow-primary text-mob-lg-font lg:text-sm-md-font font-medium h-[66px] bg-yellow-primary rounded-lg-x w-full rd-border hover:bg-black-primary woocommerce-button button woocommerce-form-login__submit ml-auto mr-auto max-w-max-704 mt-6 button alt<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?>" name="woocommerce_checkout_update_totals" value="<?php esc_attr_e('Update totals', 'woocommerce'); ?>"><?php esc_html_e('Update totals', 'woocommerce'); ?></button>
         </noscript>
-
-        <div class="rd-checkout-step__errors rd-checkout-step__errors--payment" role="alert" aria-live="assertive" hidden></div>
 
         <?php wc_get_template('checkout/terms.php'); ?>
 

@@ -17,6 +17,8 @@ function matrix_rd_express_checkout_bootstrap(): void {
 
     matrix_rd_express_checkout_reposition_iconic_fields();
     matrix_rd_express_checkout_terms_collapse();
+    remove_action('woocommerce_checkout_order_review', 'woocommerce_checkout_payment', 20);
+    add_action('woocommerce_after_shipping_rate', 'matrix_rd_express_checkout_prerender_pickup_location_field', 998, 2);
 }
 add_action('wp', 'matrix_rd_express_checkout_bootstrap');
 
@@ -213,6 +215,7 @@ function matrix_rd_express_checkout_enqueue_assets(): void {
             'wizardMessages' => [
                 'selectMethod'    => __('Choose delivery or collection.', 'matrix-starter'),
                 'selectPickup'    => __('Choose a pickup location.', 'matrix-starter'),
+                'pickupLoading'   => __('Please wait… loading collection locations.', 'matrix-starter'),
                 'selectDate'      => __('Choose a delivery or collection date.', 'matrix-starter'),
                 'noScheduleDates' => __('No dates are available for this method. Try collection or change your delivery method.', 'matrix-starter'),
                 'fieldRequired'   => __('%s is required.', 'matrix-starter'),
@@ -271,6 +274,39 @@ function matrix_rd_express_checkout_pickup_addresses(): array {
     }
 
     return $map;
+}
+
+/**
+ * Render the pickup location field while delivery is selected so the customer
+ * sees the store picker instantly when switching to Free Collection (LPP only
+ * outputs it once collection is already the chosen method).
+ *
+ * @param \WC_Shipping_Rate|string $method      Shipping rate instance or ID.
+ * @param int|string               $package_index Package index.
+ */
+function matrix_rd_express_checkout_prerender_pickup_location_field($method, $package_index): void {
+    if (! function_exists('wc_local_pickup_plus_shipping_method_id')) {
+        return;
+    }
+
+    $pickup_id = wc_local_pickup_plus_shipping_method_id();
+    $method_id = $method instanceof WC_Shipping_Rate ? $method->get_id() : (string) $method;
+
+    if ($method_id !== $pickup_id && false === strpos($method_id, 'local_pickup')) {
+        return;
+    }
+
+    $chosen = WC()->session ? WC()->session->get('chosen_shipping_methods', []) : [];
+    if (isset($chosen[$package_index]) && $chosen[$package_index] === $pickup_id) {
+        return;
+    }
+
+    if (! class_exists('SkyVerge\WooCommerce\Local_Pickup_Plus\Fields\Package_Pickup_Location_Field')) {
+        return;
+    }
+
+    $field = new \SkyVerge\WooCommerce\Local_Pickup_Plus\Fields\Package_Pickup_Location_Field($package_index);
+    $field->output_html();
 }
 
 /**

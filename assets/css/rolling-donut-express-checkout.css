@@ -38,22 +38,16 @@
   }
 }
 
-/* Pin the order summary + payment column while the (often very long) "Your
-   details" step is scrolled, so customers don't have to scroll back up to
-   reach payment. We ONLY do this when the viewport is tall enough to show the
-   whole column (incl. the Pay button); otherwise the max-height cap would clip
-   the bottom of the column behind an internal scrollbar and the Pay button
-   would appear cut off on shorter laptop screens. Below the height threshold
-   the column flows normally and the page scrolls, so nothing is clipped.
-   Mobile (<1024px) keeps it static/stacked. */
+/* Pin the order summary column while the customer works through the steps,
+   so order details stay visible without scrolling back up. Payment lives in
+   step 4 on the left; the sidebar is order details only. */
 @media (min-width: 1024px) and (min-height: 800px) {
   .rd-express-checkout__summary {
     position: sticky;
     top: 1.5rem;
     align-self: start;
-    min-height: calc(100vh - 3rem);
-    max-height: none;
-    overflow-y: visible;
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
     overflow-x: visible;
   }
 }
@@ -147,7 +141,7 @@
 }
 
 .rd-checkout-step__shell {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .rd-checkout-step--upcoming {
@@ -345,15 +339,23 @@
   }
 }
 
+#rd-checkout-step-pay #payment {
+  margin-top: 0;
+}
+
+#rd-checkout-step-pay #payment .form-row.place-order {
+  margin-top: 1rem;
+}
+
 .rd-checkout-step--has-error {
   border-color: #d63638;
   box-shadow: 0 0 0 3px rgba(214, 54, 56, 0.2), 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 #payment.rd-checkout-step--has-error {
-  border: 3px solid #d63638;
-  border-radius: 1rem;
-  padding-top: 0.75rem;
+  border: 0;
+  border-radius: 0;
+  padding-top: 0;
 }
 
 .rd-express-checkout-form .form-row.woocommerce-invalid label {
@@ -486,6 +488,24 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   display: block !important;
 }
 
+/* Show immediately on pointer-down, before the radio change + AJAX round-trip. */
+#rd-checkout-step-method .rd-shipping-option-pickup.rd-pickup-pending,
+#rd-checkout-step-method .pickup-location-field.rd-pickup-pending {
+  display: block !important;
+}
+
+/* Off-screen layout pass so Select2 can measure width while delivery is selected. */
+#rd-checkout-step-method .rd-shipping-option.rd-pickup-warmup .rd-shipping-option-pickup,
+#rd-checkout-step-method .rd-shipping-option.rd-pickup-warmup .pickup-location-field {
+  display: block !important;
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: min(100%, 28rem);
+  visibility: hidden;
+  pointer-events: none;
+}
+
 #rd-checkout-step-method ul.woocommerce-shipping-methods > li:hover,
 #rd-checkout-step-method ul.woocommerce-shipping-methods > li:has(input:checked) {
   background: #fff6a7;
@@ -515,6 +535,46 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
 #rd-checkout-step-method .pickup-location-field .select2-container .select2-selection--single {
   width: 100% !important;
   box-sizing: border-box;
+}
+
+/* Shown while Local Pickup Plus / Select2 initialises after choosing collection. */
+#rd-checkout-step-method .rd-pickup-location-loading {
+  display: none;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 3.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #d8d7ce;
+  border-radius: 12.5rem;
+  background: #fff;
+  color: #291f19;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+#rd-checkout-step-method .rd-shipping-option-pickup.rd-pickup-loading .rd-pickup-location-loading {
+  display: flex;
+}
+
+#rd-checkout-step-method .rd-shipping-option-pickup.rd-pickup-loading .pickup-location-field,
+#rd-checkout-step-method .rd-shipping-option-pickup.rd-pickup-loading .pickup-location-lookup-field {
+  display: none !important;
+}
+
+.rd-pickup-location-loading__spinner {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid #d8d7ce;
+  border-top-color: #291f19;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: rd-pickup-loading-spin 0.75s linear infinite;
+}
+
+@keyframes rd-pickup-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Every Select2 in the checkout (billing/shipping State & Country dropdowns,
@@ -709,11 +769,101 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   margin-top: 0.5rem;
 }
 
+/* Billing / shipping / contact fields — two columns on wider panels so the
+ * details step is less of a long scroll. Mobile stays a single column. */
+@media (max-width: 599px) {
+  .rd-express-checkout-form .name-field {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0;
+  }
+}
+
+@media (min-width: 600px) {
+  .rd-express-checkout-form .woocommerce-billing-fields__field-wrapper,
+  .rd-express-checkout-form .woocommerce-shipping-fields__field-wrapper,
+  .rd-express-checkout-form .woocommerce-additional-fields__field-wrapper,
+  .rd-express-checkout-form #rd-delivery-contact,
+  .rd-express-checkout-form .woocommerce-account-fields .create-account {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1rem;
+    row-gap: 1rem;
+    align-items: stretch;
+  }
+
+  .rd-express-checkout-form .woocommerce-billing-fields__field-wrapper .single-field-wrapper,
+  .rd-express-checkout-form .woocommerce-shipping-fields__field-wrapper .single-field-wrapper,
+  .rd-express-checkout-form .woocommerce-additional-fields__field-wrapper .single-field-wrapper,
+  .rd-express-checkout-form #rd-delivery-contact .single-field-wrapper,
+  .rd-express-checkout-form .woocommerce-account-fields .create-account .single-field-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    padding-bottom: 0 !important;
+  }
+
+  .rd-express-checkout-form .single-field-wrapper > p {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .rd-express-checkout-form .single-field-wrapper label {
+    display: block;
+    margin: 0 0 0.5rem 0.5rem !important;
+    padding: 0 !important;
+    line-height: 1.3;
+    min-height: 1.3em;
+  }
+
+  .rd-express-checkout-form .single-field-wrapper .woocommerce-input-wrapper {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  /* First/last name are wrapped together — let each name field sit in the grid. */
+  .rd-express-checkout-form .name-field {
+    display: contents;
+  }
+
+  /* Full-width rows — address lines and order notes only. */
+  .rd-express-checkout-form .single-field-wrapper:has([id$="_address_1_field"]),
+  .rd-express-checkout-form .single-field-wrapper:has([id$="_address_2_field"]),
+  .rd-express-checkout-form .single-field-wrapper:has(#order_comments_field),
+  .rd-express-checkout-form .woocommerce-account-fields > p.create-account {
+    grid-column: 1 / -1;
+  }
+
+  /* Hide duplicate / unused shipping fields in delivery mode. */
+  .rd-express-checkout-form .single-field-wrapper:has(#shipping_country_field),
+  .rd-express-checkout-form .single-field-wrapper:has(#shipping_postcode_field) {
+    display: none !important;
+  }
+
+  /* Phone + email share a row in the delivery contact block and in billing. */
+  .rd-express-checkout-form .single-field-wrapper:has(#billing_phone_field),
+  .rd-express-checkout-form .single-field-wrapper:has(#billing_email_field) {
+    grid-column: auto;
+  }
+
+  .rd-express-checkout-form #rd-delivery-contact:empty {
+    display: none !important;
+  }
+
+  .rd-express-checkout-form.rd-fulfilment-delivery #rd-delivery-contact {
+    margin-top: 0;
+  }
+}
+
 @media (max-width: 1023px) {
   /* Keep natural source order on mobile: progress → steps (method, date,
-     details) → order summary + payment. Previously `order: -1` pulled the
-     summary (which contains the payment form + Pay button + terms) above the
-     steps, so customers saw "Pay now" before choosing anything. */
+     details, payment) → order summary. */
   .rd-express-checkout__main {
     order: 0;
   }
@@ -919,6 +1069,21 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
    the bar while expanded. */
 .rd-order-summary[open] .rd-order-summary__total {
   display: none;
+}
+
+/* Keep product thumbnails and prices pinned to the top when box details expand. */
+.rd-order-summary .cart_item,
+.woocommerce-checkout-review-order-table .cart_item {
+  align-items: flex-start;
+}
+
+.rd-order-summary .cart_item > .flex {
+  align-items: flex-start;
+}
+
+.rd-order-summary .checkout-product-thumbnail,
+.rd-order-summary .product-total {
+  align-self: flex-start;
 }
 
 /* Mobile sticky pay bar */

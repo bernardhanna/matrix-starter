@@ -283,13 +283,26 @@ function matrix_rd_hero_slides_need_seeding(mixed $rows): bool {
 }
 
 /**
+ * Permalink for homepage hero slide 1 CTA (personalised midi sourdough box).
+ */
+function matrix_rd_home_hero_personalised_midi_url(): string {
+    $product = get_page_by_path('personalised-midi-sourdough-donuts-box-of-20', OBJECT, 'product');
+    if ($product instanceof WP_Post) {
+        return (string) get_permalink($product);
+    }
+
+    return home_url('/product/personalised-midi-sourdough-donuts-box-of-20/');
+}
+
+/**
  * Default hero slides as ACF repeater rows (attachment IDs for image fields).
  *
  * @return array<int, array<string, mixed>>
  */
 function matrix_rd_get_default_home_hero_slides_acf_rows(): array {
-    $img  = static fn (string $file): int => matrix_rd_theme_hero_attachment_id($file);
-    $shop = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
+    $img               = static fn (string $file): int => matrix_rd_theme_hero_attachment_id($file);
+    $shop              = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
+    $personalised_midi = matrix_rd_home_hero_personalised_midi_url();
 
     return [
         [
@@ -304,7 +317,7 @@ function matrix_rd_get_default_home_hero_slides_acf_rows(): array {
             'slide_button_icon'         => 1,
             'slide_hero_link'           => [
                 'title'  => __('Order fresh box now', 'matrix-starter'),
-                'url'    => $shop,
+                'url'    => $personalised_midi,
                 'target' => '',
             ],
         ],
@@ -534,8 +547,9 @@ function matrix_rd_normalize_home_hero_slide(array $row): ?array {
  * @return array<int, array<string, mixed>>
  */
 function matrix_rd_get_default_home_hero_slides(): array {
-    $asset = static fn (string $file): string => matrix_rd_home_hero_asset_url($file);
-    $shop  = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
+    $asset             = static fn (string $file): string => matrix_rd_home_hero_asset_url($file);
+    $shop              = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
+    $personalised_midi = matrix_rd_home_hero_personalised_midi_url();
 
     $slide_one = matrix_rd_normalize_home_hero_slide([
         'slide_left_pattern'        => $asset('slide-1-left-pattern.png'),
@@ -549,7 +563,7 @@ function matrix_rd_get_default_home_hero_slides(): array {
         'slide_button_icon'         => 1,
         'slide_hero_link'           => [
             'title'  => __('Order fresh box now', 'matrix-starter'),
-            'url'    => $shop,
+            'url'    => $personalised_midi,
             'target' => '',
         ],
     ]);

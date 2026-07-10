@@ -174,8 +174,9 @@ function matrix_rd_open_product_cta_row_variable(): void
 add_action('woocommerce_after_add_to_cart_quantity', 'matrix_rd_open_product_cta_row', 999);
 // Variable forms have no quantity hook — open immediately before the button.
 add_action('woocommerce_before_add_to_cart_button', 'matrix_rd_open_product_cta_row_variable', 99);
-// Priority 9 so Buy Now sits directly under Add to Basket and *above* the
-// allergen-info accordion (box-builder-woo hooks that at the default 10).
+// Priority 9 so Buy Now sits directly under Add to Basket. Product description
+// hooks at the same priority (registered later on wp) and the allergen accordion
+// follows at 10 (box-builder-woo).
 add_action('woocommerce_after_add_to_cart_button', 'matrix_rd_render_buy_now_button', 9);
 // Close the row after Buy Now (same priority, registered second).
 add_action('woocommerce_after_add_to_cart_button', 'matrix_rd_close_product_cta_row', 9);
