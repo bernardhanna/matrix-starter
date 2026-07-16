@@ -326,6 +326,12 @@
   color: #000;
 }
 
+.home-hero-slide__cta--white:hover svg path,
+.home-hero-slide__cta--black:hover svg path,
+.home-hero-slide__cta--yellow:hover svg path {
+  fill: #000 !important;
+}
+
 .home-hero-slide__cta--black {
   background: #000;
   color: #fff;

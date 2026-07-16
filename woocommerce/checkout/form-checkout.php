@@ -218,9 +218,6 @@ if (! $checkout->is_registration_enabled() && $checkout->is_registration_require
         margin: 0;
         list-style: none outside;
         margin-bottom: 1rem;
-        border: solid;
-        border-radius: 1.25rem;
-        border: var(--Item-counter, 2px) solid #000;
     }
 
     [type='text'],
@@ -636,6 +633,7 @@ if (! $checkout->is_registration_enabled() && $checkout->is_registration_require
                             </div>
                             <div class="rd-checkout-step__body" hidden>
                                 <div class="rd-checkout-step__errors" role="alert" aria-live="assertive" hidden></div>
+                                <?php do_action('rd_checkout_step_pay_before_payment'); ?>
                                 <?php woocommerce_checkout_payment(); ?>
                                 <div class="rd-checkout-step__actions">
                                     <button type="button" class="rd-checkout-step__back" data-rd-goto="details">

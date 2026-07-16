@@ -10,10 +10,14 @@ if (empty($nav_item)) {
     return;
 }
 
-$is_active       = matrix_rd_nav_item_active($nav_item);
-$nav_item_li_class = $args['nav_item_li_class'] ?? 'group relative overflow-visible';
-$link_class      = trim(
-    ($nav_is_last_cta ? 'btn-menu ' : '') .
+$is_active         = matrix_rd_nav_item_active($nav_item);
+$is_order_cta      = matrix_rd_nav_is_order_cta($nav_item);
+$nav_item_li_class = trim(
+    ($args['nav_item_li_class'] ?? 'group relative overflow-visible') .
+    ($is_order_cta ? ' rd-nav-cta-item' : '')
+);
+$link_class        = trim(
+    (($nav_is_last_cta || $is_order_cta) ? 'btn-menu ' : '') .
     'text-reg-font font-reg420 text-black-full whitespace-nowrap flex items-center hover:underline ' .
     ($is_active ? 'active' : '') . ' ' .
     (string) ($nav_item->classes ?? '')

@@ -85,10 +85,10 @@
   window.matrixRdShowCartNotices = fetchAndShowNotices;
   window.matrixRdAppendCartNoticeHtml = appendNoticeHtml;
 
-  window.matrixRdRefreshCartAndNotices = async function () {
+  window.matrixRdRefreshCartAndNotices = async function (prefetched) {
     if (usesSideCart()) {
       if (typeof window.matrixRdOpenSideCart === 'function') {
-        window.matrixRdOpenSideCart();
+        window.matrixRdOpenSideCart(prefetched);
       }
       return;
     }

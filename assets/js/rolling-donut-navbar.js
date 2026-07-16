@@ -45,12 +45,89 @@
     });
   }
 
-  window.refreshAllCartHeaders = refreshAllCartWidgets;
+  function alignDesktopTopNav() {
+    const topNav = document.querySelector('#site-nav .top-nav');
+    const headerBar = document.querySelector('.rd-header-bar');
+    const cart = document.querySelector('#site-nav .js-cart-header .cart-contents')
+      || document.querySelector('#site-nav .js-cart-header');
+    const cta = document.querySelector('#site-nav .btn-menu');
 
-  window.matrixRdRefreshCartAndNotices = async function () {
+    if (!topNav) {
+      return;
+    }
+
+    if (headerBar && headerBar.classList.contains('rd-header-bar--hidden')) {
+      return;
+    }
+
+    if (window.innerWidth < 1150 || !cart || !cta) {
+      topNav.style.setProperty('--rd-topnav-align-offset', '0px');
+      return;
+    }
+
+    // Measure from zero padding — otherwise we only capture the residual gap
+    // after the CSS fallback and make the overflow worse on wide viewports.
+    topNav.style.setProperty('--rd-topnav-align-offset', '0px');
+    void topNav.offsetWidth;
+
+    const cartRect = cart.getBoundingClientRect();
+    const ctaRect = cta.getBoundingClientRect();
+    const offset = Math.max(0, Math.round(cartRect.right - ctaRect.right));
+
+    topNav.style.setProperty('--rd-topnav-align-offset', offset + 'px');
+  }
+
+  function scheduleTopNavAlignment() {
+    alignDesktopTopNav();
+
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(alignDesktopTopNav);
+      });
+    }
+
+    window.setTimeout(alignDesktopTopNav, 120);
+    window.setTimeout(alignDesktopTopNav, 400);
+  }
+
+  function initTopNavAlignmentWatchers() {
+    const siteNav = document.getElementById('site-nav');
+    const headerBar = document.querySelector('.rd-header-bar');
+
+    if (siteNav && typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(function () {
+        scheduleTopNavAlignment();
+      });
+      resizeObserver.observe(siteNav);
+
+      const cartHeader = siteNav.querySelector('.js-cart-header');
+      if (cartHeader) {
+        resizeObserver.observe(cartHeader);
+      }
+    }
+
+    window.addEventListener('scroll', scheduleTopNavAlignment, { passive: true });
+    window.addEventListener('matrix_rd_header_layout_change', scheduleTopNavAlignment);
+
+    if (headerBar && typeof MutationObserver !== 'undefined') {
+      const classObserver = new MutationObserver(function () {
+        scheduleTopNavAlignment();
+      });
+      classObserver.observe(headerBar, {
+        attributes: true,
+        attributeFilter: ['class', 'style'],
+      });
+    }
+  }
+
+  window.refreshAllCartHeaders = refreshAllCartWidgets;
+  window.matrixRdAlignDesktopTopNav = alignDesktopTopNav;
+  window.matrixRdScheduleDesktopTopNav = scheduleTopNavAlignment;
+
+  window.matrixRdRefreshCartAndNotices = async function (prefetched) {
     if (window.matrixRdCartNotices && matrixRdCartNotices.feedbackMode === 'side_cart') {
       if (typeof window.matrixRdOpenSideCart === 'function') {
-        window.matrixRdOpenSideCart();
+        window.matrixRdOpenSideCart(prefetched);
       }
       return;
     }
@@ -61,7 +138,14 @@
     }
   };
 
-  document.addEventListener('DOMContentLoaded', function () {
+  let didInit = false;
+
+  function initNavbar() {
+    if (didInit) {
+      return;
+    }
+    didInit = true;
+
     const topbar = document.getElementById('topbar');
     const closeBtn = document.getElementById('topbar-close');
     if (topbar && closeBtn) {
@@ -84,11 +168,18 @@
 
     window.addEventListener('pageshow', function () {
       refreshAllCartWidgets();
+      scheduleTopNavAlignment();
     });
 
     window.addEventListener('load', function () {
       refreshAllCartWidgets();
+      scheduleTopNavAlignment();
     });
+
+    window.addEventListener('resize', scheduleTopNavAlignment, { passive: true });
+
+    scheduleTopNavAlignment();
+    initTopNavAlignmentWatchers();
 
     if (typeof jQuery !== 'undefined') {
       jQuery(document.body).on('added_to_cart removed_from_cart wc_fragment_refresh', function (event) {
@@ -100,12 +191,24 @@
           return;
         }
         refreshAllCartWidgets();
+        scheduleTopNavAlignment();
       });
       jQuery(document.body).trigger('wc_fragment_refresh');
     }
 
     window.addEventListener('matrix_rd_cart_updated', function () {
       window.matrixRdRefreshCartAndNotices();
+      scheduleTopNavAlignment();
     });
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNavbar);
+    document.addEventListener('DOMContentLoaded', scheduleTopNavAlignment);
+  } else {
+    initNavbar();
+    scheduleTopNavAlignment();
+  }
+
+  window.addEventListener('load', scheduleTopNavAlignment);
 })();

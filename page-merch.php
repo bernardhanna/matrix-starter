@@ -1,6 +1,8 @@
 <?php
 /**
  * Merch products — legacy template-merch-products.
+ *
+ * Template Name: Merch Products
  */
 defined('ABSPATH') || exit;
 

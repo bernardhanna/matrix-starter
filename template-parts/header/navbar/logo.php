@@ -5,7 +5,7 @@
 $logos = $args['logos'] ?? matrix_rd_nav_logos();
 ?>
 <a
-  class="nav-center hide-md relative z-[100] flex w-1/3 cursor-pointer items-center justify-center lg:relative lg:bottom-4 lg:w-1/6"
+  class="nav-center hide-md relative z-[100] flex w-1/3 cursor-pointer items-center justify-center lg:relative laptop:bottom-4 laptop:w-1/6"
   href="<?php echo esc_url(home_url('/')); ?>"
   aria-label="<?php echo esc_attr(get_bloginfo('name') . ' — ' . __('Home', 'matrix-starter')); ?>"
 >

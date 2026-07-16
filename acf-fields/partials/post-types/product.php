@@ -207,6 +207,14 @@ $woo_product
             'ui'            => 1,
             'default_value' => 0,
         ])
+        ->addWysiwyg('group_select_note', [
+            'label'        => 'Select note',
+            'instructions' => 'Optional note shown above this dropdown on the product page. The heading "Please note:" is added automatically — enter only the body text here.',
+            'required'     => 0,
+            'tabs'         => 'all',
+            'toolbar'      => 'basic',
+            'media_upload' => 0,
+        ])
         ->addRepeater('group_options', [
             'label'        => 'Options',
             'instructions' => 'Add selectable options for this dropdown.',

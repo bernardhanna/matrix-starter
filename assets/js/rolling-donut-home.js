@@ -229,10 +229,16 @@
       heroControlsHome.next = controls.nextElementSibling;
     }
 
-    if (window.innerWidth >= 1084) {
-      hero.classList.remove('home-hero-slider--controls-in-slide');
-      if (controls.parentElement !== heroControlsHome.parent) {
-        heroControlsHome.parent.insertBefore(controls, heroControlsHome.next);
+    const desktop = window.innerWidth >= 1084;
+    hero.classList.toggle('home-hero-slider--controls-in-slide', !desktop);
+
+    if (desktop) {
+      if (heroControlsHome.parent && controls.parentElement !== heroControlsHome.parent) {
+        if (heroControlsHome.next && heroControlsHome.next.parentElement === heroControlsHome.parent) {
+          heroControlsHome.parent.insertBefore(controls, heroControlsHome.next);
+        } else {
+          heroControlsHome.parent.appendChild(controls);
+        }
       }
       return;
     }
@@ -245,12 +251,8 @@
 
     const target =
       slideEl.querySelector('.home-hero-slide__cta-wrap') || slideEl.querySelector('.home-hero-slide__content');
-    if (!target) {
-      return;
-    }
 
-    hero.classList.add('home-hero-slider--controls-in-slide');
-    if (controls.parentElement !== target) {
+    if (target && controls.parentElement !== target) {
       target.appendChild(controls);
     }
   }

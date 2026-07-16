@@ -123,7 +123,7 @@ function matrix_rd_checkout_render_heading(): void {
     // absolutely centred, so it stays in the middle of the row in line with the
     // title regardless of the heading width.
     echo '<div class="rd-checkout-heading-row">';
-    echo '<h1 class="rd-checkout-heading-title text-black-full text-xl-font font-reg420">' . esc_html__('Check out', 'rolling-donut') . '</h1>';
+    echo '<h1 class="rd-checkout-heading-title text-black-full text-xl-font font-reg420">' . esc_html__('Checkout', 'rolling-donut') . '</h1>';
     if ($logo_url !== '') {
         echo '<a href="' . esc_url(home_url('/')) . '" class="rd-checkout-heading-logo" aria-label="' . esc_attr__('The Rolling Donut — home', 'matrix-starter') . '">';
         echo '<img src="' . esc_url($logo_url) . '" alt="' . esc_attr($logo_alt) . '" />';
@@ -313,6 +313,42 @@ function matrix_rd_checkout_address_field_icons(array $address_fields): array {
     return $address_fields;
 }
 add_filter('woocommerce_default_address_fields', 'matrix_rd_checkout_address_field_icons', 20);
+
+/**
+ * Phone fields: tel input + pattern hint (letters stripped via checkout JS).
+ */
+function matrix_rd_checkout_phone_field_attributes(array $address_fields): array {
+    if (! isset($address_fields['phone'])) {
+        return $address_fields;
+    }
+
+    $address_fields['phone']['type'] = 'tel';
+    $address_fields['phone']['custom_attributes'] = array_merge(
+        (array) ($address_fields['phone']['custom_attributes'] ?? []),
+        [
+            'inputmode' => 'tel',
+            'pattern'   => '[0-9+\\s()-]*',
+            'title'     => __('Enter numbers only', 'matrix-starter'),
+        ]
+    );
+
+    return $address_fields;
+}
+add_filter('woocommerce_default_address_fields', 'matrix_rd_checkout_phone_field_attributes', 25);
+
+/**
+ * Strip non-phone characters before WooCommerce validates checkout.
+ */
+function matrix_rd_checkout_sanitize_phone_post_data(): void {
+    foreach (array('billing_phone', 'shipping_phone') as $field) {
+        if (empty($_POST[ $field ])) {
+            continue;
+        }
+
+        $_POST[ $field ] = preg_replace('/[^\d+\s()-]/', '', wp_unslash((string) $_POST[ $field ]));
+    }
+}
+add_action('woocommerce_checkout_process', 'matrix_rd_checkout_sanitize_phone_post_data', 5);
 
 /**
  * Order notes label/placeholder (legacy).
@@ -829,6 +865,76 @@ function matrix_rd_checkout_save_delivery_eircode_to_session($post_data = ''): v
 }
 add_action('woocommerce_checkout_update_order_review', 'matrix_rd_checkout_save_delivery_eircode_to_session');
 
+/**
+ * Preserve phone and email across checkout AJAX refreshes.
+ *
+ * @param string $post_data Serialized checkout field data from AJAX.
+ */
+function matrix_rd_checkout_save_contact_to_session($post_data = ''): void {
+    if (! WC()->session) {
+        return;
+    }
+
+    $data = matrix_rd_checkout_parse_order_review_post_data($post_data);
+
+    foreach (array('billing_phone', 'billing_email') as $field) {
+        if (! empty($data[ $field ])) {
+            WC()->session->set('matrix_rd_' . $field, sanitize_text_field((string) $data[ $field ]));
+        }
+    }
+}
+add_action('woocommerce_checkout_update_order_review', 'matrix_rd_checkout_save_contact_to_session');
+
+/**
+ * Restore saved phone and email after checkout fragment updates.
+ */
+function matrix_rd_checkout_restore_contact_from_session(): void {
+    if (! WC()->session || ! is_checkout()) {
+        return;
+    }
+
+    $phone = (string) WC()->session->get('matrix_rd_billing_phone', '');
+    $email = (string) WC()->session->get('matrix_rd_billing_email', '');
+
+    if ($phone === '' && $email === '') {
+        return;
+    }
+    ?>
+    <script>
+      jQuery(function ($) {
+        var saved = <?php echo wp_json_encode([
+            'phone' => $phone,
+            'email' => $email,
+        ]); ?>;
+
+        function restoreContactFields() {
+          if (saved.phone && !$('#billing_phone').val()) {
+            $('#billing_phone').val(saved.phone).trigger('change');
+          }
+          if (saved.email && !$('#billing_email').val()) {
+            $('#billing_email').val(saved.email).trigger('change');
+          }
+        }
+
+        restoreContactFields();
+        $(document.body).on('updated_checkout', restoreContactFields);
+      });
+    </script>
+    <?php
+}
+add_action('woocommerce_after_checkout_form', 'matrix_rd_checkout_restore_contact_from_session');
+
+/**
+ * Default checkout countries to Ireland.
+ *
+ * @return string
+ */
+function matrix_rd_checkout_default_country(): string {
+    return 'IE';
+}
+add_filter('default_checkout_billing_country', 'matrix_rd_checkout_default_country');
+add_filter('default_checkout_shipping_country', 'matrix_rd_checkout_default_country');
+
 function matrix_rd_checkout_restore_delivery_slots_from_session(): void {
     if (! WC()->session) {
         return;
@@ -929,6 +1035,41 @@ function matrix_rd_checkout_footer_scripts(): void {
     <script>
       jQuery(function ($) {
         $('#shipping_phone_field label, #shipping_email_field label').removeClass('screen-reader-text');
+
+        function sanitizePhoneInputValue(value) {
+          return String(value || '').replace(/[^\d+\s()-]/g, '');
+        }
+
+        function bindCheckoutPhoneInputs() {
+          $('#billing_phone, #shipping_phone').each(function () {
+            var cleaned = sanitizePhoneInputValue(this.value);
+            if (this.value !== cleaned) {
+              this.value = cleaned;
+            }
+          });
+        }
+
+        bindCheckoutPhoneInputs();
+
+        $(document).on('input', '#billing_phone, #shipping_phone', function () {
+          var cleaned = sanitizePhoneInputValue(this.value);
+          if (this.value !== cleaned) {
+            this.value = cleaned;
+          }
+        });
+
+        $(document).on('paste', '#billing_phone, #shipping_phone', function () {
+          var input = this;
+          window.setTimeout(function () {
+            var cleaned = sanitizePhoneInputValue(input.value);
+            if (input.value !== cleaned) {
+              input.value = cleaned;
+              $(input).trigger('change');
+            }
+          }, 0);
+        });
+
+        $(document.body).on('updated_checkout', bindCheckoutPhoneInputs);
 
         function setPickupLocationPlaceholder() {
           if ($('.rd-express-checkout-form').length) {

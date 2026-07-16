@@ -38,7 +38,7 @@ $is_cart_or_checkout = (function_exists('is_cart') && is_cart())
   class="rd-header relative z-[200] w-full"
   :class="{ 'z-[1200]': open }"
   x-data="matrixRdHeadroom({ cartOrCheckout: <?php echo $is_cart_or_checkout ? 'true' : 'false'; ?> })"
-  x-effect="open ? (document.body.style.overflow = 'hidden') : (document.body.style.overflow = ''); isPinned; isVisible; $nextTick(() => measure())"
+  x-effect="open ? (document.body.style.overflow = 'hidden') : (document.body.style.overflow = ''); isPinned; isVisible; $nextTick(() => { measure(); if (typeof window.matrixRdScheduleDesktopTopNav === 'function') window.matrixRdScheduleDesktopTopNav(); })"
   @keydown.escape.window="open = false; showSearch = false"
 >
   <div

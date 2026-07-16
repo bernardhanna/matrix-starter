@@ -83,3 +83,24 @@ $cart_url    = wc_get_cart_url();
     </a>
   </div>
 </div>
+<script>
+  (function () {
+    function alignTopNav() {
+      if (typeof window.matrixRdScheduleDesktopTopNav === 'function') {
+        window.matrixRdScheduleDesktopTopNav();
+      } else if (typeof window.matrixRdAlignDesktopTopNav === 'function') {
+        window.matrixRdAlignDesktopTopNav();
+      }
+    }
+
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(alignTopNav);
+      });
+    } else {
+      window.setTimeout(alignTopNav, 0);
+    }
+
+    window.addEventListener('load', alignTopNav, { once: true });
+  })();
+</script>

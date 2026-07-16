@@ -16,9 +16,28 @@ function matrix_rd_express_checkout_bootstrap(): void {
     }
 
     matrix_rd_express_checkout_reposition_iconic_fields();
+    matrix_rd_express_checkout_reposition_stripe_wallets();
     matrix_rd_express_checkout_terms_collapse();
     remove_action('woocommerce_checkout_order_review', 'woocommerce_checkout_payment', 20);
     add_action('woocommerce_after_shipping_rate', 'matrix_rd_express_checkout_prerender_pickup_location_field', 998, 2);
+}
+
+/**
+ * Render Apple Pay / Google Pay inside the payment wizard step, not above step 1.
+ */
+function matrix_rd_express_checkout_reposition_stripe_wallets(): void {
+    if (! class_exists('WC_Stripe_Express_Checkout_Element')) {
+        return;
+    }
+
+    $ece = WC_Stripe_Express_Checkout_Element::instance();
+
+    if (! $ece) {
+        return;
+    }
+
+    remove_action('woocommerce_checkout_before_customer_details', [$ece, 'display_express_checkout_button_html'], 1);
+    add_action('rd_checkout_step_pay_before_payment', [$ece, 'display_express_checkout_button_html'], 5);
 }
 add_action('wp', 'matrix_rd_express_checkout_bootstrap');
 

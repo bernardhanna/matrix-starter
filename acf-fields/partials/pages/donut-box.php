@@ -93,6 +93,13 @@ return [
             [
                 'param'    => 'page_template',
                 'operator' => '==',
+                'value'    => 'page-donut-box.php',
+            ],
+        ],
+        [
+            [
+                'param'    => 'page_template',
+                'operator' => '==',
                 'value'    => 'templates/template-box-products.blade.php',
             ],
         ],

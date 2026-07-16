@@ -2,6 +2,8 @@
 /**
  * Donut Box products — legacy template-box-products.
  *
+ * Template Name: Donut Box Products
+ *
  * @see https://therollingdonut.ie/donut-box/
  */
 defined('ABSPATH') || exit;

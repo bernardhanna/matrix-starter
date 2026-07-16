@@ -768,7 +768,7 @@ function matrix_rd_home_hero_slider_qc_overrides(): void {
     wp_enqueue_style('matrix-rd-home-hero-slider-qc');
     wp_add_inline_style(
         'matrix-rd-home-hero-slider-qc',
-        '.home-hero-slider .home-hero-slide__cta:hover svg,.home-hero-slider .home-hero-slide__cta:hover svg path{fill:#000!important;color:#000!important}@media (min-width:1084px){.home-hero-slider.splide .splide__pagination,.home-hero-slider.splide .home-hero-slider__pagination{left:calc(50% - 96px)!important;right:auto!important;transform:none!important}}'
+        '.home-hero-slider .home-hero-slide__cta:hover svg,.home-hero-slider .home-hero-slide__cta:hover svg path{fill:#000!important;color:#000!important}'
     );
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_home_hero_slider_qc_overrides', 120);

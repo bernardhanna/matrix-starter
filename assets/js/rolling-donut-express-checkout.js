@@ -94,9 +94,22 @@
         $bar.attr('aria-expanded', shouldOpen ? 'true' : 'false');
     }
 
-    function clearOrderReviewBlockUi() {
+    function clearCheckoutBlockUi() {
+        var $form = $('form.checkout');
+        var $payment = $('#payment.woocommerce-checkout-payment');
         var $reviewTable = $('.woocommerce-checkout-review-order-table');
         var $orderReview = $('#order_review');
+
+        if ($form.length) {
+            $form.unblock();
+            $form.removeClass('processing');
+            $form.find('> .blockUI.blockOverlay').remove();
+        }
+
+        if ($payment.length) {
+            $payment.unblock();
+            $payment.find('.blockUI.blockOverlay').remove();
+        }
 
         if ($reviewTable.length) {
             $reviewTable.unblock();
@@ -107,6 +120,22 @@
             $orderReview.unblock();
             $orderReview.find('.blockUI.blockOverlay').remove();
         }
+    }
+
+    function closePickupLocationDropdowns() {
+        $('#rd-checkout-step-method select.pickup-location-lookup.select2-hidden-accessible').each(function () {
+            var $select = $(this);
+
+            if (!$select.data('select2')) {
+                return;
+            }
+
+            try {
+                $select.select2('close');
+            } catch (err) {
+                // Select2 may throw if the picker is mid-init.
+            }
+        });
     }
 
     function getChosenShippingMethod() {
@@ -1268,7 +1297,11 @@
             var $billing = $('#billing_' + billingKey);
             var shippingVal = $shipping.val() || '';
 
-            if ($shipping.length && $billing.length && $billing.val() !== shippingVal) {
+            if (!$billing.length || !$shipping.length) {
+                return;
+            }
+
+            if ($billing.val() !== shippingVal) {
                 $billing.val(shippingVal);
             }
         });
@@ -2418,6 +2451,10 @@
         updateWizardSummaries();
         updateScheduleUnavailableState();
         updateMobilePayBarVisibility();
+
+        if (wizardSteps[currentWizardStep] === 'pay') {
+            ensureStripeExpressCheckoutVisible();
+        }
     }
 
     function goToWizardStep(index, options) {
@@ -2432,9 +2469,22 @@
         }
 
         currentWizardStep = index;
+
+        if (wizardSteps[index] !== 'method') {
+            closePickupLocationDropdowns();
+        }
+
+        if (wizardSteps[index] !== 'pay') {
+            stripeExpressCheckoutPayStepRefreshed = false;
+        }
+
         refreshWizardStepStates();
         syncMobileOrderSummaryPlacement();
         applyOrderSummaryState();
+
+        if (wizardSteps[index] === 'pay') {
+            clearCheckoutBlockUi();
+        }
 
         if (options.scroll !== false) {
             var $target = $('[data-rd-step="' + wizardSteps[index] + '"]');
@@ -2511,6 +2561,8 @@
         }
 
         goToWizardStep(payIndex, { force: true, scroll: options.scroll !== false });
+
+        ensureStripeExpressCheckoutVisible();
 
         if (options.scroll !== false) {
             window.setTimeout(focusPaymentCardField, 360);
@@ -2705,6 +2757,43 @@
         $payment.find('.wc-stripe-upe-element, .wc-upe-form').show();
     }
 
+    var stripeExpressCheckoutRefreshQueued = false;
+    var stripeExpressCheckoutPayStepRefreshed = false;
+
+    // Apple Pay / Google Pay mount inside a hidden wizard step until the customer
+    // reaches Payment. Refresh checkout once when that step opens so Stripe can
+    // measure the container and render the wallet buttons.
+    function ensureStripeExpressCheckoutVisible() {
+        var payIndex = getWizardStepIndex('pay');
+
+        if (payIndex === -1 || currentWizardStep !== payIndex) {
+            return;
+        }
+
+        var $ece = $('#wc-stripe-express-checkout-element');
+        var $separator = $('#wc-stripe-express-checkout-button-separator');
+        var $payBody = $('#rd-checkout-step-pay .rd-checkout-step__body');
+
+        if ($ece.length && $payBody.length && !$ece.closest('#rd-checkout-step-pay').length) {
+            $ece.prependTo($payBody);
+            if ($separator.length) {
+                $separator.insertAfter($ece);
+            }
+        }
+
+        if (stripeExpressCheckoutRefreshQueued || stripeExpressCheckoutPayStepRefreshed) {
+            return;
+        }
+
+        stripeExpressCheckoutRefreshQueued = true;
+        stripeExpressCheckoutPayStepRefreshed = true;
+
+        window.setTimeout(function () {
+            stripeExpressCheckoutRefreshQueued = false;
+            $(document.body).trigger('update_checkout');
+        }, 120);
+    }
+
     function refreshExpressCheckout() {
         decorateShippingOptions();
         applyFulfilmentMode();
@@ -2713,6 +2802,7 @@
         syncBillingFromShippingForStripe();
         syncCheckoutAddressAutofill();
         ensureStripePaymentVisible();
+        ensureStripeExpressCheckoutVisible();
         updateScheduleUnavailableState();
         syncMobilePayBarTotal();
         refreshWizardStepStates();
@@ -2771,7 +2861,8 @@
     });
 
     $(document.body).on('updated_checkout', function () {
-        clearOrderReviewBlockUi();
+        clearCheckoutBlockUi();
+        window.setTimeout(clearCheckoutBlockUi, 0);
         refreshExpressCheckout();
         updateScheduleDateLabel();
         syncMobilePayBarTotal();

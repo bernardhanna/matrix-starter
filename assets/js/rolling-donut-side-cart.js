@@ -84,36 +84,79 @@
     setBodyLock(false);
   }
 
+  function normalizeSideCartData(data) {
+    if (!data || typeof data !== 'object') {
+      return null;
+    }
+
+    if (data.html || data.side_cart_html) {
+      return {
+        html: data.html || data.side_cart_html || '',
+        cart_count: data.cart_count,
+        cart_total: data.cart_total || '',
+      };
+    }
+
+    return null;
+  }
+
+  function applySideCartData(data) {
+    const inner = getInner();
+    const normalized = normalizeSideCartData(data);
+    if (!inner || !normalized || !normalized.html) {
+      return false;
+    }
+
+    inner.innerHTML = normalized.html;
+    applyCartHeaderData(normalized);
+    return true;
+  }
+
+  var refreshSideCartPromise = null;
+
   async function refreshSideCartContent() {
+    if (refreshSideCartPromise) {
+      return refreshSideCartPromise;
+    }
+
     const inner = getInner();
     const cfg = getConfig();
     if (!inner || !cfg.ajaxUrl) {
       return null;
     }
 
-    const url = cfg.ajaxUrl + (cfg.ajaxUrl.indexOf('?') >= 0 ? '&' : '?') + 'action=fetch_side_cart&nocache=' + Date.now();
+    refreshSideCartPromise = (async function () {
+      const url = cfg.ajaxUrl + (cfg.ajaxUrl.indexOf('?') >= 0 ? '&' : '?') + 'action=fetch_side_cart&nocache=' + Date.now();
 
-    try {
-      const response = await fetch(url, {
-        method: 'GET',
-        credentials: 'same-origin',
-      });
-      const result = await response.json();
-      if (!result.success || !result.data) {
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          credentials: 'same-origin',
+        });
+        const result = await response.json();
+        if (!result.success || !result.data) {
+          return null;
+        }
+
+        applySideCartData(result.data);
+        return result.data;
+      } catch (e) {
         return null;
       }
+    })().finally(function () {
+      refreshSideCartPromise = null;
+    });
 
-      inner.innerHTML = result.data.html || '';
-      applyCartHeaderData(result.data);
-
-      return result.data;
-    } catch (e) {
-      return null;
-    }
+    return refreshSideCartPromise;
   }
 
-  async function openSideCartWithRefresh() {
+  async function openSideCartWithRefresh(prefetched) {
     openSideCart();
+
+    if (applySideCartData(prefetched)) {
+      return normalizeSideCartData(prefetched);
+    }
+
     setLoadingState(true);
 
     try {
@@ -237,7 +280,7 @@
         window.matrixRdSideCart.clearNonce = result.data.clearNonce;
       }
 
-      inner.innerHTML = result.data.html || '';
+      applySideCartData(result.data);
       clearWcCartFragmentStorage();
       syncCartChrome(result.data);
 

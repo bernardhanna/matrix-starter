@@ -56,6 +56,8 @@ window.matrixRdHeadroom = function (config) {
         return;
       }
 
+      const wasPinned = this.isPinned;
+      const wasVisible = this.isVisible;
       const y = window.scrollY;
       const delta = y - this.lastScrollY;
 
@@ -74,6 +76,10 @@ window.matrixRdHeadroom = function (config) {
       } else {
         this.isPinned = false;
         this.isVisible = true;
+      }
+
+      if (wasPinned !== this.isPinned || wasVisible !== this.isVisible) {
+        window.dispatchEvent(new CustomEvent('matrix_rd_header_layout_change'));
       }
 
       this.lastScrollY = y <= 0 ? 0 : y;

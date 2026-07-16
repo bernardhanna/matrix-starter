@@ -2,6 +2,12 @@
 /**
  * WooCommerce page header band.
  */
+static $matrix_rd_woo_header_rendered = false;
+if ($matrix_rd_woo_header_rendered) {
+    return;
+}
+$matrix_rd_woo_header_rendered = true;
+
 $body_classes = get_body_class();
 $image_id     = function_exists('get_field') ? get_field('woo_header_bg', 'option', false) : 0;
 $image_url    = $image_id ? wp_get_attachment_url((int) $image_id) : '';
@@ -43,9 +49,9 @@ $center_header_text  = ! $is_singular_product || $is_box_product;
 $is_archive_header   = ! $is_singular_product;
 
 if ($is_archive_header) {
-    $inner_classes = 'rd-woo-header__inner absolute top-0 left-0 right-0 w-full h-full mx-auto lg:max-w-max-1549 flex flex-col items-stretch justify-start bg-black-full sm:bg-transparent min-h-[150px] max-md:min-h-[200px]';
+    $inner_classes = 'rd-woo-header__inner relative w-full mx-auto lg:max-w-max-1549 flex flex-col items-stretch justify-start bg-black-full';
     $bc_classes    = 'rd-woo-bc relative z-30 flex w-full items-start justify-start pt-4 px-4 desktop:p-0';
-    $band_classes  = 'rd-woo-header__band flex-1 relative flex flex-col items-center justify-center gap-3 px-2 py-4 text-center w-full mx-auto overflow-visible';
+    $band_classes  = 'rd-woo-header__band relative flex flex-col items-center justify-center gap-3 px-2 py-4 pb-8 text-center w-full mx-auto overflow-visible';
 } elseif ($center_header_text) {
     $inner_classes = 'rd-woo-header__inner bg-black-full sm:bg-transparent min-h-[150px] max-md:min-h-[200px] mobile:absolute top-0 left-0 right-0 w-full h-auto mobile:h-full mx-auto max-w-max-1485 flex flex-col items-center justify-center text-center';
     $bc_classes    = 'rd-woo-bc hidden w-full pl-4 md:flex lg:max-w-max-1485 desktop:pl-0';
@@ -57,172 +63,121 @@ if ($is_archive_header) {
 }
 ?>
 <style>
-/* Unified mobile hero band for every WooCommerce archive / page header
- * (shop, our-donuts, merch, donut-box, my-account). Matches the interior
- * page-header baseline used on pages like /contact-us/: a solid dark band with
- * the breadcrumb on top (white) and a centred title. Filterable archives keep
- * the "Sort by" control pinned top-right beside the breadcrumbs. Single product headers
- * are intentionally excluded (they have their own gallery title treatment). */
-/* Archive / shop headers: pin breadcrumbs to the top like page-header-rd. */
-@media (min-width: 768px) {
-  .rd-woo-header--archive .rd-woo-header__inner {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    justify-content: flex-start !important;
-    height: 100%;
-    min-height: 243px;
-  }
+/* Archive / shop headers: curved image band, then a solid title row below (not overlaid). */
+.rd-woo-header--archive {
+  display: flex;
+  flex-direction: column;
+}
 
-  .rd-woo-header--archive .rd-woo-bc {
-    display: flex !important;
-    flex: 0 0 auto;
-    align-items: flex-start;
-    justify-content: flex-start;
-    width: 100%;
-  }
+.rd-woo-header--archive .rd-woo-header__media {
+  width: 100%;
+  line-height: 0;
+}
 
-  .rd-woo-header--archive .rd-woo-header__band {
-    flex: 1 1 auto;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 0.75rem;
-    height: auto !important;
-    margin: 0;
-    padding: 0.5rem 0.5rem 1.25rem;
-  }
+.rd-woo-header--archive .rd-woo-header__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  background-color: #0E1217;
+}
 
-  .rd-woo-header--archive .rd-woo-header__subtitle {
-    margin: 0;
-    max-width: 90%;
-    color: #fff !important;
-  }
+.rd-woo-header--archive .rd-woo-bc {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+}
 
-  .rd-woo-header--archive .rd-woo-header__subtitle p {
-    margin: 0;
-    color: inherit !important;
-  }
+.rd-woo-header--archive .rd-woo-bc,
+.rd-woo-header--archive .rd-woo-bc a,
+.rd-woo-header--archive .rd-woo-bc span {
+  color: #fff;
+}
 
-  .rd-woo-header--archive .rd-woo-header__titlewrap {
-    margin: 0 !important;
-    padding: 0;
-  }
+.rd-woo-header--archive .rd-woo-header__band {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0.5rem 1.25rem;
+}
 
-  .rd-woo-header__toolbar {
-    position: relative;
-    z-index: 40;
-  }
+.rd-woo-header--archive .rd-woo-header__subtitle {
+  margin: 0;
+  max-width: 90%;
+  color: #fff !important;
+}
 
-  .rd-woo-header__toolbar .rd-woo-bc {
-    display: flex !important;
-    flex: 1 1 auto;
-    min-width: 0;
-    padding: 0;
-  }
+.rd-woo-header--archive .rd-woo-header__subtitle p {
+  margin: 0;
+  color: inherit !important;
+}
 
-  .rd-woo-header__toolbar .rd-woo-filter {
-    margin: 0;
-    width: auto;
-    justify-content: flex-end;
-  }
+.rd-woo-header--archive .rd-woo-header__titlewrap {
+  margin: 0 !important;
+  padding: 0;
+}
 
-  .rd-woo-header--has-filter {
-    overflow: visible;
-  }
+.rd-woo-header__toolbar {
+  position: relative;
+  z-index: 40;
+}
 
-  .rd-woo-header--has-filter .rd-woo-header__inner {
-    overflow: visible;
-  }
+.rd-woo-header__toolbar .rd-woo-bc {
+  display: flex !important;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+}
 
-  .rd-woo-header--has-filter .rd-woo-header__headline {
-    position: relative;
-    width: 100%;
-  }
+.rd-woo-header__toolbar .rd-woo-filter {
+  margin: 0;
+  width: auto;
+  justify-content: flex-end;
+}
 
-  .rd-woo-header--has-filter .rd-woo-filter__panel {
-    position: absolute;
-    top: calc(100% + 1rem);
-    right: 0;
-    left: 0;
-    z-index: 60;
-    margin-top: 0;
-    width: 100%;
-  }
+.rd-woo-header--has-filter {
+  overflow: visible;
+}
+
+.rd-woo-header--has-filter .rd-woo-header__inner {
+  overflow: visible;
+}
+
+.rd-woo-header--has-filter .rd-woo-header__headline {
+  position: relative;
+  width: 100%;
+}
+
+.rd-woo-header--has-filter .rd-woo-filter__panel {
+  position: absolute;
+  top: calc(100% + 1rem);
+  right: 0;
+  left: 0;
+  z-index: 60;
+  margin-top: 0;
+  width: 100%;
 }
 
 @media (max-width: 767px) {
-  .rd-woo-header--archive .rd-woo-header__inner {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    justify-content: flex-start !important;
-    background-color: #0E1217 !important;
-    min-height: 150px !important;
-    overflow: hidden;
-  }
-
-  .rd-woo-header--has-filter.rd-woo-header--archive .rd-woo-header__inner {
-    overflow: visible;
-  }
-
-  .rd-woo-header--archive .rd-woo-bc {
-    display: flex !important;
-    position: relative;
-    z-index: 10;
-    width: 100%;
-  }
-  .rd-woo-header--archive .rd-woo-bc,
-  .rd-woo-header--archive .rd-woo-bc a,
-  .rd-woo-header--archive .rd-woo-bc span { color: #fff; }
-
   .rd-woo-header--archive .rd-woo-header__band {
-    position: relative;
-    z-index: 10;
-    flex: 1 1 auto;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
     gap: 12px;
-    width: 100%;
-    height: auto !important;
-    text-align: center;
     padding: 8px 16px 20px;
   }
-  .rd-woo-header--archive .rd-woo-header__titlewrap {
-    margin: 0 !important;
-    padding: 0;
-    text-align: center;
-  }
+
   .rd-woo-header--archive .rd-woo-header__titlewrap h1 {
     margin: 0;
     text-align: center;
     font-size: 2rem;
     line-height: 1.15;
-  }
-
-  .rd-woo-header--archive .rd-woo-header__subtitle {
-    color: #fff !important;
-  }
-
-  .rd-woo-header--archive .rd-woo-header__subtitle p {
-    margin: 0;
-    color: inherit !important;
-  }
-
-  .rd-woo-header--has-filter .rd-woo-filter__panel {
-    position: absolute;
-    top: calc(100% + 1rem);
-    right: 0;
-    left: 0;
-    z-index: 60;
-    margin-top: 0;
-    width: 100%;
   }
 }
 
@@ -250,7 +205,7 @@ if ($is_archive_header) {
   }"
 >
   <?php if ($image_url || $image_url_mobile) : ?>
-  <div>
+  <div class="rd-woo-header__media">
     <?php if ($image_url) : ?>
     <img class="object-cover w-full min-h-[243px] hidden sm:block" src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($image_alt); ?>" <?php echo $image_srcset ? 'srcset="' . esc_attr($image_srcset) . '"' : ''; ?> sizes="(min-width: 640px) 100vw" />
     <?php endif; ?>

@@ -394,6 +394,13 @@ body.woocommerce-checkout {
   list-style: disc;
   font-size: 0.95rem;
   font-weight: 500;
+  color: #d63638;
+}
+
+.rd-express-checkout-form #wc-stripe-upe-errors,
+.rd-express-checkout-form .woocommerce-NoticeGroup-checkout .woocommerce-error,
+.rd-express-checkout-form .woocommerce-NoticeGroup-checkout .woocommerce-error li {
+  color: #d63638 !important;
 }
 
 .rd-checkout-step__errors-list li + li {
@@ -743,6 +750,25 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+/* If the pickup menu was open when the customer advanced to Payment, a
+   body-appended Select2 container can linger over the Stripe fields. Hide and
+   disable any open picker once the Method step is collapsed. */
+#rd-checkout-step-method:not(.rd-checkout-step--active) .select2-container--open,
+#rd-checkout-step-method:not(.rd-checkout-step--active) .select2-dropdown {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* Keep Stripe card fields above any leftover checkout overlays. */
+#rd-checkout-step-pay .rd-checkout-step__body,
+#rd-checkout-step-pay #payment.woocommerce-checkout-payment,
+#rd-checkout-step-pay .wc-stripe-upe-element,
+#rd-checkout-step-pay .wc-upe-form {
+  position: relative;
+  z-index: 2;
+}
+
 #rd-checkout-step-method .pickup-location-field .select2-results__options {
   max-height: 16rem;
   overflow-y: auto;
@@ -757,6 +783,18 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   position: relative;
   height: 3.5rem;
   border-radius: 12.5rem;
+}
+
+#rd-checkout-step-method .pickup-location-field .select2-container--default .select2-selection--single::before {
+  content: url('https://api.iconify.design/ph/map-pin.svg?width=22&height=22');
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  z-index: 1;
+  width: 19.5px;
+  height: 19.5px;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 #rd-checkout-step-method .select2-container--default .select2-selection--single .select2-selection__rendered {
@@ -1474,4 +1512,25 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   line-height: 1.5;
   padding-bottom: 0;
   padding-top: 0.6rem;
+}
+
+/* Apple Pay / Google Pay (Stripe Express Checkout Element) */
+#rd-checkout-step-pay #wc-stripe-express-checkout-element {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: stretch;
+  margin: 0 0 1rem;
+  max-width: 100%;
+}
+
+#rd-checkout-step-pay #wc-stripe-express-checkout-element > div {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+#rd-checkout-step-pay #wc-stripe-express-checkout-button-separator {
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 0.875rem;
+  margin: 0 0 1.25rem;
 }

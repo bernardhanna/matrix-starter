@@ -308,11 +308,13 @@ function matrix_rd_nav_enqueue_assets(): void {
     );
 
     $theme_version = get_option('theme_css_version', '1.0');
+    $navbar_css_path = get_template_directory() . '/assets/css/rolling-donut-navbar.css';
+    $navbar_css_ver  = is_readable($navbar_css_path) ? (string) filemtime($navbar_css_path) : $theme_version;
     wp_enqueue_style(
         'matrix-rd-navbar',
         get_template_directory_uri() . '/assets/css/rolling-donut-navbar.css',
         ['matrix-starter'],
-        $theme_version
+        $navbar_css_ver
     );
 
     $navbar_deps = ['jquery', 'iconify', 'alpine', 'matrix-rd-headroom'];
@@ -323,11 +325,13 @@ function matrix_rd_nav_enqueue_assets(): void {
         $navbar_deps[] = 'matrix-rd-cart-notices';
     }
 
+    $navbar_js_path = get_template_directory() . '/assets/js/rolling-donut-navbar.js';
+    $navbar_js_ver  = is_readable($navbar_js_path) ? (string) filemtime($navbar_js_path) : $theme_version;
     wp_enqueue_script(
         'matrix-rd-navbar',
         get_template_directory_uri() . '/assets/js/rolling-donut-navbar.js',
         $navbar_deps,
-        $theme_version,
+        $navbar_js_ver,
         true
     );
 

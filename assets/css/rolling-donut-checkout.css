@@ -33,6 +33,20 @@ label[for="payment_method_stripe"]::after {
   pointer-events: none !important;
 }
 
+/* Same overlay issue on Stripe card fields during update_checkout. */
+.woocommerce-checkout #payment .blockUI.blockOverlay,
+.rd-express-checkout-form #payment .blockUI.blockOverlay {
+  pointer-events: none !important;
+}
+
+/* Express checkout can keep `form.checkout.processing` set while collection
+   pickup AJAX runs; the form-level blockUI overlay then sits above Stripe and
+   swallows card-field clicks even when #payment overlays are cleared. */
+.rd-express-checkout-form.checkout.processing .blockUI.blockOverlay,
+.rd-express-checkout-form.checkout.processing > .blockUI.blockOverlay {
+  pointer-events: none !important;
+}
+
 /* Keep payment visible below the order summary after AJAX fragment updates */
 .woocommerce-checkout #order_review > .woocommerce-checkout-payment,
 .woocommerce-checkout #payment.woocommerce-checkout-payment {
