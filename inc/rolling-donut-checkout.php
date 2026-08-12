@@ -50,6 +50,166 @@ function matrix_rd_checkout_enqueue_assets(): void {
             (string) filemtime($css_path)
         );
     }
+
+    if (wp_script_is('wc-checkout', 'registered') || wp_script_is('wc-checkout', 'enqueued')) {
+        wp_enqueue_script('wc-checkout');
+        wp_add_inline_script(
+            'wc-checkout',
+            <<<'JS'
+(function ($) {
+  function couponNoticeTarget($input) {
+    return $input.closest('.rd-checkout-payment-coupon__row');
+  }
+
+  function clearPaymentCouponError($input) {
+    var $wrap = $input.closest('.rd-checkout-payment-coupon');
+    $wrap.find('.rd-checkout-payment-coupon__error').remove();
+    $input
+      .removeClass('has-error')
+      .removeAttr('aria-invalid')
+      .removeAttr('aria-describedby');
+  }
+
+  function showPaymentCouponError($input, htmlOrText) {
+    clearPaymentCouponError($input);
+    var msg = $('<div>').html(htmlOrText || '').text().trim();
+    if (!msg) {
+      msg = 'Unable to apply that coupon. Please try again.';
+    }
+    $input
+      .addClass('has-error')
+      .attr('aria-invalid', 'true')
+      .attr('aria-describedby', 'rd-payment-coupon-error')
+      .trigger('focus');
+    $('<p>', {
+      id: 'rd-payment-coupon-error',
+      class: 'rd-checkout-payment-coupon__error',
+      role: 'alert',
+      text: msg,
+    }).insertAfter(couponNoticeTarget($input));
+  }
+
+  function applyPaymentCoupon() {
+    var $input = $('#rd_payment_coupon_code');
+    if (!$input.length) {
+      return;
+    }
+
+    var code = String($input.val() || '').trim();
+    if (!code) {
+      showPaymentCouponError($input, 'Please enter a coupon or gift voucher code.');
+      return;
+    }
+
+    clearPaymentCouponError($input);
+
+    // Prefer WooCommerce AJAX directly — the visible field lives in #payment and
+    // must not depend on the legacy hidden form.checkout_coupon (often removed /
+    // display:none / not wired after fragment refresh).
+    if (typeof wc_checkout_params === 'undefined' || !wc_checkout_params.wc_ajax_url) {
+      var $legacy = $('form.checkout_coupon');
+      if ($legacy.length) {
+        $legacy.find('#coupon_code').val(code);
+        $legacy.trigger('submit');
+      } else {
+        showPaymentCouponError($input, 'Coupon applying is unavailable. Please refresh and try again.');
+      }
+      return;
+    }
+
+    var $box = $input.closest('.rd-checkout-payment-coupon');
+    if ($box.hasClass('processing')) {
+      return;
+    }
+
+    $box.addClass('processing');
+    if ($.fn.block) {
+      $box.block({
+        message: null,
+        overlayCSS: { background: '#fff', opacity: 0.6 },
+      });
+    }
+
+    $.ajax({
+      type: 'POST',
+      url: wc_checkout_params.wc_ajax_url
+        .toString()
+        .replace('%%endpoint%%', 'apply_coupon'),
+      data: {
+        security: wc_checkout_params.apply_coupon_nonce,
+        coupon_code: code,
+        billing_email: $('form.checkout input[name="billing_email"]').val() || '',
+      },
+      dataType: 'html',
+      success: function (response) {
+        $box.removeClass('processing');
+        if ($.fn.unblock) {
+          $box.unblock();
+        }
+
+        $('.woocommerce-error, .woocommerce-message, .is-error, .is-success, .checkout-inline-error-message').remove();
+
+        var isError =
+          !response ||
+          response.indexOf('woocommerce-error') !== -1 ||
+          response.indexOf('is-error') !== -1;
+
+        if (isError) {
+          showPaymentCouponError($input, response);
+        } else {
+          clearPaymentCouponError($input);
+          $input.val('');
+          if (response) {
+            // Surface success near the payment coupon UI (not the legacy form).
+            $box.prepend(response);
+          }
+          // Only fire "applied" on success — the listener clears inline errors.
+          $(document.body).trigger('applied_coupon_in_checkout', [code]);
+        }
+
+        $(document.body).trigger('update_checkout', {
+          update_shipping_method: false,
+        });
+      },
+      error: function () {
+        $box.removeClass('processing');
+        if ($.fn.unblock) {
+          $box.unblock();
+        }
+        showPaymentCouponError($input, 'Unable to apply that coupon. Please try again.');
+      },
+    });
+  }
+
+  $(document.body).on('click', '.rd-checkout-payment-coupon__apply', function (e) {
+    e.preventDefault();
+    applyPaymentCoupon();
+  });
+
+  $(document.body).on('keydown', '#rd_payment_coupon_code', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      applyPaymentCoupon();
+    }
+  });
+
+  $(document.body).on('input change', '#rd_payment_coupon_code', function () {
+    clearPaymentCouponError($(this));
+  });
+
+  $(document.body).on('applied_coupon applied_coupon_in_checkout', function () {
+    var $input = $('#rd_payment_coupon_code');
+    if ($input.length) {
+      $input.val('');
+      clearPaymentCouponError($input);
+    }
+  });
+})(jQuery);
+JS
+            ,
+            'after'
+        );
+    }
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_checkout_enqueue_assets', 30);
 

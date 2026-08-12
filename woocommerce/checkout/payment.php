@@ -38,6 +38,36 @@ if (!wp_doing_ajax()) {
             ?>
         </ul>
     <?php endif; ?>
+
+    <?php if (wc_coupons_enabled()) : ?>
+      <div class="rd-checkout-payment-coupon">
+        <label class="rd-checkout-payment-coupon__label" for="rd_payment_coupon_code">
+          <?php esc_html_e('Coupon / Gift voucher', 'matrix-starter'); ?>
+        </label>
+        <div class="rd-checkout-payment-coupon__row">
+          <input
+            type="text"
+            class="input-text rd-checkout-payment-coupon__input"
+            name="rd_payment_coupon_code"
+            id="rd_payment_coupon_code"
+            value=""
+            placeholder="<?php esc_attr_e('Enter code', 'matrix-starter'); ?>"
+            autocomplete="off"
+            aria-required="false"
+            spellcheck="false"
+          />
+          <button
+            type="button"
+            class="button rd-checkout-payment-coupon__apply coupon-btn"
+            name="rd_apply_coupon"
+            aria-label="<?php esc_attr_e('Apply coupon or gift voucher code', 'matrix-starter'); ?>"
+          >
+            <?php esc_html_e('Apply', 'matrix-starter'); ?>
+          </button>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <div class="form-row place-order">
         <noscript>
             <?php
