@@ -10,6 +10,8 @@ if ($slides === []) {
 }
 
 $slide_count = count($slides);
+$hero_layout = function_exists('matrix_rd_get_home_hero_layout') ? matrix_rd_get_home_hero_layout() : 'default';
+$hero_layout_class = $hero_layout === 'layout_2' ? 'home-hero--layout-2' : 'home-hero--layout-default';
 
 $hero_arrow_prev_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.4375 11.1094H6.72422L14.932 3.98438C15.0633 3.86953 14.9836 3.65625 14.8102 3.65625H12.7359C12.6445 3.65625 12.5578 3.68906 12.4898 3.74766L3.63281 11.4328C3.46868 11.5751 3.37438 11.7816 3.37438 11.9988C3.37438 12.216 3.46868 12.4226 3.63281 12.5648L12.5414 20.2969C12.5766 20.3273 12.6188 20.3438 12.6633 20.3438H14.8078C14.9813 20.3438 15.0609 20.1281 14.9297 20.0156L6.72422 12.8906H20.4375C20.5406 12.8906 20.625 12.8062 20.625 12.7031V11.2969C20.625 11.1938 20.5406 11.1094 20.4375 11.1094Z" fill="currentColor"/></svg>';
 
@@ -56,7 +58,7 @@ $render_responsive_image = static function (
     <?php endif;
 };
 ?>
-<section class="home-hero home-hero--slider relative z-[1] w-full overflow-hidden" aria-label="<?php esc_attr_e('Homepage hero', 'matrix-starter'); ?>">
+<section class="home-hero home-hero--slider <?php echo esc_attr($hero_layout_class); ?> relative z-[1] w-full overflow-hidden" aria-label="<?php esc_attr_e('Homepage hero', 'matrix-starter'); ?>" data-hero-layout="<?php echo esc_attr($hero_layout); ?>">
   <div
     id="home-hero-slider"
     class="home-hero-slider splide relative w-full"
@@ -78,11 +80,20 @@ $render_responsive_image = static function (
           $heading_mobile      = (string) ($slide['heading_mobile'] ?? '');
           $subtext             = (string) ($slide['subtext'] ?? '');
           $subtext_mobile      = (string) ($slide['subtext_mobile'] ?? '');
+          $button_note         = (string) ($slide['button_note'] ?? '');
           $hero_link           = is_array($slide['hero_link'] ?? null) ? $slide['hero_link'] : [];
           $text_color          = (string) ($slide['text_color'] ?? 'white');
           $button_style        = (string) ($slide['button_style'] ?? 'white');
+          $button_hover_style  = (string) ($slide['button_hover_style'] ?? 'default');
           $button_icon         = ! empty($slide['button_icon']);
+          $body_highlight      = ! empty($slide['body_highlight']);
           $text_class          = $text_color === 'black' ? 'home-hero-slide__text--black' : 'home-hero-slide__text--white';
+          $slide_modifier      = function_exists('matrix_rd_home_hero_slide_modifier_classes')
+              ? matrix_rd_home_hero_slide_modifier_classes($slide)
+              : '';
+          $cta_hover_class     = in_array($button_hover_style, ['white', 'black', 'yellow'], true)
+              ? ' home-hero-slide__cta--hover-' . $button_hover_style
+              : '';
           $hide_title_on_mobile = $heading_mobile !== '';
           $desktop_subtext_only = $subtext !== '' && $subtext_mobile !== '';
           $show_shared_subtext  = $subtext !== '' && $subtext_mobile === '';
@@ -94,9 +105,15 @@ $render_responsive_image = static function (
           $cta_icon_fill       = function_exists('matrix_rd_home_hero_cta_icon_fill')
               ? matrix_rd_home_hero_cta_icon_fill($button_style)
               : ($button_style === 'black' ? '#ffffff' : '#000000');
+          $render_body         = static function (string $content) use ($body_highlight): string {
+              return function_exists('matrix_rd_home_hero_render_body_html')
+                  ? matrix_rd_home_hero_render_body_html($content, $body_highlight)
+                  : wp_kses_post($content);
+          };
+          $body_class          = 'home-hero-slide__body ' . $text_class . ($body_highlight ? ' home-hero-slide__body--highlight' : '');
           ?>
           <div class="splide__slide" aria-label="<?php echo esc_attr(sprintf(/* translators: %1$d slide number, %2$d total slides */ __('Slide %1$d of %2$d', 'matrix-starter'), $index + 1, $slide_count)); ?>">
-            <div class="home-hero-slide">
+            <div class="home-hero-slide<?php echo esc_attr($slide_modifier); ?>">
               <div class="home-hero-slide__left">
                 <?php if ($left_pattern['url'] !== '' || $left_pattern_mobile['url'] !== '') : ?>
                   <div class="home-hero-slide__pattern" aria-hidden="true">
@@ -112,7 +129,7 @@ $render_responsive_image = static function (
 
                 <div class="home-hero-slide__overlay"<?php echo $overlay_style !== '' ? ' style="' . esc_attr($overlay_style) . '"' : ''; ?>>
                   <div class="home-hero-slide__content">
-                    <?php if ($left_image['url'] !== '' || $left_image_mobile['url'] !== '') : ?>
+                    <?php if ($hero_layout !== 'default' && ($left_image['url'] !== '' || $left_image_mobile['url'] !== '')) : ?>
                       <div class="home-hero-slide__title-image<?php echo $hide_title_on_mobile ? ' home-hero-slide__title-image--desktop-only' : ''; ?>">
                         <?php
                         $render_responsive_image(
@@ -138,27 +155,27 @@ $render_responsive_image = static function (
                     <?php endif; ?>
 
                     <?php if ($show_shared_subtext) : ?>
-                      <div class="home-hero-slide__body <?php echo esc_attr($text_class); ?>">
-                        <?php echo wp_kses_post($subtext); ?>
+                      <div class="<?php echo esc_attr($body_class); ?>">
+                        <?php echo $render_body($subtext); ?>
                       </div>
                     <?php endif; ?>
 
                     <?php if ($desktop_subtext_only) : ?>
-                      <div class="home-hero-slide__body home-hero-slide__body--desktop-only <?php echo esc_attr($text_class); ?>">
-                        <?php echo wp_kses_post($subtext); ?>
+                      <div class="<?php echo esc_attr($body_class . ' home-hero-slide__body--desktop-only'); ?>">
+                        <?php echo $render_body($subtext); ?>
                       </div>
                     <?php endif; ?>
 
                     <?php if ($subtext_mobile !== '') : ?>
-                      <div class="home-hero-slide__body home-hero-slide__body--mobile-only <?php echo esc_attr($text_class); ?>">
-                        <?php echo wp_kses_post($subtext_mobile); ?>
+                      <div class="<?php echo esc_attr($body_class . ' home-hero-slide__body--mobile-only'); ?>">
+                        <?php echo $render_body($subtext_mobile); ?>
                       </div>
                     <?php endif; ?>
 
                     <?php if (! empty($hero_link['url'])) : ?>
                       <div class="home-hero-slide__cta-wrap">
                         <a
-                          class="home-hero-slide__cta home-hero-slide__cta--<?php echo esc_attr($button_style); ?>"
+                          class="home-hero-slide__cta home-hero-slide__cta--<?php echo esc_attr($button_style); ?><?php echo esc_attr($cta_hover_class); ?>"
                           href="<?php echo esc_url($hero_link['url']); ?>"
                           <?php echo ! empty($hero_link['target']) ? 'target="' . esc_attr($hero_link['target']) . '"' : ''; ?>
                         >
@@ -167,6 +184,12 @@ $render_responsive_image = static function (
                           <?php endif; ?>
                           <?php echo esc_html($hero_link['title'] ?? __('Order fresh box now', 'matrix-starter')); ?>
                         </a>
+                      </div>
+                    <?php endif; ?>
+
+                    <?php if ($button_note !== '') : ?>
+                      <div class="home-hero-slide__body home-hero-slide__button-note <?php echo esc_attr($text_class); ?>">
+                        <?php echo wp_kses_post($button_note); ?>
                       </div>
                     <?php endif; ?>
                   </div>

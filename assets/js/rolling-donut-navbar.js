@@ -45,12 +45,28 @@
     });
   }
 
+  function getVisibleDesktopOrderCta() {
+    // There are multiple .btn-menu nodes (nav-left/right + nav-combined). Only the
+    // visible one has a real box — picking a hidden zero-width CTA produced
+    // ~viewport-width padding and clipped the cart/utilities out of view.
+    const candidates = document.querySelectorAll('#site-nav ul.nav-left .btn-menu, #site-nav ul.nav-right .btn-menu, #site-nav ul.nav-combined .btn-menu');
+
+    for (let i = 0; i < candidates.length; i++) {
+      const el = candidates[i];
+      if (el.offsetWidth > 8 && el.offsetHeight > 8) {
+        return el;
+      }
+    }
+
+    return null;
+  }
+
   function alignDesktopTopNav() {
     const topNav = document.querySelector('#site-nav .top-nav');
     const headerBar = document.querySelector('.rd-header-bar');
     const cart = document.querySelector('#site-nav .js-cart-header .cart-contents')
       || document.querySelector('#site-nav .js-cart-header');
-    const cta = document.querySelector('#site-nav .btn-menu');
+    const cta = getVisibleDesktopOrderCta();
 
     if (!topNav) {
       return;
@@ -72,7 +88,13 @@
 
     const cartRect = cart.getBoundingClientRect();
     const ctaRect = cta.getBoundingClientRect();
-    const offset = Math.max(0, Math.round(cartRect.right - ctaRect.right));
+
+    if (cartRect.width < 8 || ctaRect.width < 8) {
+      return;
+    }
+
+    // Cap the nudge — a runaway value with overflow:hidden hides the cart row.
+    const offset = Math.max(0, Math.min(48, Math.round(cartRect.right - ctaRect.right)));
 
     topNav.style.setProperty('--rd-topnav-align-offset', offset + 'px');
   }
@@ -106,7 +128,8 @@
       }
     }
 
-    window.addEventListener('scroll', scheduleTopNavAlignment, { passive: true });
+    // Do not realign on every scroll — that shifts the utility top bar while sticky.
+    // Pin/unpin and visibility changes already fire matrix_rd_header_layout_change.
     window.addEventListener('matrix_rd_header_layout_change', scheduleTopNavAlignment);
 
     if (headerBar && typeof MutationObserver !== 'undefined') {

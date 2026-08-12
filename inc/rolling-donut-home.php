@@ -147,7 +147,7 @@ function matrix_rd_home_enqueue_tailwind_after_legacy(): void {
 add_action('wp_enqueue_scripts', 'matrix_rd_home_enqueue_tailwind_after_legacy', 100);
 
 /**
- * Featured slider arrow visibility (loads after legacy CSS).
+ * Featured slider styles (layout + hero-matching controls).
  */
 function matrix_rd_home_featured_slider_overrides(): void {
     if (is_admin() || (! is_front_page() && ! is_page('about-us'))) {
@@ -155,20 +155,220 @@ function matrix_rd_home_featured_slider_overrides(): void {
     }
 
     $deps = ['matrix-rd-legacy'];
-    if (wp_style_is('matrix-rd-fonts', 'enqueued')) {
-        $deps = ['matrix-rd-fonts'];
+    if (wp_style_is('matrix-rd-home-hero-slider', 'enqueued')) {
+        $deps[] = 'matrix-rd-home-hero-slider';
     } elseif (wp_style_is('matrix-starter', 'enqueued')) {
         $deps = ['matrix-starter'];
     }
 
-    wp_register_style('matrix-rd-featured-slider', false, $deps, '1');
-    wp_enqueue_style('matrix-rd-featured-slider');
-    wp_add_inline_style(
+    $css = get_template_directory() . '/assets/css/rolling-donut-featured.css';
+    if (! is_readable($css)) {
+        return;
+    }
+
+    wp_enqueue_style(
         'matrix-rd-featured-slider',
-        '.featured-donuts .splide__arrow{position:relative!important;top:auto!important;left:auto!important;right:auto!important;transform:none!important;background:transparent!important;opacity:1!important}.featured-donuts .splide__arrow svg{display:block!important}@media (min-width:993px){.featured-donuts .splide__arrows{display:flex!important;z-index:200!important;right:6rem!important;left:auto!important;top:auto!important;bottom:2rem!important;transform:none!important;width:auto!important;flex-direction:column-reverse!important;align-items:flex-end!important;justify-content:flex-end!important;gap:.75rem!important}.featured-donuts .splide__arrow svg{height:61.5px!important;width:34px!important}}@media (max-width:992px){.featured-donuts .splide__arrows{display:none!important}}'
+        get_template_directory_uri() . '/assets/css/rolling-donut-featured.css',
+        $deps,
+        (string) filemtime($css)
     );
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_home_featured_slider_overrides', 110);
+
+/**
+ * Normalize one featured slide row.
+ *
+ * @param array<string, mixed> $row
+ * @return array<string, mixed>|null
+ */
+function matrix_rd_normalize_featured_slide(array $row): ?array {
+    $pick = static function (array $row, array $keys) {
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $row) && $row[$key] !== null && $row[$key] !== '') {
+                return $row[$key];
+            }
+        }
+        return null;
+    };
+
+    $image        = matrix_rd_acf_image($pick($row, ['slide_image', 'image']) ?? null);
+    $image_mobile = matrix_rd_acf_image($pick($row, ['slide_image_mobile', 'image_mobile']) ?? null);
+    $heading      = trim((string) ($pick($row, ['slide_heading', 'heading']) ?? ''));
+    $text         = trim((string) ($pick($row, ['slide_text', 'text', 'description']) ?? ''));
+    $bg_color     = trim((string) ($pick($row, ['slide_bg_color', 'bg_color']) ?? ''));
+    $text_color   = (string) ($pick($row, ['slide_text_color', 'text_color']) ?? 'black');
+    $button       = $pick($row, ['slide_button', 'button']) ?? [];
+
+    if (! is_array($button)) {
+        $button = [];
+    }
+
+    $button_url   = trim((string) ($button['url'] ?? ''));
+    $button_title = trim((string) ($button['title'] ?? ''));
+
+    if ($bg_color === '') {
+        $bg_color = '#ffed56';
+    }
+    if (! in_array($text_color, ['black', 'white'], true)) {
+        $text_color = 'black';
+    }
+
+    $has_content = $image['url'] !== ''
+        || $image_mobile['url'] !== ''
+        || $heading !== ''
+        || $text !== '';
+
+    if (! $has_content) {
+        return null;
+    }
+
+    if ($button_url === '') {
+        $button_url   = home_url('/donut-box/');
+        $button_title = $button_title !== '' ? $button_title : __('Order Now', 'matrix-starter');
+    }
+
+    return [
+        'image'        => $image,
+        'image_mobile' => $image_mobile,
+        'heading'      => $heading,
+        'text'         => $text,
+        'bg_color'     => $bg_color,
+        'text_color'   => $text_color,
+        'button'       => [
+            'url'    => $button_url,
+            'title'  => $button_title !== '' ? $button_title : __('Order Now', 'matrix-starter'),
+            'target' => (string) ($button['target'] ?? ''),
+        ],
+    ];
+}
+
+/**
+ * Build featured slides from the legacy product relationship.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function matrix_rd_featured_slides_from_products(?int $post_id = null): array {
+    $context  = $post_id ?? (int) get_option('page_on_front');
+    $featured = $context > 0 ? get_field('donuts', $context) : get_field('donuts');
+    if (empty($featured) || ! is_array($featured)) {
+        return [];
+    }
+
+    $slides = [];
+    foreach ($featured as $donut) {
+        $post_id = is_object($donut) ? (int) $donut->ID : (int) $donut;
+        if ($post_id <= 0) {
+            continue;
+        }
+
+        $post = get_post($post_id);
+        if (! $post instanceof WP_Post) {
+            continue;
+        }
+
+        $image_id = (int) get_post_thumbnail_id($post_id);
+        $bg       = (string) (get_field('featured_donut_bg_color', $post_id) ?: '#ffed56');
+        $raw      = (string) $post->post_content;
+        $text     = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags($raw)) ?? '');
+
+        $slide = matrix_rd_normalize_featured_slide([
+            'slide_image'      => $image_id > 0 ? $image_id : '',
+            'slide_heading'    => $post->post_title,
+            'slide_text'       => $text,
+            'slide_bg_color'   => $bg,
+            'slide_text_color' => 'black',
+            'slide_button'     => [
+                'title'  => __('Order Now', 'matrix-starter'),
+                'url'    => home_url('/donut-box/'),
+                'target' => '',
+            ],
+            '_image_id'        => $image_id,
+        ]);
+
+        if ($slide !== null) {
+            $slide['_image_id'] = $image_id;
+            $slides[]           = $slide;
+        }
+    }
+
+    return $slides;
+}
+
+/**
+ * Featured slides for the homepage carousel.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function matrix_rd_get_featured_slides(): array {
+    $post_id = (int) get_option('page_on_front');
+    $context = $post_id > 0 ? $post_id : false;
+
+    $rows = function_exists('get_field') ? get_field('featured_slides', $context) : null;
+    if (is_array($rows) && $rows !== []) {
+        $slides = [];
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $slide = matrix_rd_normalize_featured_slide($row);
+            if ($slide !== null) {
+                $slides[] = $slide;
+            }
+        }
+        if ($slides !== []) {
+            return $slides;
+        }
+    }
+
+    return matrix_rd_featured_slides_from_products($post_id > 0 ? $post_id : null);
+}
+
+/**
+ * Seed featured_slides from legacy product picks when the repeater is empty.
+ */
+function matrix_rd_seed_featured_slides(int $post_id, bool $force = false): bool {
+    if (! function_exists('get_field') || ! function_exists('update_field')) {
+        return false;
+    }
+
+    $front_page_id = (int) get_option('page_on_front');
+    if ($front_page_id <= 0 || $post_id !== $front_page_id) {
+        return false;
+    }
+
+    $existing = get_field('featured_slides', $post_id);
+    if (! $force && is_array($existing) && $existing !== []) {
+        foreach ($existing as $row) {
+            if (is_array($row) && matrix_rd_normalize_featured_slide($row) !== null) {
+                return false;
+            }
+        }
+    }
+
+    $from_products = matrix_rd_featured_slides_from_products($post_id);
+    if ($from_products === []) {
+        return false;
+    }
+
+    $rows = [];
+    foreach ($from_products as $slide) {
+        $image_id = (int) ($slide['_image_id'] ?? 0);
+        if ($image_id <= 0 && ! empty($slide['image']['url'])) {
+            $image_id = (int) attachment_url_to_postid($slide['image']['url']);
+        }
+
+        $rows[] = [
+            'slide_image'      => $image_id > 0 ? $image_id : '',
+            'slide_heading'    => $slide['heading'],
+            'slide_text'       => $slide['text'],
+            'slide_bg_color'   => $slide['bg_color'],
+            'slide_text_color' => $slide['text_color'],
+            'slide_button'     => $slide['button'],
+        ];
+    }
+
+    return (bool) update_field('featured_slides', $rows, $post_id);
+}
 
 /**
  * Theme asset base for bundled home hero slide images.
@@ -255,6 +455,18 @@ function matrix_rd_theme_hero_attachment_id(string $filename): int {
 }
 
 /**
+ * Homepage hero layout: default (full-bleed card) or layout_2 (split panels).
+ */
+function matrix_rd_get_home_hero_layout(): string {
+    $layout = function_exists('get_field') ? get_field('hero_layout') : null;
+    if (! is_string($layout) || $layout === '') {
+        $layout = (string) get_post_meta(get_queried_object_id(), 'hero_layout', true);
+    }
+
+    return in_array($layout, ['default', 'layout_2'], true) ? $layout : 'default';
+}
+
+/**
  * Whether a hero repeater row has enough content to render.
  *
  * @param array<string, mixed> $row
@@ -309,6 +521,7 @@ function matrix_rd_get_default_home_hero_slides_acf_rows(): array {
             'slide_left_pattern'        => $img('slide-1-left-pattern.png'),
             'slide_left_image'          => $img('slide-1-neon.png'),
             'slide_left_image_mobile'   => $img('slide-1-neon.png'),
+            'slide_heading'             => __('The Original Donuts In Dublin', 'matrix-starter'),
             'slide_subtext'             => __("Made in Ireland. Made Fresh Daily. The Original Donuts In Dublin Since\n1978.", 'matrix-starter'),
             'slide_right_image'         => $img('slide-1-right.png'),
             'slide_left_overlay'        => 'black',
@@ -430,10 +643,16 @@ function matrix_rd_map_hero_slide_acf_row(array $row): array {
         $button_style = $legacy_layout === 'promo_yellow' ? 'black' : 'white';
     }
 
+    $button_hover_style = (string) ($pick($row, ['slide_button_hover_style']) ?? 'default');
+
     $button_icon = $row['slide_button_icon'] ?? null;
     if ($button_icon === null || $button_icon === '') {
         $button_icon = true;
     }
+
+    $truthy = static function ($value): bool {
+        return $value === true || $value === 1 || $value === '1';
+    };
 
     return [
         'left_pattern'            => $pick($row, ['slide_left_pattern', 'slide_banner_left', 'banner_left']),
@@ -445,13 +664,21 @@ function matrix_rd_map_hero_slide_acf_row(array $row): array {
         'subtext'                 => $subtext,
         'subtext_mobile'          => trim((string) ($pick($row, ['slide_subtext_mobile']) ?? '')),
         'hero_link'               => $pick($row, ['slide_hero_link', 'hero_link']) ?? [],
+        'button_note'             => trim((string) ($pick($row, ['slide_button_note', 'button_note']) ?? '')),
         'right_image'             => $pick($row, ['slide_right_image', 'slide_banner_right', 'banner_right']),
         'right_image_mobile'      => $pick($row, ['slide_right_image_mobile', 'slide_banner_bottom_mobile', 'banner_bottom_mobile']),
         'left_overlay'            => $left_overlay,
         'left_overlay_custom'     => (string) ($pick($row, ['slide_left_overlay_custom']) ?? ''),
         'text_color'              => $text_color,
         'button_style'            => $button_style,
+        'button_hover_style'      => $button_hover_style,
         'button_icon'             => (bool) $button_icon,
+        'compact_overlay'         => $truthy($row['slide_compact_overlay'] ?? $row['compact_overlay'] ?? false),
+        'full_width_content'      => $truthy($row['slide_full_width_content'] ?? $row['full_width_content'] ?? false),
+        'body_highlight'          => $truthy($row['slide_body_highlight'] ?? $row['body_highlight'] ?? false),
+        'body_emphasis'           => $truthy($row['slide_body_emphasis'] ?? $row['body_emphasis'] ?? false),
+        'title_size'              => (string) ($pick($row, ['slide_title_size', 'title_size']) ?? 'default'),
+        'mobile_text_size'        => (string) ($pick($row, ['slide_mobile_text_size', 'mobile_text_size']) ?? 'default'),
     ];
 }
 
@@ -483,6 +710,67 @@ function matrix_rd_home_hero_cta_icon_fill(string $button_style): string {
 }
 
 /**
+ * Modifier classes for optional per-slide design options.
+ *
+ * @param array<string, mixed> $slide
+ */
+function matrix_rd_home_hero_slide_modifier_classes(array $slide): string {
+    $classes = [];
+
+    if (($slide['mobile_text_size'] ?? 'default') === 'compact') {
+        $classes[] = 'home-hero-slide--text-compact';
+    }
+    if (! empty($slide['compact_overlay'])) {
+        $classes[] = 'home-hero-slide--compact-overlay';
+    }
+    if (! empty($slide['full_width_content'])) {
+        $classes[] = 'home-hero-slide--full-width';
+    }
+    if (! empty($slide['body_highlight'])) {
+        $classes[] = 'home-hero-slide--body-highlight';
+    }
+    if (! empty($slide['body_emphasis'])) {
+        $classes[] = 'home-hero-slide--body-emphasis';
+    }
+    if (($slide['title_size'] ?? 'default') === 'small') {
+        $classes[] = 'home-hero-slide--title-small';
+    }
+
+    return $classes === [] ? '' : ' ' . implode(' ', $classes);
+}
+
+/**
+ * Render hero subtext, optionally as newsletter-style white highlight lines.
+ */
+function matrix_rd_home_hero_render_body_html(string $html, bool $highlight = false): string {
+    $html = trim($html);
+    if ($html === '') {
+        return '';
+    }
+
+    if (! $highlight) {
+        return wp_kses_post($html);
+    }
+
+    $normalized = preg_replace('/<br\s*\/?>/i', "\n", $html);
+    $normalized = html_entity_decode((string) $normalized, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $normalized = wp_strip_all_tags((string) $normalized);
+    $lines      = preg_split('/\R+/', $normalized) ?: [];
+
+    $out = [];
+    foreach ($lines as $index => $line) {
+        $line = trim($line);
+        if ($line === '') {
+            continue;
+        }
+        $mod = $index === 0 ? ' home-hero-slide__highlight-line--first' : '';
+        $out[] = '<span class="home-hero-slide__highlight-line' . $mod . '">' . esc_html($line) . '</span>';
+    }
+
+    return $out === [] ? '' : implode('', $out);
+}
+
+/**
  * Normalize one hero slide row from ACF or a built-in default array.
  *
  * @param array<string, mixed> $row
@@ -502,12 +790,22 @@ function matrix_rd_normalize_home_hero_slide(array $row): ?array {
     $heading_mobile  = trim((string) ($row['heading_mobile'] ?? ''));
     $subtext         = trim((string) ($row['subtext'] ?? ''));
     $subtext_mobile  = trim((string) ($row['subtext_mobile'] ?? ''));
+    $button_note     = trim((string) ($row['button_note'] ?? ''));
     $hero_link  = is_array($row['hero_link'] ?? null) ? $row['hero_link'] : [];
     $text_color = in_array($row['text_color'] ?? '', ['white', 'black'], true) ? $row['text_color'] : 'white';
     $button_style = in_array($row['button_style'] ?? '', ['white', 'black', 'yellow'], true) ? $row['button_style'] : 'white';
+    $button_hover_style = in_array($row['button_hover_style'] ?? '', ['default', 'white', 'black', 'yellow'], true)
+        ? $row['button_hover_style']
+        : 'default';
     $left_overlay = in_array($row['left_overlay'] ?? '', ['black', 'dark_brown', 'yellow', 'transparent', 'custom'], true)
         ? $row['left_overlay']
         : 'black';
+    $title_size = in_array($row['title_size'] ?? '', ['default', 'small'], true)
+        ? $row['title_size']
+        : 'default';
+    $mobile_text_size = in_array($row['mobile_text_size'] ?? '', ['default', 'compact'], true)
+        ? $row['mobile_text_size']
+        : 'default';
 
     $has_content = $left_pattern['url'] !== ''
         || $left_image['url'] !== ''
@@ -531,13 +829,21 @@ function matrix_rd_normalize_home_hero_slide(array $row): ?array {
         'subtext'             => $subtext,
         'subtext_mobile'      => $subtext_mobile,
         'hero_link'           => $hero_link,
+        'button_note'         => $button_note,
         'right_image'         => $right_image,
         'right_image_mobile'  => $right_image_mobile,
         'left_overlay'        => $left_overlay,
         'left_overlay_custom' => (string) ($row['left_overlay_custom'] ?? ''),
         'text_color'          => $text_color,
         'button_style'        => $button_style,
+        'button_hover_style'  => $button_hover_style,
         'button_icon'         => (bool) ($row['button_icon'] ?? true),
+        'compact_overlay'     => ! empty($row['compact_overlay']),
+        'full_width_content'  => ! empty($row['full_width_content']),
+        'body_highlight'      => ! empty($row['body_highlight']),
+        'body_emphasis'       => ! empty($row['body_emphasis']),
+        'title_size'          => $title_size,
+        'mobile_text_size'    => $mobile_text_size,
     ];
 }
 
@@ -555,6 +861,7 @@ function matrix_rd_get_default_home_hero_slides(): array {
         'slide_left_pattern'        => $asset('slide-1-left-pattern.png'),
         'slide_left_image'          => $asset('slide-1-neon.png'),
         'slide_left_image_mobile'   => $asset('slide-1-neon.png'),
+        'slide_heading'             => __('The Original Donuts In Dublin', 'matrix-starter'),
         'slide_subtext'             => __("Made in Ireland. Made Fresh Daily. The Original Donuts In Dublin Since\n1978.", 'matrix-starter'),
         'slide_right_image'         => $asset('slide-1-right.png'),
         'slide_left_overlay'        => 'black',
@@ -701,6 +1008,69 @@ function matrix_rd_migrate_legacy_home_hero_slides(int $post_id): void {
 add_action('acf/save_post', 'matrix_rd_migrate_legacy_home_hero_slides', 5);
 
 /**
+ * Attachment ID for the default left-panel background pattern (slide-3 yellow).
+ */
+function matrix_rd_home_hero_default_left_pattern_id(): int {
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+
+    $from_theme = matrix_rd_theme_hero_attachment_id('slide-3-left-pattern.png');
+    if ($from_theme > 0) {
+        $cached = $from_theme;
+        return $cached;
+    }
+
+    $by_url = (int) attachment_url_to_postid(
+        home_url('/wp-content/uploads/2026/07/slide-3-left-pattern.png')
+    );
+    if ($by_url > 0) {
+        $cached = $by_url;
+        return $cached;
+    }
+
+    $existing = get_posts([
+        'post_type'              => 'attachment',
+        'post_status'            => 'inherit',
+        'posts_per_page'         => 1,
+        'fields'                 => 'ids',
+        'no_found_rows'          => true,
+        'update_post_meta_cache' => false,
+        'update_post_term_cache' => false,
+        'meta_query'             => [
+            [
+                'key'     => '_wp_attached_file',
+                'value'   => 'slide-3-left-pattern.png',
+                'compare' => 'LIKE',
+            ],
+        ],
+    ]);
+
+    $cached = $existing !== [] ? (int) $existing[0] : 0;
+    return $cached;
+}
+
+/**
+ * Pre-select the yellow slide-3 pattern when adding a hero repeater row.
+ *
+ * @param array<string, mixed> $field
+ * @return array<string, mixed>
+ */
+function matrix_rd_home_hero_left_pattern_default_field(array $field): array {
+    $id = matrix_rd_home_hero_default_left_pattern_id();
+    if ($id > 0) {
+        $field['default_value'] = $id;
+    }
+
+    return $field;
+}
+add_filter(
+    'acf/load_field/key=field_homepage_hero_slides_left_pattern',
+    'matrix_rd_home_hero_left_pattern_default_field'
+);
+
+/**
  * Seed hero_slides from legacy meta or built-in defaults when the editor opens.
  */
 function matrix_rd_migrate_legacy_home_hero_on_edit(): void {
@@ -720,6 +1090,7 @@ function matrix_rd_migrate_legacy_home_hero_on_edit(): void {
 
     matrix_rd_migrate_legacy_home_hero_slides($post_id);
     matrix_rd_seed_home_hero_slides($post_id);
+    matrix_rd_seed_featured_slides($post_id);
 }
 add_action('current_screen', 'matrix_rd_migrate_legacy_home_hero_on_edit');
 
@@ -768,7 +1139,10 @@ function matrix_rd_home_hero_slider_qc_overrides(): void {
     wp_enqueue_style('matrix-rd-home-hero-slider-qc');
     wp_add_inline_style(
         'matrix-rd-home-hero-slider-qc',
-        '.home-hero-slider .home-hero-slide__cta:hover svg,.home-hero-slider .home-hero-slide__cta:hover svg path{fill:#000!important;color:#000!important}'
+        '.home-hero-slider .home-hero-slide__cta:hover svg,'
+        . '.home-hero-slider .home-hero-slide__cta:hover svg path{fill:#000!important;color:#000!important}'
+        . '.home-hero-slider .home-hero-slide__cta--hover-black:hover svg,'
+        . '.home-hero-slider .home-hero-slide__cta--hover-black:hover svg path{fill:#fff!important;color:#fff!important}'
     );
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_home_hero_slider_qc_overrides', 120);

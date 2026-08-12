@@ -30,7 +30,7 @@ if (function_exists('is_cart') && (is_cart() || is_checkout())) {
 } elseif ($is_thankyou) {
     $nav_top_class = 'top-8 lg:pt-0';
 } else {
-    $nav_top_class = 'top-0 lg:-mt-2 xxl:-mt-8 desktop:-mt-10';
+    $nav_top_class = 'top-0';
 }
 ?>
 <section
