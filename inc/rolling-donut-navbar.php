@@ -17,20 +17,46 @@ function matrix_rd_nav_is_thankyou(): bool {
 }
 
 /**
- * Whether the main site navigation should render (hide on cart/checkout).
- * Thank-you keeps a logo-only bar, matching legacy.
+ * Header layout for a request.
+ *
+ * Cart (empty or with items) and thank-you keep a centered logo and hide the
+ * menus, matching legacy. Checkout hides the site nav because the page heading
+ * already carries the logo.
+ *
+ * @return 'full'|'logo_only'|'hidden'
+ */
+function matrix_rd_nav_header_mode(bool $is_thankyou, bool $is_cart, bool $is_checkout): string {
+    if ($is_thankyou || $is_cart) {
+        return 'logo_only';
+    }
+    if ($is_checkout) {
+        return 'hidden';
+    }
+
+    return 'full';
+}
+
+function matrix_rd_nav_current_header_mode(): string {
+    return matrix_rd_nav_header_mode(
+        matrix_rd_nav_is_thankyou(),
+        function_exists('is_cart') && is_cart(),
+        function_exists('is_checkout') && is_checkout()
+    );
+}
+
+/**
+ * Centered logo, no menus — cart and thank-you.
+ */
+function matrix_rd_nav_is_logo_only(): bool {
+    return matrix_rd_nav_current_header_mode() === 'logo_only';
+}
+
+/**
+ * Whether the main site navigation should render (hide on checkout).
+ * Cart and thank-you keep a logo-only bar, matching legacy.
  */
 function matrix_rd_nav_should_show(): bool {
-    if (matrix_rd_nav_is_thankyou()) {
-        return true;
-    }
-    if (function_exists('is_cart') && is_cart()) {
-        return false;
-    }
-    if (function_exists('is_checkout') && is_checkout()) {
-        return false;
-    }
-    return true;
+    return matrix_rd_nav_current_header_mode() !== 'hidden';
 }
 
 /**

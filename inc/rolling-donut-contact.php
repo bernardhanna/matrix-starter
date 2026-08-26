@@ -31,6 +31,33 @@ function matrix_rd_contact_form_recipient(): string {
 }
 
 /**
+ * BCC on Contact Us admin notifications (not the visitor autoresponder).
+ */
+function matrix_rd_contact_form_bcc(): string {
+    return 'bernard@matrixinternet.ie';
+}
+
+/**
+ * Always BCC Bernard on Contact Us (form #33) even if the hidden field is stripped.
+ *
+ * @param  list<string> $bcc_list
+ * @return list<string>
+ */
+function matrix_rd_contact_form_append_bcc(array $bcc_list, int $form_id): array {
+    if ($form_id !== MATRIX_RD_CONTACT_GF_FORM_ID) {
+        return $bcc_list;
+    }
+
+    $bcc = matrix_rd_contact_form_bcc();
+    if ($bcc !== '' && ! in_array($bcc, $bcc_list, true)) {
+        $bcc_list[] = $bcc;
+    }
+
+    return $bcc_list;
+}
+add_filter('matrix_theme_forms_bcc', 'matrix_rd_contact_form_append_bcc', 10, 2);
+
+/**
  * Admin email subject line (matches GF admin notification when available).
  */
 function matrix_rd_contact_form_admin_subject(): string {

@@ -15,9 +15,10 @@ $telephone   = matrix_rd_nav_telephone();
 $cart        = matrix_rd_nav_cart();
 $mobile_bg   = matrix_rd_nav_mobile_bg();
 $is_thankyou = matrix_rd_nav_is_thankyou();
+$logo_only   = function_exists('matrix_rd_nav_is_logo_only') && matrix_rd_nav_is_logo_only();
 
 $show_topbar = true;
-if ($is_thankyou || (function_exists('is_cart') && (is_cart() || is_checkout()) && is_user_logged_in())) {
+if ($logo_only || (function_exists('is_cart') && (is_cart() || is_checkout()) && is_user_logged_in())) {
     $show_topbar = false;
 }
 
@@ -29,7 +30,8 @@ $inner_args = [
     'cart'         => $cart,
     'mobile_bg'    => $mobile_bg,
     'is_thankyou'  => $is_thankyou,
-    'show_topnav'  => ! $is_thankyou,
+    'logo_only'    => $logo_only,
+    'show_topnav'  => ! $logo_only,
 ];
 
 $is_cart_or_checkout = (function_exists('is_cart') && is_cart())
@@ -68,7 +70,7 @@ $is_cart_or_checkout = (function_exists('is_cart') && is_cart())
   <div class="rd-header-spacer" :style="{ height: spacerHeight }" aria-hidden="true"></div>
 
   <?php
-  if (! $is_thankyou) {
+  if (! $logo_only) {
       get_template_part('template-parts/header/navbar/search-panel', null, [
           'mobile_menu_bg' => $mobile_bg,
       ]);

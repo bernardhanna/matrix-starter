@@ -926,7 +926,7 @@ input.rd-product-search__input:focus {
   }
 }
 
-/* Thank-you: logo only, sized to match the checkout heading logo (6rem / 4.5rem). */
+/* Cart + thank-you: logo only, sized to match the checkout heading logo (6rem / 4.5rem). */
 #site-nav.rd-nav--logo-only nav#menu {
   justify-content: center;
 }

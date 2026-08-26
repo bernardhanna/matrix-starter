@@ -73,6 +73,10 @@ test.describe('Contact Us form', () => {
     await expect(form.locator('input[name="terms_conditions"]')).toBeVisible();
     await expect(form.locator('button[type="submit"]')).toBeVisible();
 
+    await expect(form.locator('input[name="_cfg_bcc"]')).toHaveValue(
+      'bernard@matrixinternet.ie'
+    );
+
     // The required guards the JS submit handler relies on must be present.
     await expect(form.locator('input[name="first_name"]')).toHaveAttribute('required', '');
     await expect(form.locator('input[name="email"]')).toHaveAttribute('required', '');

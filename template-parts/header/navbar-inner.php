@@ -9,6 +9,7 @@
  *   @type array  $cart
  *   @type string $mobile_bg
  *   @type bool   $is_thankyou
+ *   @type bool   $logo_only
  *   @type string $section_id Optional. Defaults to site-nav.
  * }
  */
@@ -19,7 +20,7 @@ $cart        = $args['cart'] ?? ['count' => 0, 'total_html' => ''];
 $mobile_bg   = $args['mobile_bg'] ?? '';
 $is_thankyou = ! empty($args['is_thankyou']);
 $section_id  = $args['section_id'] ?? 'site-nav';
-$logo_only   = $is_thankyou;
+$logo_only   = ! empty($args['logo_only']) || $is_thankyou;
 $show_topnav = $args['show_topnav'] ?? ! $logo_only;
 
 $nav_all      = $args['nav_all'] ?? ($nav_split['all'] ?? array_merge($nav_split['left'], $nav_split['right']));
@@ -31,10 +32,18 @@ if ($logo_only) {
 } elseif (function_exists('is_cart') && (is_cart() || is_checkout())) {
     $nav_top_class = 'top-8 lg:pt-0';
 }
+
+$navbar_state_class = ' xl:h-nav overflow-visible';
+if ($logo_only) {
+    $navbar_state_class = ' rd-nav--logo-only overflow-hidden';
+    if ($is_thankyou) {
+        $navbar_state_class .= ' mb-8 xl:mb-0';
+    }
+}
 ?>
 <section
   id="<?php echo esc_attr($section_id); ?>"
-  class="navbar h-auto max-lg:flex max-lg:items-center max-lg:py-4 bg-white transition-colors duration-200<?php echo $is_thankyou ? ' mb-8 xl:mb-0 rd-nav--logo-only overflow-hidden' : ' xl:h-nav overflow-visible'; ?>"
+  class="navbar h-auto max-lg:flex max-lg:items-center max-lg:py-4 bg-white transition-colors duration-200<?php echo $navbar_state_class; ?>"
   :class="{ 'max-lg:bg-transparent rd-nav--menu-open': open }"
 >
   <div class="relative mx-auto w-full max-w-sitewidth px-4 lg:px-10">

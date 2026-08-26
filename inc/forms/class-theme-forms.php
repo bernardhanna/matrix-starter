@@ -432,6 +432,10 @@ class Theme_Forms {
     $to_list  = $this->parse_emails($cfg_to);
     if (!$to_list) $to_list = $this->parse_emails(get_option('admin_email'));
     $bcc_list = $this->parse_emails($cfg_bcc);
+    $filtered_bcc = apply_filters('matrix_theme_forms_bcc', $bcc_list, $form_id, $form_name);
+    if (is_array($filtered_bcc)) {
+      $bcc_list = $this->parse_emails($filtered_bcc);
+    }
 
     $subject    = $cfg_subject ?: $default_subject;
     if ($form_name !== '') {

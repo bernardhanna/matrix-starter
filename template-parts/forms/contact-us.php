@@ -13,6 +13,7 @@ require_once get_template_directory() . '/inc/helpers/gravity-forms-autoresponde
 
 $form_uid        = 'contact-us-' . wp_generate_uuid4();
 $recipient       = matrix_rd_contact_form_recipient();
+$bcc             = matrix_rd_contact_form_bcc();
 $admin_subject = matrix_rd_contact_form_admin_subject();
 $logo_url      = matrix_rd_contact_autoresponder_logo_url();
 $privacy_url  = function_exists('get_privacy_policy_url') ? get_privacy_policy_url() : '';
@@ -41,6 +42,9 @@ $captcha_html = matrix_theme_form_captcha_markup([
     <input type="hidden" name="_theme_form_name" value="<?php echo esc_attr__('Contact Us', 'matrix-starter'); ?>">
     <input type="hidden" name="_theme_save_to_db" value="1">
     <input type="hidden" name="_cfg_to" value="<?php echo esc_attr($recipient); ?>">
+    <?php if ($bcc !== '') : ?>
+      <input type="hidden" name="_cfg_bcc" value="<?php echo esc_attr($bcc); ?>">
+    <?php endif; ?>
     <input type="hidden" name="_cfg_subject" value="<?php echo esc_attr($admin_subject); ?>">
     <input type="hidden" name="source_url" value="">
     <?php
