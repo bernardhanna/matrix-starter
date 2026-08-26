@@ -206,6 +206,30 @@ function matrix_rd_product_type_slug(int $product_id): ?string {
 }
 
 /**
+ * There is no page at /shop/. WordPress 404-guesses that slug onto the live
+ * "Shop Closed" page. Send it to the real Woo shop (Our Donuts) instead.
+ */
+function matrix_rd_redirect_legacy_shop_path(): void {
+    if (is_admin() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        return;
+    }
+
+    $path = trim((string) wp_parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH), '/');
+    if ($path !== 'shop') {
+        return;
+    }
+
+    $dest = function_exists('wc_get_page_permalink') ? (string) wc_get_page_permalink('shop') : '';
+    if ($dest === '' || $dest === '0') {
+        $dest = home_url('/our-donuts/');
+    }
+
+    wp_safe_redirect($dest, 301);
+    exit;
+}
+add_action('template_redirect', 'matrix_rd_redirect_legacy_shop_path', 0);
+
+/**
  * Standalone donut flavours are not sold on their own — send their product
  * URLs to the Our Donuts shop instead of rendering a single-product page.
  */
