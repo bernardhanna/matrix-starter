@@ -27,7 +27,7 @@ const fullPaths = [
   '/contact-us/',
   '/weddings-events/',
   '/frequently-asked-questions/',
-  '/product/custom-order/',
+  '/product/midi-sourdough-donuts-box-of-20/',
   '/cart/',
   '/careers/',
   '/accessibility/',

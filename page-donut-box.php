@@ -30,10 +30,8 @@ while (have_posts()) {
         <?php
         if ($ordered_categories !== []) {
             foreach ($ordered_categories as $product_category) {
-                $box_query = new WP_Query([
-                    'post_type'      => 'product',
-                    'posts_per_page' => -1,
-                    'tax_query'      => [
+                $box_query = new WP_Query(matrix_rd_catalog_product_query_args([
+                    'tax_query' => [
                         'relation' => 'AND',
                         [
                             'taxonomy' => 'rd_product_type',
@@ -46,7 +44,7 @@ while (have_posts()) {
                             'terms'    => (int) $product_category->term_id,
                         ],
                     ],
-                ]);
+                ]));
 
                 if (! $box_query->have_posts()) {
                     wp_reset_postdata();
@@ -55,7 +53,7 @@ while (have_posts()) {
 
                 $category_description = term_description((int) $product_category->term_id, 'product_cat');
                 ?>
-        <h4 class="w-full product-category-title font-edmondsans text-xl-font font-reg420"><?php echo esc_html($product_category->name); ?></h4>
+        <h4 id="<?php echo esc_attr($product_category->slug); ?>" class="w-full product-category-title font-edmondsans text-xl-font font-reg420"><?php echo esc_html($product_category->name); ?></h4>
                 <?php if ($category_description) : ?>
         <span class="relative -mt-2 leading-none -top-2 category-description text-reg-font text-black-font w-full block mb-4"><?php echo esc_html(wp_strip_all_tags($category_description)); ?></span>
                 <?php endif; ?>

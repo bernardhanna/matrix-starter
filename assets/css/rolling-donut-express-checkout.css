@@ -1165,6 +1165,12 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   cursor: not-allowed;
 }
 
+.rd-express-checkout-form #place_order:disabled,
+.woocommerce-checkout #place_order:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* Collapsed terms in payment area */
 .rd-terms-collapse {
   margin: 0 0 1rem;

@@ -1,13 +1,14 @@
 /* Main Body */
 @page {
-	margin: 1cm 2cm 3cm;
+	margin-top: 1cm;
+	margin-bottom: 3cm;
+	margin-left: 2cm;
+	margin-right: 2cm;
 }
-
 body {
 	background: #fff;
 	color: #000;
-	margin: 0;
-
+	margin: 0cm;
 	/* want to use custom fonts? http://docs.wpovernight.com/woocommerce-pdf-invoices-packing-slips/using-custom-fonts/ */
 	font-size: 9pt;
 	line-height: 100%; /* fixes inherit dompdf bug */
@@ -105,7 +106,6 @@ td.header {
 td.shop-info {
 	width: 40%;
 }
-
 .document-type-label {
 	text-transform: uppercase;
 }
@@ -177,6 +177,30 @@ table.order-details {
 	border: 0;
 }
 
+/* Invoices keep a visible grey underline on every line, including bundled donuts.
+   Packing slips keep the grouped (borderless) bundle look from the rule above.
+   1px #ccc hairlines often disappear in the PDF engine, so use a slightly
+   darker 0.75pt rule that still reads as a divider, not a heavy box. */
+.invoice .order-details td,
+.invoice .order-details th {
+	border-bottom: 0.75pt solid #999;
+	border-top: 0.75pt solid #999;
+}
+
+.invoice .order-details thead th {
+	border-color: black;
+}
+
+.invoice .order-details tr.product-bundle td,
+.invoice .order-details tr.bundled-item td {
+	border-bottom: 0.75pt solid #999;
+	border-top: 0.75pt solid #999;
+}
+
+.invoice .order-details tr.bundled-item td.product {
+	padding-left: 0.375em;
+}
+
 
 /* item meta formatting for WC2.6 and older */
 dl {
@@ -193,22 +217,19 @@ dd {
 	margin-left: 5px;
 }
 
-dd::after {
+dd:after {
 	content: "\A";
 	white-space: pre;
 }
-
 /* item-meta formatting for WC3.0+ */
 .wc-item-meta {
 	margin: 4px 0;
 	font-size: 7pt;
 	line-height: 7pt;
 }
-
 .wc-item-meta p {
 	display: inline;
 }
-
 .wc-item-meta li {
 	margin: 0;
 	margin-left: 5px;
@@ -261,10 +282,9 @@ table.totals tr.payment_method {
 }
 
 /* page numbers */
-.pagenum::before {
+.pagenum:before {
 	content: counter(page);
 }
-
 .pagenum,.pagecount {
 	font-family: sans-serif;
 }
@@ -278,9 +298,8 @@ hr {
 	border: 0;
 	position: relative;
 }
-
-hr::before,
-hr::after {
+hr:before,
+hr:after {
 	content: '';
 	display: block;
 	position: absolute;
@@ -291,16 +310,14 @@ hr::after {
 	border-top: 2px dashed black;
 
 }
-
-hr::before {
+hr:before {
 	left: 0;
 	right: 100%;
-	margin-right: 0;
+	margin-right: 0px;
 }
-
-hr::after {
+hr:after {
 	right: 0;
 	left: 0%;
-	margin-left: 0;
+	margin-left: 0px;
 }
 

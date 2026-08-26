@@ -41,13 +41,13 @@ do_action( 'woocommerce_before_reset_password_form' );
         margin-left: 4px;
     }
 </style>
-<form method="post" class="woocommerce-ResetPassword lost_reset_password w-full max-w-max-704 mx-auto border-black-full border-2 border-solid rounded-[10px] laptop:rounded-md-32">
+<form method="post" class="woocommerce-ResetPassword lost_reset_password w-full max-w-max-704 mx-auto border-black-full border-2 border-solid rounded-[10px] laptop:rounded-md-32 text-white">
 	<p class="py-4 woocommerce-form-row woocommerce-form-row--first form-row form-row-first">
-		<label class="text-black" for="password_1"><?php esc_html_e( 'New password', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true"><span class="text-red-critical">*</span></span><span class="screen-reader-text"><?php esc_html_e( 'Required', 'woocommerce' ); ?></span></label>
+		<label class="text-white" for="password_1"><?php esc_html_e( 'New password', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true"><span class="text-red-critical">*</span></span><span class="screen-reader-text"><?php esc_html_e( 'Required', 'woocommerce' ); ?></span></label>
 		<input type="password" class="flex w-full mt-2 font-light rounded-lg-x h-input text-black-secondary text-mob-xs-font font-laca pl-11 max-w-max-704 woocommerce-Input woocommerce-Input--text input-text" placeholder="<?php esc_html_e('Enter New Password', 'woocommerce'); ?>"  name="password_1" id="password_1" autocomplete="new-password" required aria-required="true" />
 	</p>
 	<p class="woocommerce-form-row woocommerce-form-row--last form-row form-row-last">
-		<label class="text-black" for="text-white password_2"><?php esc_html_e( 'Re-enter new password', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true"><span class="text-red-critical">*</span></span><span class="screen-reader-text"><?php esc_html_e( 'Required', 'woocommerce' ); ?></span></label>
+		<label class="text-white" for="password_2"><?php esc_html_e( 'Re-enter new password', 'woocommerce' ); ?>&nbsp;<span class="required" aria-hidden="true"><span class="text-red-critical">*</span></span><span class="screen-reader-text"><?php esc_html_e( 'Required', 'woocommerce' ); ?></span></label>
 		<input type="password" class="flex w-full mt-2 font-light woocommerce-Input rounded-lg-x h-input text-black-secondary text-mob-xs-font font-laca pl-11 max-w-max-704 woocommerce-Input--text input-text" placeholder="<?php esc_html_e('Reenter New Password', 'woocommerce'); ?>" name="password_2" id="password_2" autocomplete="new-password" required aria-required="true" />
 	</p>
 

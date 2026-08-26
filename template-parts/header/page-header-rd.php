@@ -46,16 +46,32 @@ if (is_home()) {
   color: var(--color-yellow-primary, #f2e900);
 }
 
-/* On phones the page-header band switches to a solid dark background (set via the
- * Alpine init below at <=575px). Tighten title spacing on small screens. */
+/* On phones use a solid dark band so the white title stays readable even if
+ * Alpine has not swapped the photo yet, or the photo is missing. */
 @media (max-width: 575px) {
+  .rd-page-header {
+    background-color: #000;
+    min-height: 160px;
+  }
+
+  .rd-page-header__media {
+    display: none;
+  }
+
+  .rd-page-header__overlay {
+    position: relative !important;
+    height: auto !important;
+    background-color: #000;
+  }
+
   .rd-page-header__titlerow {
     padding-top: 1rem !important;
     padding-bottom: 1.25rem !important;
   }
 
   .rd-page-header__titlerow h1 {
-    font-size: 2rem !important;
+    color: #fff !important;
+    font-size: clamp(1.5rem, 8vw, 2rem) !important;
     line-height: 1.15 !important;
   }
 }
@@ -63,7 +79,7 @@ if (is_home()) {
 <section class="rd-page-header relative z-20 w-full">
   <?php if ($image_url || $image_url_mobile) : ?>
   <div
-    class="relative w-full bg-cover bg-center"
+    class="rd-page-header__media relative w-full bg-cover bg-center"
     style="<?php echo $image_url ? 'background-image:url(' . esc_url($image_url) . ');' : ''; ?>min-height:300px"
     x-data="{
       isMobile: false,
@@ -72,7 +88,7 @@ if (is_home()) {
           this.isMobile = window.innerWidth <= 575;
           if (this.isMobile) {
             this.$el.style.backgroundImage = 'none';
-            this.$el.style.backgroundColor = '#0E1217';
+            this.$el.style.backgroundColor = '#000';
             this.$el.style.minHeight = '150px';
           } else {
             this.$el.style.backgroundImage = 'url(<?php echo esc_js($image_url); ?>)';
@@ -86,7 +102,7 @@ if (is_home()) {
     }"
   ></div>
   <?php endif; ?>
-  <div class="absolute top-0 left-0 right-0 w-full h-full px-4 mx-auto desktop:p-0 lg:max-w-max-1549">
+  <div class="rd-page-header__overlay absolute top-0 left-0 right-0 w-full h-full px-4 mx-auto desktop:p-0 lg:max-w-max-1549">
     <?php if (! function_exists('is_woocommerce') || ! is_woocommerce()) : ?>
     <div class="relative z-30 flex items-start justify-start w-full pt-4">
       <?php matrix_rd_render_breadcrumbs(); ?>

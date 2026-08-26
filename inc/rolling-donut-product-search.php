@@ -5,6 +5,9 @@
  * Searches WooCommerce products (incl. box-builder & bundle "box" products),
  * Pages and Blog posts, and returns a typed, mixed result set for the
  * header live-search dropdown.
+ *
+ * Single donuts are not sold on their own, so a flavour match is rewritten to
+ * the box products that include that donut (WPC bundle items).
  */
 
 /**
@@ -35,6 +38,9 @@ function matrix_rd_search_all_results(string $term, int $limit = 10): array {
             ? (string) wp_get_attachment_image_url($image_id, 'woocommerce_thumbnail')
             : (function_exists('wc_placeholder_img_src') ? wc_placeholder_img_src('woocommerce_thumbnail') : '');
 
+        $type_slug  = function_exists('matrix_rd_product_type_slug') ? matrix_rd_product_type_slug((int) $product_id) : null;
+        $type_label = $type_slug === 'box' ? __('Box', 'matrix-starter') : __('Product', 'matrix-starter');
+
         $results[] = [
             'id'         => (int) $product_id,
             'title'      => html_entity_decode($product->get_name(), ENT_QUOTES, 'UTF-8'),
@@ -42,7 +48,7 @@ function matrix_rd_search_all_results(string $term, int $limit = 10): array {
             'image'      => (string) $image,
             'price_html' => (string) $product->get_price_html(),
             'type'       => 'product',
-            'type_label' => __('Product', 'matrix-starter'),
+            'type_label' => $type_label,
         ];
     }
 
@@ -80,18 +86,151 @@ function matrix_rd_search_format_post(int $post_id, string $type, string $type_l
 }
 
 /**
+ * Whether the product is a standalone donut flavour (not a box/merch/rental).
+ */
+function matrix_rd_is_single_donut_product(int $product_id): bool {
+    return function_exists('matrix_rd_product_type_slug')
+        && matrix_rd_product_type_slug($product_id) === 'donut';
+}
+
+/**
+ * Parent + variation IDs for matching a donut against WPC bundle items.
+ *
+ * @return int[]
+ */
+function matrix_rd_product_search_flavour_ids(int $product_id): array {
+    $ids     = [$product_id];
+    $product = function_exists('wc_get_product') ? wc_get_product($product_id) : null;
+    if (! $product instanceof WC_Product) {
+        return $ids;
+    }
+
+    if ($product->is_type('variation')) {
+        $parent = $product->get_parent_id();
+        if ($parent > 0) {
+            $ids[] = $parent;
+        }
+    }
+
+    if ($product->is_type('variable')) {
+        foreach ($product->get_children() as $child_id) {
+            $ids[] = (int) $child_id;
+        }
+    }
+
+    return array_values(array_unique(array_filter(array_map('intval', $ids))));
+}
+
+/**
+ * Box product IDs whose WPC bundle includes any of the given donut products.
+ *
+ * @param int[] $donut_ids
+ * @return int[]
+ */
+function matrix_rd_boxes_containing_donuts(array $donut_ids): array {
+    $donut_ids = array_values(array_unique(array_filter(array_map('intval', $donut_ids))));
+    if ($donut_ids === [] || ! taxonomy_exists('rd_product_type')) {
+        return [];
+    }
+
+    $flavour_ids = [];
+    foreach ($donut_ids as $donut_id) {
+        foreach (matrix_rd_product_search_flavour_ids($donut_id) as $id) {
+            $flavour_ids[$id] = true;
+        }
+    }
+
+    $box_ids = get_posts([
+        'post_type'              => 'product',
+        'post_status'            => 'publish',
+        'posts_per_page'         => -1,
+        'fields'                 => 'ids',
+        'no_found_rows'          => true,
+        'update_post_meta_cache' => false,
+        'tax_query'              => [
+            [
+                'taxonomy' => 'rd_product_type',
+                'field'    => 'slug',
+                'terms'    => ['box'],
+            ],
+        ],
+    ]);
+
+    $matches = [];
+    foreach ($box_ids as $box_id) {
+        $box = function_exists('wc_get_product') ? wc_get_product((int) $box_id) : null;
+        if (! $box instanceof WC_Product || ! method_exists($box, 'get_items')) {
+            continue;
+        }
+
+        foreach ((array) $box->get_items() as $item) {
+            $item_id = isset($item['id']) ? (int) $item['id'] : 0;
+            if ($item_id <= 0) {
+                continue;
+            }
+            if (isset($flavour_ids[$item_id])) {
+                $matches[] = (int) $box_id;
+                break;
+            }
+            $child = wc_get_product($item_id);
+            if ($child instanceof WC_Product && $child->is_type('variation')) {
+                $parent_id = (int) $child->get_parent_id();
+                if ($parent_id > 0 && isset($flavour_ids[$parent_id])) {
+                    $matches[] = (int) $box_id;
+                    break;
+                }
+            }
+        }
+    }
+
+    return array_values(array_unique($matches));
+}
+
+/**
+ * Drop standalone donuts and replace them with the boxes that include them.
+ *
+ * @param int[] $product_ids
+ * @return int[]
+ */
+function matrix_rd_product_search_rewrite_donuts_to_boxes(array $product_ids): array {
+    $kept   = [];
+    $donuts = [];
+
+    foreach ($product_ids as $product_id) {
+        $product_id = (int) $product_id;
+        if ($product_id <= 0) {
+            continue;
+        }
+        if (function_exists('matrix_rd_is_custom_order_product') && matrix_rd_is_custom_order_product($product_id)) {
+            continue;
+        }
+        if (matrix_rd_is_single_donut_product($product_id)) {
+            $donuts[] = $product_id;
+            continue;
+        }
+        $kept[] = $product_id;
+    }
+
+    $boxes = matrix_rd_boxes_containing_donuts($donuts);
+
+    return array_values(array_unique(array_merge($kept, $boxes)));
+}
+
+/**
  * Collect product IDs by title match, then SKU match.
+ * Standalone donuts are omitted; matching flavours surface their parent boxes.
  *
  * @return int[]
  */
 function matrix_rd_product_search_collect_ids(string $term, int $limit): array {
-    $ids = [];
+    $ids            = [];
+    $candidate_cap  = max($limit * 4, 24);
 
     $title_query = new WP_Query([
         'post_type'              => 'product',
         'post_status'            => 'publish',
         's'                      => $term,
-        'posts_per_page'         => $limit,
+        'posts_per_page'         => $candidate_cap,
         'fields'                 => 'ids',
         'no_found_rows'          => true,
         'update_post_meta_cache' => false,
@@ -102,11 +241,11 @@ function matrix_rd_product_search_collect_ids(string $term, int $limit): array {
         $ids[] = (int) $id;
     }
 
-    if (count($ids) < $limit) {
+    if (count($ids) < $candidate_cap) {
         $sku_query = new WP_Query([
             'post_type'              => 'product',
             'post_status'            => 'publish',
-            'posts_per_page'         => $limit - count($ids),
+            'posts_per_page'         => $candidate_cap - count($ids),
             'fields'                 => 'ids',
             'post__not_in'           => $ids,
             'no_found_rows'          => true,
@@ -126,7 +265,9 @@ function matrix_rd_product_search_collect_ids(string $term, int $limit): array {
         }
     }
 
-    return array_slice(array_values(array_unique($ids)), 0, $limit);
+    $ids = matrix_rd_product_search_rewrite_donuts_to_boxes($ids);
+
+    return array_slice($ids, 0, $limit);
 }
 
 /**
@@ -206,6 +347,99 @@ function matrix_rd_register_product_search_route(): void {
     ]);
 }
 add_action('rest_api_init', 'matrix_rd_register_product_search_route');
+
+/**
+ * Full site search: hide standalone donut products (they are not sold alone).
+ */
+function matrix_rd_search_exclude_donut_products(WP_Query $query): void {
+    if (is_admin() || ! $query->is_main_query() || ! $query->is_search()) {
+        return;
+    }
+    if (! taxonomy_exists('rd_product_type')) {
+        return;
+    }
+
+    $tax_query = $query->get('tax_query');
+    if (! is_array($tax_query)) {
+        $tax_query = [];
+    }
+
+    $tax_query[] = [
+        'taxonomy' => 'rd_product_type',
+        'field'    => 'slug',
+        'terms'    => ['donut'],
+        'operator' => 'NOT IN',
+    ];
+
+    $query->set('tax_query', $tax_query);
+}
+add_action('pre_get_posts', 'matrix_rd_search_exclude_donut_products', 25);
+
+/**
+ * Full site search: when the query matches donut flavours, insert the boxes
+ * that include those flavours so "View all results" matches the live dropdown.
+ *
+ * @param WP_Post[] $posts
+ * @return WP_Post[]
+ */
+function matrix_rd_search_inject_boxes_for_donuts(array $posts, WP_Query $query): array {
+    if (is_admin() || ! $query->is_main_query() || ! $query->is_search()) {
+        return $posts;
+    }
+
+    $term = trim((string) $query->get('s'));
+    if ($term === '' || ! function_exists('wc_get_product')) {
+        return $posts;
+    }
+
+    $donut_query = new WP_Query([
+        'post_type'              => 'product',
+        'post_status'            => 'publish',
+        's'                      => $term,
+        'posts_per_page'         => 24,
+        'fields'                 => 'ids',
+        'no_found_rows'          => true,
+        'update_post_meta_cache' => false,
+        'tax_query'              => [
+            [
+                'taxonomy' => 'rd_product_type',
+                'field'    => 'slug',
+                'terms'    => ['donut'],
+            ],
+        ],
+    ]);
+
+    $box_ids = matrix_rd_boxes_containing_donuts(array_map('intval', $donut_query->posts));
+    if ($box_ids === []) {
+        return $posts;
+    }
+
+    $seen = [];
+    foreach ($posts as $post) {
+        if ($post instanceof WP_Post) {
+            $seen[(int) $post->ID] = true;
+        }
+    }
+
+    $inject = [];
+    foreach ($box_ids as $box_id) {
+        if (isset($seen[$box_id])) {
+            continue;
+        }
+        $box_post = get_post($box_id);
+        if ($box_post instanceof WP_Post && $box_post->post_status === 'publish') {
+            $inject[]        = $box_post;
+            $seen[$box_id] = true;
+        }
+    }
+
+    if ($inject === []) {
+        return $posts;
+    }
+
+    return array_merge($inject, $posts);
+}
+add_filter('the_posts', 'matrix_rd_search_inject_boxes_for_donuts', 10, 2);
 
 function matrix_rd_product_search_enqueue(): void {
     if (is_admin() || ! matrix_rd_nav_should_show()) {

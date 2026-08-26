@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { installCookieBlocker } = require('./helpers/cookie-blocker');
 
 /**
  * Checkout — box details accordion is read-only (no editing).
@@ -120,6 +121,7 @@ async function openBoxAccordion(page) {
 test.describe('Checkout — box details are read-only', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
+    await installCookieBlocker(page);
   });
 
   test('the box accordion shows at checkout with no edit controls', async ({ page }) => {

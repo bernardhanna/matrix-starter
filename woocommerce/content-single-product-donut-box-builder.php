@@ -324,7 +324,15 @@
 
     /* ---------- Flavour cards (custom-order page only) ---------- */
     .postid-3947 #available-products {
+        display: grid;
         gap: 14px;
+        grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 1084px) {
+        .postid-3947 #available-products {
+            grid-template-columns: 1fr 1fr;
+        }
     }
 
     .postid-3947 #available-products .product-item {
@@ -374,10 +382,27 @@
     }
 
     .postid-3947 #available-products .quantity input {
-        width: 38px;
+        width: 48px;
+        min-width: 48px;
+        padding: 0;
         text-align: center;
         background: transparent;
         font-weight: 500;
+        font-size: 16px;
+        line-height: 30px;
+        overflow: visible;
+        /* Slick sets user-select:none on the slider; keep these typeable. */
+        user-select: text;
+        -webkit-user-select: text;
+        pointer-events: auto;
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    .postid-3947 #available-products .quantity input::-webkit-outer-spin-button,
+    .postid-3947 #available-products .quantity input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
     }
 
     .postid-3947 #available-products .decrement-btn,
@@ -895,7 +920,8 @@ $disable_add_remove = get_post_meta($product->get_id(), '_donut_box_builder_disa
                 ?>
                     <div id="custom-price-container" class="flex flex-col justify-center my-4">
                         <label class="text-black-full font-reg420 text-sm-md-font" for="custom-price">Enter your price (€):</label>
-                        <input class="w-full m-auto my-4 text-center" type="number" placeholder="0" id="custom-price" name="custom_price" min="0" step="0.01" required>
+                        <input class="w-full m-auto my-4 text-center" type="number" placeholder="0" id="custom-price" name="custom_price" min="0" step="any" inputmode="decimal" required>
+                        <p class="text-xs text-gray-600 -mt-2 mb-2">0 is allowed for complimentary orders.</p>
                     </div>
                 <?php
                 }
@@ -955,8 +981,6 @@ $disable_add_remove = get_post_meta($product->get_id(), '_donut_box_builder_disa
 </div>
 
 <?php do_action('woocommerce_after_single_product'); ?>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const productId = parseInt('<?php echo $product_id; ?>');
@@ -1161,7 +1185,7 @@ $disable_add_remove = get_post_meta($product->get_id(), '_donut_box_builder_disa
             const selectedAdditionalProducts = document.querySelectorAll('.additional-product-checkbox:checked');
             selectedAdditionalProducts.forEach(checkbox => {
                 const productId = checkbox.value;
-                const quantityInput = document.getElementById('additional-product-quantity-' + productId);
+                const quantityInput = document.getElementById('additional_product_quantity_' + productId) || document.getElementById('additional-product-quantity-' + productId);
                 const quantity = parseInt(quantityInput.value) || 1;
                 const price = parseFloat(checkbox.dataset.price) || 0;
                 total += price * quantity;
@@ -1223,17 +1247,39 @@ $disable_add_remove = get_post_meta($product->get_id(), '_donut_box_builder_disa
             });
         }
 
+        function quantityInputsForProduct(productId) {
+            return document.querySelectorAll(
+                '#product-quantity-' + productId + ', .product-quantity-input[data-product-id="' + productId + '"]'
+            );
+        }
+
+        function setProductQuantity(productId, nextValue) {
+            const inputs = quantityInputsForProduct(productId);
+            if (!inputs.length) {
+                return;
+            }
+            inputs.forEach(function(input) {
+                input.value = nextValue;
+            });
+            inputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
         window.incrementProductQuantity = function(productId) {
-            const quantityInput = document.getElementById('product-quantity-' + productId);
-            quantityInput.value = parseInt(quantityInput.value) + 1;
-            quantityInput.dispatchEvent(new Event('change'));
+            const inputs = quantityInputsForProduct(productId);
+            if (!inputs.length) {
+                return;
+            }
+            setProductQuantity(productId, (parseInt(inputs[0].value, 10) || 0) + 1);
         };
 
         window.decrementProductQuantity = function(productId) {
-            const quantityInput = document.getElementById('product-quantity-' + productId);
-            if (parseInt(quantityInput.value) > 0) {
-                quantityInput.value = parseInt(quantityInput.value) - 1;
-                quantityInput.dispatchEvent(new Event('change'));
+            const inputs = quantityInputsForProduct(productId);
+            if (!inputs.length) {
+                return;
+            }
+            const current = parseInt(inputs[0].value, 10) || 0;
+            if (current > 0) {
+                setProductQuantity(productId, current - 1);
             }
         };
 
@@ -1467,14 +1513,16 @@ $disable_add_remove = get_post_meta($product->get_id(), '_donut_box_builder_disa
                 let customPrice = null;
                 if (parseInt(productId) === 3947) {
                     const customPriceInput = document.getElementById('custom-price');
-                    customPrice = customPriceInput.value;
+                    customPrice = customPriceInput ? customPriceInput.value.trim() : '';
+                    const parsedPrice = parseFloat(customPrice);
 
-                    if (!customPrice || parseFloat(customPrice) <= 0) {
-                        alert('Please enter a valid price.');
+                    if (customPrice === '' || Number.isNaN(parsedPrice) || parsedPrice < 0) {
+                        alert('Please enter a valid price. 0 is allowed.');
                         addToCartButton.disabled = false;
                         addToCartButton.textContent = 'Add Box to Cart';
                         return;
                     }
+                    customPrice = parsedPrice;
                 }
 
                 const selectedStandCheckboxes = document.querySelectorAll('.stand-type-checkbox:checked');
@@ -1546,9 +1594,15 @@ $disable_add_remove = get_post_meta($product->get_id(), '_donut_box_builder_disa
                         if (data.success) {
                             const refreshNotices = async () => {
                                 const sideCartMode = window.matrixRdCartNotices && matrixRdCartNotices.feedbackMode === 'side_cart';
+                                const payload = data.data || {};
                                 if (sideCartMode && typeof window.matrixRdOpenSideCart === 'function') {
-                                    window.matrixRdOpenSideCart();
-                                } else if (data.data && data.data.notice_html && typeof window.matrixRdAppendCartNoticeHtml === 'function') {
+                                    window.matrixRdOpenSideCart({
+                                        side_cart_html: payload.side_cart_html || '',
+                                        html: payload.side_cart_html || payload.html || '',
+                                        cart_count: payload.cart_count || payload.cart_contents_count,
+                                        cart_total: payload.cart_total || ''
+                                    });
+                                } else if (payload.notice_html && typeof window.matrixRdAppendCartNoticeHtml === 'function') {
                                     window.matrixRdAppendCartNoticeHtml(data.data.notice_html);
                                 } else if (typeof window.matrixRdRefreshCartAndNotices === 'function') {
                                     await window.matrixRdRefreshCartAndNotices();
@@ -1638,12 +1692,31 @@ $disable_add_remove = get_post_meta($product->get_id(), '_donut_box_builder_disa
 
 
     document.addEventListener("DOMContentLoaded", function() {
-        const availableProducts = $("#available-products");
+        const customPriceInput = document.getElementById('custom-price');
+        if (customPriceInput) {
+            const formatEnteredPrice = function () {
+                if (customPriceInput.value === '') {
+                    return;
+                }
+                const parsed = parseFloat(customPriceInput.value);
+                if (Number.isNaN(parsed) || parsed < 0) {
+                    return;
+                }
+                customPriceInput.value = String(Math.round(parsed * 100) / 100);
+            };
+            customPriceInput.addEventListener('blur', formatEnteredPrice);
+        }
+
+        const availableProducts = jQuery("#available-products");
 
         function initializeSlick() {
+            // Custom Order is a quantity list, not a carousel. Slick clones slides,
+            // strips input ids, and sets user-select:none — which makes the +/-
+            // steppers and number fields unusable.
+            const isCustomOrder = document.body.classList.contains('postid-3947');
             // While the flavour search is active, keep a plain (un-slick) list so
             // every match stays in the DOM and can be filtered by display.
-            if (window.isDonutSearchActive && window.isDonutSearchActive()) {
+            if (isCustomOrder || (window.isDonutSearchActive && window.isDonutSearchActive())) {
                 if (availableProducts.hasClass("slick-initialized")) {
                     availableProducts.slick('unslick');
                 }
@@ -1704,7 +1777,7 @@ $disable_add_remove = get_post_meta($product->get_id(), '_donut_box_builder_disa
         window.rdInitDonutSlick = initializeSlick;
 
         initializeSlick();
-        $(window).on('resize', debouncedResize);
+        jQuery(window).on('resize', debouncedResize);
     });
 
     function debounce(func, delay) {
@@ -1717,9 +1790,17 @@ $disable_add_remove = get_post_meta($product->get_id(), '_donut_box_builder_disa
 
     document.querySelectorAll('.product-quantity-input').forEach(input => {
         input.addEventListener('input', debounce(event => {
-            const quantity = parseInt(event.target.value) || 0;
-            updateItemInBox(event.target.dataset.productId, quantity);
-        }, 300)); // Adjust delay as needed
+            const quantity = parseInt(event.target.value, 10) || 0;
+            const id = parseInt(event.target.getAttribute('data-product-id'), 10);
+            const change = new Event('change', { bubbles: true });
+            event.target.value = quantity;
+            if (id) {
+                document.querySelectorAll('.product-quantity-input[data-product-id="' + id + '"]').forEach(function(el) {
+                    el.value = quantity;
+                });
+            }
+            event.target.dispatchEvent(change);
+        }, 300));
     });
 
     document.addEventListener('DOMContentLoaded', function() {

@@ -22,6 +22,37 @@ test('my account auth template contains required fields and padding utilities', 
     expect($contents)->not->toContain('mobile:px-4');
 });
 
+test('checkout login form has placeholders and no All-in-One reCAPTCHA markup', function () {
+    $template = dirname(__DIR__, 2) . '/woocommerce/global/form-login.php';
+
+    expect(is_readable($template))->toBeTrue();
+
+    $contents = file_get_contents($template);
+
+    expect($contents)->toContain("esc_attr_e( 'Enter username or email'");
+    expect($contents)->toContain("esc_attr_e( 'Enter Password'");
+    expect($contents)->toContain('matrix_rd_account_captcha_markup');
+    expect($contents)->not->toContain('g-recaptcha');
+    expect($contents)->not->toContain('aios-wc-captcha');
+});
+
+test('lost password endpoint uses a reset-password hero and white intro copy', function () {
+    $header = dirname(__DIR__, 2) . '/woocommerce/custom/woocommerce-header.php';
+    $lost   = dirname(__DIR__, 2) . '/woocommerce/myaccount/form-lost-password.php';
+
+    expect(is_readable($header))->toBeTrue();
+    expect(is_readable($lost))->toBeTrue();
+
+    $header_contents = file_get_contents($header);
+    $lost_contents   = file_get_contents($lost);
+
+    expect($header_contents)->toContain("is_wc_endpoint_url('lost-password')");
+    expect($header_contents)->toContain("showLostPassword: <?php echo \$is_lost_password ? 'true' : 'false'; ?>");
+    expect($lost_contents)->toContain('text-white');
+    expect($lost_contents)->not->toContain('text-black-font');
+    expect($lost_contents)->toContain('for="user_login"');
+});
+
 test('registration auth helpers are defined in theme', function () {
     $auth_file = dirname(__DIR__, 2) . '/inc/rolling-donut-myaccount-auth.php';
     expect(is_readable($auth_file))->toBeTrue();

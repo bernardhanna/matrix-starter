@@ -104,9 +104,20 @@ function matrix_starter_enqueue_scripts() {
   wp_enqueue_style('matrix-starter', $app_css, [], $theme_version);
 
   // Alpine + Intersect
-  wp_enqueue_script('alpine-intersect','https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js',[],null,true);
-  wp_enqueue_script('alpine','https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',['alpine-intersect'],null,true);
-  wp_add_inline_script('alpine', "document.addEventListener('alpine:init',()=>{ if(window.Alpine&&window.AlpineIntersect) Alpine.plugin(window.AlpineIntersect); });");
+  $load_alpine_intersect = ! is_front_page();
+  if ($load_alpine_intersect) {
+    wp_enqueue_script('alpine-intersect','https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js',[],null,true);
+  }
+  wp_enqueue_script(
+    'alpine',
+    'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',
+    $load_alpine_intersect ? ['alpine-intersect'] : [],
+    null,
+    true
+  );
+  if ($load_alpine_intersect) {
+    wp_add_inline_script('alpine', "document.addEventListener('alpine:init',()=>{ if(window.Alpine&&window.AlpineIntersect) Alpine.plugin(window.AlpineIntersect); });");
+  }
   wp_add_inline_style('matrix-starter', '[x-cloak]{display:none !important;}');
 
   /*
@@ -127,9 +138,9 @@ function matrix_starter_enqueue_scripts() {
     .klaviyo-close-form svg *{stroke:#111 !important;opacity:1 !important;}
   ');
 
-  // Stat counters (IntersectionObserver — no Alpine dependency)
+  // Stat counters (IntersectionObserver — no Alpine dependency). Homepage has none.
   $stat_counters_js = get_template_directory() . '/assets/js/stat-counters.js';
-  if (file_exists($stat_counters_js)) {
+  if (file_exists($stat_counters_js) && ! is_front_page()) {
     wp_enqueue_script(
       'stat-counters',
       $base . '/assets/js/stat-counters.js',
@@ -139,15 +150,18 @@ function matrix_starter_enqueue_scripts() {
     );
   }
 
-  // Theme forms helper
+  // Theme forms helper — not used on the homepage (Klaviyo newsletter).
   $forms_js_path = get_template_directory() . '/inc/forms/js/forms.js';
-  wp_enqueue_script(
-    'theme-forms',
-    $base . '/inc/forms/js/forms.js',
-    ['jquery'],
-    file_exists($forms_js_path) ? filemtime($forms_js_path) : null,
-    true
-  );
+  $load_theme_forms = ! is_front_page();
+  if ($load_theme_forms) {
+    wp_enqueue_script(
+      'theme-forms',
+      $base . '/inc/forms/js/forms.js',
+      ['jquery'],
+      file_exists($forms_js_path) ? filemtime($forms_js_path) : null,
+      true
+    );
+  }
 
   // ---- CAPTCHA provider switch (Google reCAPTCHA v3 / Cloudflare Turnstile) ----
   $provider     = (function_exists('get_field') ? (get_field('captcha_provider', 'option') ?: 'none') : 'none');
@@ -158,20 +172,34 @@ function matrix_starter_enqueue_scripts() {
   // Normalize provider value to lowercase for consistency
   $provider = strtolower( $provider );
 
-// Pass provider + keys to the forms helper (BEFORE it runs). wp_json_encode ensures valid JS literals.
-wp_add_inline_script(
-  'theme-forms',
-  'window.themeFormsCaptchaProvider = ' . wp_json_encode( $provider, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ';
-   window.themeFormsRecaptchaV3      = ' . wp_json_encode( $recaptchaKey, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ';
-   window.themeFormsTurnstileSiteKey = ' . wp_json_encode( $turnstileKey, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ';',
-  'before'
-);
-  // Load provider-specific API
-  if ($provider === 'recaptcha_v3' && $recaptchaKey) {
+  // Captcha scripts: contact forms, logged-out My Account, and checkout login
+  // — live host only. Local/staging stay captcha-free.
+  $captcha_active = function_exists('matrix_theme_form_captcha_enabled') && matrix_theme_form_captcha_enabled();
+  $load_theme_captcha = $load_theme_forms && ! matrix_is_wc_flow_page() && $captcha_active;
+  $load_account_captcha = $captcha_active
+    && function_exists('is_account_page')
+    && is_account_page()
+    && ! is_user_logged_in();
+  $load_checkout_login_captcha = $captcha_active
+    && function_exists('is_checkout')
+    && is_checkout()
+    && ! is_user_logged_in();
+  $expose_captcha_keys = $load_theme_captcha || $load_account_captcha || $load_checkout_login_captcha;
+
+  if ($load_theme_forms) {
+    wp_add_inline_script(
+      'theme-forms',
+      'window.themeFormsCaptchaProvider = ' . wp_json_encode( $expose_captcha_keys ? $provider : 'none', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ';
+   window.themeFormsRecaptchaV3      = ' . wp_json_encode( $expose_captcha_keys ? $recaptchaKey : '', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ';
+   window.themeFormsTurnstileSiteKey = ' . wp_json_encode( $expose_captcha_keys ? $turnstileKey : '', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ';',
+      'before'
+    );
+  }
+  if ($expose_captcha_keys && $provider === 'recaptcha_v3' && $recaptchaKey) {
     wp_enqueue_script('recaptcha', "https://www.google.com/recaptcha/api.js?render={$recaptchaKey}", [], null, true);
   }
 
-  if ($provider === 'turnstile' && $turnstileKey) {
+  if ($expose_captcha_keys && $provider === 'turnstile' && $turnstileKey) {
     wp_enqueue_script('turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', [], null, true);
   }
 
@@ -258,7 +286,7 @@ wp_add_inline_script(
     if (in_array('leaflet', $enabled_scripts, true)) { wp_enqueue_style('leaflet'); wp_enqueue_script('leaflet'); }
 
     // Optional: force-load Turnstile globally (even if provider not selected)
-    if (in_array('cloudflare_turnstile', $enabled_scripts, true) && !wp_script_is('turnstile','enqueued')) {
+    if ($expose_captcha_keys && in_array('cloudflare_turnstile', $enabled_scripts, true) && !wp_script_is('turnstile','enqueued')) {
       wp_enqueue_script('turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', [], null, true);
     }
   }
@@ -327,6 +355,7 @@ wp_add_inline_script(
       'alpine-intersect','alpine',
       'wc-checkout','wc-country-select','wc-address-i18n',
       'selectWoo','jquery-blockui','jquery-payment',
+      'slick-js',
       'wc-add-to-cart-variation','wc-credit-card-form',
       'wc-password-strength-meter',
     ];

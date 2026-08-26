@@ -56,8 +56,8 @@ $main_style = $matrix_rd_bg_url !== ''
           $content_wrap = 'mx-auto lg:max-w-max-1568 px-4 pt-6 pb-12 lg:pb-20';
           $content_inner_class = 'max-w-none';
       } else {
-          $content_wrap = 'mx-auto lg:max-w-max-1568 px-4 pt-6 pb-12 lg:pb-20';
-          $content_inner_class = 'gutenburg entry-content max-w-none';
+          $content_wrap = 'w-full px-4 pt-10 pb-16 mx-auto lg:pt-16';
+          $content_inner_class = 'gutenburg e-content rd-page-prose text-base-font font-lighter text-black-full';
       }
       ?>
   <div class="<?php echo esc_attr($content_wrap); ?>">

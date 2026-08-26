@@ -20,7 +20,7 @@ const { test, expect } = require('@playwright/test');
  */
 
 const CHECKOUT_PATH = process.env.CHECKOUT_PATH || '/checkout/';
-const ADD_TO_CART_ID = process.env.CHECKOUT_ADD_TO_CART || '';
+const ADD_TO_CART_ID = process.env.CHECKOUT_ADD_TO_CART || '1959';
 
 const METHOD_STEP = '#rd-checkout-step-method';
 const SELECTED_LI = `${METHOD_STEP} li:has(input.shipping_method:checked)`;
@@ -37,7 +37,7 @@ const SELECTED_NATIVE = `${SELECTED_LI} select.pickup-location-lookup`;
 async function dismissBlockingUi(page) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const closeDialog = page
-      .getByRole('button', { name: /close dialog|no thanks|close|dismiss/i })
+      .getByRole('button', { name: /close dialog|no thanks|close|dismiss|accept/i })
       .first();
     if (await closeDialog.isVisible().catch(() => false)) {
       await closeDialog.click({ force: true }).catch(() => {});
@@ -46,6 +46,11 @@ async function dismissBlockingUi(page) {
     }
     break;
   }
+  await page.evaluate(() => {
+    document.querySelectorAll('#cookiescript_injected, #cookiescript_injected_wrapper, .cookiescript_badge').forEach((el) => {
+      el.remove();
+    });
+  }).catch(() => {});
   await page.keyboard.press('Escape').catch(() => {});
 }
 
@@ -63,21 +68,33 @@ async function waitForCheckoutSettled(page) {
  * AJAX resolves before we start listening.
  */
 async function selectMethodAndSettle(page, locator) {
+  if (await locator.isChecked().catch(() => false)) {
+    await waitForCheckoutSettled(page);
+    return;
+  }
+
   const response = page
     .waitForResponse((res) => /wc-ajax=update_order_review/i.test(res.url()), { timeout: 15000 })
     .catch(() => {});
-  await locator.check({ force: true });
+  await locator.evaluate((el) => {
+    if (!(el instanceof HTMLInputElement)) {
+      return;
+    }
+    el.checked = true;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
   await response;
   await waitForCheckoutSettled(page);
 }
 
 async function openCheckout(page) {
   if (ADD_TO_CART_ID) {
-    await page.goto(`/?add-to-cart=${encodeURIComponent(ADD_TO_CART_ID)}`);
-    await page.waitForLoadState('networkidle').catch(() => {});
+    await page.goto(`/?add-to-cart=${encodeURIComponent(ADD_TO_CART_ID)}`, {
+      waitUntil: 'domcontentloaded',
+    });
   }
 
-  await page.goto(CHECKOUT_PATH);
+  await page.goto(CHECKOUT_PATH, { waitUntil: 'domcontentloaded' });
   await dismissBlockingUi(page);
   await waitForCheckoutSettled(page);
 }
@@ -112,6 +129,68 @@ async function assertPickerVisible(page, context) {
   expect(overflow, `page overflows horizontally (${context})`).toBeLessThanOrEqual(1);
 }
 
+async function assertBothMethodsVisible(page, context) {
+  const deliveryLi = page
+    .locator(`${METHOD_STEP} li`)
+    .filter({ has: page.locator('input.shipping_method:not([value*="local_pickup"])') })
+    .first();
+  const pickupLi = page
+    .locator(`${METHOD_STEP} li`)
+    .filter({ has: page.locator('input.shipping_method[value*="local_pickup"]') })
+    .first();
+
+  await expect(deliveryLi, `delivery option missing (${context})`).toBeVisible({ timeout: 10000 });
+  await expect(pickupLi, `collection option missing (${context})`).toBeVisible({ timeout: 10000 });
+  await expect(
+    page.locator(`${METHOD_STEP} label`).filter({ hasText: /^Delivery/ }),
+    `delivery label hidden (${context})`
+  ).toBeVisible();
+  await expect(
+    page.locator(`${METHOD_STEP} label`).filter({ hasText: /Free Collection/i }),
+    `collection label hidden (${context})`
+  ).toBeVisible();
+
+  const deliveryBox = await deliveryLi.boundingBox();
+  const pickupBox = await pickupLi.boundingBox();
+  expect(deliveryBox?.height || 0, `delivery option collapsed (${context})`).toBeGreaterThan(20);
+  expect(pickupBox?.height || 0, `collection option collapsed (${context})`).toBeGreaterThan(20);
+}
+
+async function choosePickupLocation(page) {
+  const select = page.locator(SELECTED_NATIVE).first();
+  if ((await select.count()) === 0) {
+    return false;
+  }
+
+  const select2 = page.locator(SELECTED_SELECT2).first();
+  if ((await select2.count()) > 0) {
+    await select2.click();
+    const option = page
+      .locator('.select2-results__option:not(.select2-results__message)')
+      .filter({ hasNot: page.locator('[aria-disabled="true"]') })
+      .first();
+    if ((await option.count()) === 0) {
+      return false;
+    }
+    await option.click();
+    await waitForCheckoutSettled(page);
+    return true;
+  }
+
+  const value = await select.evaluate((el) => {
+    const opt = Array.from(/** @type {HTMLSelectElement} */ (el).options).find(
+      (item) => item.value && item.value !== '0'
+    );
+    return opt ? opt.value : '';
+  });
+  if (!value) {
+    return false;
+  }
+  await select.selectOption(value);
+  await waitForCheckoutSettled(page);
+  return true;
+}
+
 test.describe('Express checkout — pickup location visibility', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -142,8 +221,53 @@ test.describe('Express checkout — pickup location visibility', () => {
     // Repeat the toggle to catch the intermittent (race-condition) failure.
     for (let i = 0; i < 3; i += 1) {
       await selectMethodAndSettle(page, delivery);
+      const change = page.locator(`${METHOD_STEP} .rd-checkout-step__change`);
+      if (await change.isVisible().catch(() => false)) {
+        await change.click();
+        await waitForCheckoutSettled(page);
+      }
+      await assertBothMethodsVisible(page, `delivery selected #${i + 1}`);
       await selectMethodAndSettle(page, pickup);
       await assertPickerVisible(page, `delivery->collection toggle #${i + 1}`);
+      await assertBothMethodsVisible(page, `collection selected #${i + 1}`);
+    }
+  });
+
+  test('Change after collection still shows delivery and collection', async ({ page }) => {
+    test.setTimeout(120000);
+
+    const pickup = page.locator(PICKUP_RADIO).first();
+    const delivery = page.locator(NON_PICKUP_RADIO).first();
+    test.skip((await pickup.count()) === 0 || (await delivery.count()) === 0, 'Need both fulfilment methods.');
+
+    await assertBothMethodsVisible(page, 'initial method step');
+
+    await selectMethodAndSettle(page, pickup);
+    await assertBothMethodsVisible(page, 'after selecting collection');
+
+    const picked = await choosePickupLocation(page);
+    test.skip(!picked, 'No selectable pickup location.');
+
+    await page.locator(`${METHOD_STEP} .rd-checkout-step__continue`).click({ force: true }).catch(() => {});
+    await waitForCheckoutSettled(page);
+
+    const change = page.locator(`${METHOD_STEP} .rd-checkout-step__change`);
+    await expect(change).toBeVisible({ timeout: 10000 });
+
+    for (let i = 0; i < 3; i += 1) {
+      const review = page
+        .waitForResponse((res) => /wc-ajax=update_order_review/i.test(res.url()), { timeout: 8000 })
+        .catch(() => {});
+      await change.click();
+      await review;
+      await waitForCheckoutSettled(page);
+      await assertBothMethodsVisible(page, `after Change #${i + 1}`);
+      await expect(delivery).toBeVisible();
+      await expect(pickup).toBeVisible();
+
+      await page.locator(`${METHOD_STEP} .rd-checkout-step__continue`).click({ force: true });
+      await waitForCheckoutSettled(page);
+      await expect(change).toBeVisible({ timeout: 10000 });
     }
   });
 });

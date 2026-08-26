@@ -8,9 +8,49 @@
 defined('ABSPATH') || exit;
 
 /**
+ * Stripe Link / Apple Pay / Google Pay locations allowed on the storefront.
+ *
+ * @return array<int, string>
+ */
+function matrix_rd_stripe_express_checkout_storefront_locations(): array {
+    return ['checkout'];
+}
+
+/**
+ * Keep Stripe express wallets (Link, Apple Pay, Google Pay, Amazon Pay) on checkout only.
+ *
+ * @param mixed $settings Stripe gateway settings.
+ *
+ * @return mixed
+ */
+function matrix_rd_stripe_express_checkout_locations_checkout_only($settings) {
+    if (! is_array($settings)) {
+        return $settings;
+    }
+
+    // Leave the Stripe admin UI on the saved option; enforce checkout-only on the storefront.
+    if (is_admin() && ! wp_doing_ajax()) {
+        return $settings;
+    }
+
+    $checkout_only = matrix_rd_stripe_express_checkout_storefront_locations();
+    $settings['express_checkout_button_locations'] = $checkout_only;
+    $settings['link_button_locations']             = $checkout_only;
+    $settings['amazon_pay_button_locations']       = $checkout_only;
+    $settings['payment_request_button_locations']  = $checkout_only;
+
+    return $settings;
+}
+add_filter('option_woocommerce_stripe_settings', 'matrix_rd_stripe_express_checkout_locations_checkout_only');
+add_filter('wc_stripe_hide_payment_request_on_product_page', '__return_true');
+add_filter('wc_stripe_show_payment_request_on_cart', '__return_false');
+
+/**
  * Bootstrap express checkout hooks.
  */
 function matrix_rd_express_checkout_bootstrap(): void {
+    matrix_rd_remove_stripe_express_from_cart_and_product();
+
     if (! function_exists('is_checkout') || ! is_checkout() || is_wc_endpoint_url('order-received')) {
         return;
     }
@@ -23,14 +63,37 @@ function matrix_rd_express_checkout_bootstrap(): void {
 }
 
 /**
- * Render Apple Pay / Google Pay inside the payment wizard step, not above step 1.
+ * Stripe Express Checkout Element instance, if the gateway has booted it.
  */
-function matrix_rd_express_checkout_reposition_stripe_wallets(): void {
+function matrix_rd_stripe_express_checkout_element() {
     if (! class_exists('WC_Stripe_Express_Checkout_Element')) {
-        return;
+        return null;
     }
 
     $ece = WC_Stripe_Express_Checkout_Element::instance();
+
+    return $ece ?: null;
+}
+
+/**
+ * Do not render Stripe Link / wallet buttons on product or cart pages.
+ */
+function matrix_rd_remove_stripe_express_from_cart_and_product(): void {
+    $ece = matrix_rd_stripe_express_checkout_element();
+
+    if (! $ece) {
+        return;
+    }
+
+    remove_action('woocommerce_after_add_to_cart_form', [$ece, 'display_express_checkout_button_html'], 1);
+    remove_action('woocommerce_proceed_to_checkout', [$ece, 'display_express_checkout_button_html'], 20);
+}
+
+/**
+ * Render Apple Pay / Google Pay / Link inside the payment wizard step, not above step 1.
+ */
+function matrix_rd_express_checkout_reposition_stripe_wallets(): void {
+    $ece = matrix_rd_stripe_express_checkout_element();
 
     if (! $ece) {
         return;
@@ -264,6 +327,7 @@ function matrix_rd_express_checkout_enqueue_assets(): void {
                 'errorsTitle'     => __('What\'s missing', 'matrix-starter'),
             ],
             'mobilePayLabel'   => __('Place Order', 'matrix-starter'),
+            'processingLabel'  => __('Processing...', 'matrix-starter'),
             'pickupAddresses'  => matrix_rd_express_checkout_pickup_addresses(),
         ]);
     }

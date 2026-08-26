@@ -1,5 +1,9 @@
 /**
  * Headroom-style header state for Rolling Donut navbar (Alpine x-data).
+ *
+ * When pinned, the promo topbar is hidden (x-show="!isPinned"). The spacer must
+ * keep the *pre-pin* in-flow height so the page does not jump when that bar
+ * disappears and the header becomes fixed.
  */
 window.matrixRdHeadroom = function (config) {
   config = config || {};
@@ -11,6 +15,8 @@ window.matrixRdHeadroom = function (config) {
     isPinned: false,
     isVisible: true,
     headerHeight: 0,
+    /** Height reserved in document flow while pinned (captured before topbar hides). */
+    flowHeight: 0,
     pinOffset: 60,
     tolerance: 5,
 
@@ -19,7 +25,7 @@ window.matrixRdHeadroom = function (config) {
       this.$nextTick(() => this.measure());
       window.addEventListener('resize', () => {
         this.measure();
-        if (window.innerWidth > 1149) {
+        if (window.innerWidth > 1210) {
           this.open = false;
         }
       });
@@ -27,8 +33,15 @@ window.matrixRdHeadroom = function (config) {
     },
 
     measure() {
-      if (this.$refs.headerBar) {
-        this.headerHeight = this.$refs.headerBar.offsetHeight;
+      if (!this.$refs.headerBar) {
+        return;
+      }
+
+      // While pinned the promo topbar is hidden — do not overwrite flowHeight
+      // with the shorter fixed-bar measurement (that causes a layout jump).
+      this.headerHeight = this.$refs.headerBar.offsetHeight;
+      if (!this.isPinned) {
+        this.flowHeight = this.headerHeight;
       }
     },
 
@@ -45,10 +58,17 @@ window.matrixRdHeadroom = function (config) {
     },
 
     get spacerHeight() {
-      if (!this.isPinned || !this.headerHeight) {
+      if (!this.isPinned) {
         return '0px';
       }
-      return this.headerHeight + 'px';
+      const height = this.flowHeight || this.headerHeight;
+      return height ? height + 'px' : '0px';
+    },
+
+    captureFlowHeight() {
+      if (this.$refs.headerBar) {
+        this.flowHeight = this.$refs.headerBar.offsetHeight;
+      }
     },
 
     onScroll() {
@@ -65,6 +85,10 @@ window.matrixRdHeadroom = function (config) {
         this.isPinned = false;
         this.isVisible = true;
       } else if (y > this.pinOffset) {
+        // Capture full in-flow height (promo topbar + nav) before Alpine hides the topbar.
+        if (!this.isPinned) {
+          this.captureFlowHeight();
+        }
         this.isPinned = true;
         if (delta < -this.tolerance) {
           this.isVisible = true;
@@ -76,6 +100,10 @@ window.matrixRdHeadroom = function (config) {
       } else {
         this.isPinned = false;
         this.isVisible = true;
+      }
+
+      if (wasPinned && !this.isPinned) {
+        this.$nextTick(() => this.measure());
       }
 
       if (wasPinned !== this.isPinned || wasVisible !== this.isVisible) {

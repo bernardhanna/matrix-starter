@@ -4,9 +4,36 @@
 (function () {
     'use strict';
 
+    function summarySortName(name) {
+        return String(name || '').replace(/\s+[—–-]\s+(large|midi)\s*$/i, '').trim();
+    }
+
+    function sortBundleRowsAz(list) {
+        // Box builder keeps the native WPC list as a hidden data layer. Reordering
+        // those nodes would change picker/slot order; the visible summary is sorted
+        // separately in rd-box-builder.js.
+        if (document.getElementById('rd-bb-summary') && list.closest('.woosb-wrap')) {
+            return;
+        }
+
+        var rows = Array.prototype.slice.call(list.querySelectorAll('.woosb-product:not(.woosb-product-hidden)'));
+        rows.sort(function (a, b) {
+            var aEl = a.querySelector('.rd-bb-summary-label, .woosb-name');
+            var bEl = b.querySelector('.rd-bb-summary-label, .woosb-name');
+            var an = summarySortName(aEl ? aEl.textContent : '');
+            var bn = summarySortName(bEl ? bEl.textContent : '');
+            return an.localeCompare(bn, undefined, { sensitivity: 'base', numeric: true });
+        });
+        rows.forEach(function (row) {
+            list.appendChild(row);
+        });
+    }
+
     function initBundleListLayout(root) {
         var scope = root || document;
         scope.querySelectorAll('.woocommerce div.product .woosb-products.woosb-products-layout-list').forEach(function (list) {
+            sortBundleRowsAz(list);
+
             var rows = list.querySelectorAll('.woosb-product:not(.woosb-product-hidden)');
             var count = rows.length;
 

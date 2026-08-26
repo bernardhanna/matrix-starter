@@ -267,6 +267,10 @@ class Theme_Forms {
   }
 
   private function captcha_ok(): bool {
+    if (function_exists('matrix_theme_form_captcha_enabled') && ! matrix_theme_form_captcha_enabled()) {
+      return true;
+    }
+
     $provider = function_exists('get_field') ? (get_field('captcha_provider', 'option') ?: 'none') : 'none';
     if ($provider === 'none') return true;
 
@@ -285,17 +289,9 @@ class Theme_Forms {
     }
 
     if ($provider === 'turnstile') {
-      $token = sanitize_text_field($_POST['cf-turnstile-response'] ?? '');
-      if (!$token) return false;
-      $response = wp_remote_post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-        'body' => [
-          'secret'   => get_field('turnstile_secret_key', 'option'),
-          'response' => $token,
-        ],
-        'timeout' => 10,
-      ]);
-      $json = json_decode(wp_remote_retrieve_body($response), true);
-      return !empty($json['success']);
+      return function_exists('matrix_theme_form_turnstile_token_valid')
+        ? matrix_theme_form_turnstile_token_valid()
+        : false;
     }
 
     return true;
@@ -614,6 +610,10 @@ if (!function_exists('matrix_collect_brevo_list_ids')) {
 
 if (!function_exists('matrix_verify_newsletter_captcha')) {
   function matrix_verify_newsletter_captcha(): bool {
+    if (function_exists('matrix_theme_form_captcha_enabled') && ! matrix_theme_form_captcha_enabled()) {
+      return true;
+    }
+
     if (!function_exists('get_field')) {
       return true;
     }
@@ -643,22 +643,9 @@ if (!function_exists('matrix_verify_newsletter_captcha')) {
     }
 
     if ($provider === 'turnstile') {
-      $token = sanitize_text_field($_POST['cf-turnstile-response'] ?? '');
-      if ($token === '') {
-        return false;
-      }
-      $response = wp_remote_post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-        'body' => [
-          'secret' => (string) get_field('turnstile_secret_key', 'option'),
-          'response' => $token,
-        ],
-        'timeout' => 10,
-      ]);
-      if (is_wp_error($response)) {
-        return false;
-      }
-      $json = json_decode((string) wp_remote_retrieve_body($response), true);
-      return !empty($json['success']);
+      return function_exists('matrix_theme_form_turnstile_token_valid')
+        ? matrix_theme_form_turnstile_token_valid()
+        : false;
     }
 
     return true;

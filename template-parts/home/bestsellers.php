@@ -19,8 +19,8 @@ if (empty($product_posts)) {
     return;
 }
 
-$bg_image   = matrix_rd_acf_image(get_field('bg_image'));
-$text_image = matrix_rd_acf_image(get_field('text_image'));
+$bg_image   = matrix_rd_acf_image(get_field('bg_image'), '', 'large');
+$text_image = matrix_rd_acf_image(get_field('text_image'), '', 'large');
 $heading    = get_field('heading');
 ?>
 <section
@@ -31,7 +31,7 @@ $heading    = get_field('heading');
 >
   <div class="overlay">
     <?php if ($text_image['url']) : ?>
-      <img class="text-image mx-auto h-[86px] w-full max-w-max-1000 object-contain lg:h-full" src="<?php echo esc_url($text_image['url']); ?>" alt="<?php echo esc_attr($text_image['alt']); ?>" />
+      <img class="text-image mx-auto h-[86px] w-full max-w-max-1000 object-contain lg:h-full" src="<?php echo esc_url($text_image['url']); ?>" alt="<?php echo esc_attr($text_image['alt']); ?>" loading="lazy" decoding="async" />
     <?php endif; ?>
     <?php if ($heading) : ?>
       <h1 id="main" class="text-mob-xxl-font lg:text-lg-font font-regular relative text-center text-white">
@@ -93,7 +93,7 @@ $heading    = get_field('heading');
                           }
                           ?>
                           <div class="row flex w-1/2 items-center pb-4">
-                            <img src="<?php echo esc_url(get_the_post_thumbnail_url($allergen_id, 'thumbnail')); ?>" alt="<?php echo esc_attr(get_the_title($allergen_id)); ?>" class="mr-1 h-6 w-6" />
+                            <img src="<?php echo esc_url(get_the_post_thumbnail_url($allergen_id, 'thumbnail')); ?>" alt="<?php echo esc_attr(get_the_title($allergen_id)); ?>" class="mr-1 h-6 w-6" loading="lazy" decoding="async" />
                             <span class="text-mob-xs-font font-regular font-laca"><?php echo esc_html(get_the_title($allergen_id)); ?></span>
                           </div>
                         <?php endforeach; ?>
@@ -115,10 +115,12 @@ $heading    = get_field('heading');
                     class="bestseller_image relative h-[386px] w-full rounded-sm-8 border-3 border-solid border-black-full object-cover"
                     src="<?php echo esc_url($image_url); ?>"
                     alt="<?php echo esc_attr($product->post_title); ?>"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div
-                    id="productContentOne"
-                    class="absolute inset-0 z-40 flex h-[386px] flex-col items-center justify-end p-4 lg:items-start"
+                    id="product-content-one-<?php echo (int) $product->ID; ?>"
+                    class="product-content-one absolute inset-0 z-40 flex h-[386px] flex-col items-center justify-end p-4 lg:items-start"
                     @mouseenter="isLargeScreen && (isHovered = true)"
                     @mouseleave="isLargeScreen && (isHovered = false)"
                     x-transition:enter.duration.500ms.delay.50ms
@@ -142,8 +144,8 @@ $heading    = get_field('heading');
                       <?php esc_html_e('Select and Customise', 'matrix-starter'); ?>
                     </span>
                     <div
-                      id="productInfo"
-                      class="flex w-full items-center justify-between"
+                      id="product-info-<?php echo (int) $product->ID; ?>"
+                      class="product-info flex w-full items-center justify-between"
                       x-show.transition="isHovered"
                       x-transition:enter.duration.500ms
                       x-transition:leave.duration.400ms
@@ -159,8 +161,8 @@ $heading    = get_field('heading');
                     </div>
                   </div>
                   <div
-                    id="productContentTwo"
-                    class="animate-fade flex flex-col"
+                    id="product-content-two-<?php echo (int) $product->ID; ?>"
+                    class="product-content-two animate-fade flex flex-col"
                     @mouseenter="isLargeScreen && (isHovered = true)"
                     @mouseleave="isLargeScreen && (isHovered = false)"
                   >
@@ -253,7 +255,7 @@ $heading    = get_field('heading');
   }
 
   @media (width >= 1550px) {
-    .bestseller-splide #productContentTwo {
+    .bestseller-splide .product-content-two {
       height: auto;
       min-height: 150px;
     }

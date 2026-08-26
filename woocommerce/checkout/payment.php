@@ -40,31 +40,59 @@ if (!wp_doing_ajax()) {
     <?php endif; ?>
 
     <?php if (wc_coupons_enabled()) : ?>
-      <div class="rd-checkout-payment-coupon">
-        <label class="rd-checkout-payment-coupon__label" for="rd_payment_coupon_code">
-          <?php esc_html_e('Coupon / Gift voucher', 'matrix-starter'); ?>
-        </label>
-        <div class="rd-checkout-payment-coupon__row">
-          <input
-            type="text"
-            class="input-text rd-checkout-payment-coupon__input"
-            name="rd_payment_coupon_code"
-            id="rd_payment_coupon_code"
-            value=""
-            placeholder="<?php esc_attr_e('Enter code', 'matrix-starter'); ?>"
-            autocomplete="off"
-            aria-required="false"
-            spellcheck="false"
-          />
-          <button
-            type="button"
-            class="button rd-checkout-payment-coupon__apply coupon-btn"
-            name="rd_apply_coupon"
-            aria-label="<?php esc_attr_e('Apply coupon or gift voucher code', 'matrix-starter'); ?>"
-          >
-            <?php esc_html_e('Apply', 'matrix-starter'); ?>
-          </button>
-        </div>
+      <?php
+        $rd_applied_coupons = WC()->cart ? WC()->cart->get_coupons() : [];
+        $rd_coupon_applied  = ! empty($rd_applied_coupons);
+      ?>
+      <div class="rd-checkout-payment-coupon<?php echo $rd_coupon_applied ? ' rd-checkout-payment-coupon--applied' : ''; ?>">
+        <?php if ($rd_coupon_applied) : ?>
+          <span class="rd-checkout-payment-coupon__label">
+            <?php esc_html_e('Coupon / Gift voucher', 'matrix-starter'); ?>
+          </span>
+          <?php foreach ($rd_applied_coupons as $rd_coupon) : ?>
+            <?php
+              $rd_coupon_code = $rd_coupon instanceof WC_Coupon ? (string) $rd_coupon->get_code() : (string) $rd_coupon;
+            ?>
+            <div class="rd-checkout-payment-coupon__row rd-checkout-payment-coupon__row--applied">
+              <span class="rd-checkout-payment-coupon__code" data-coupon="<?php echo esc_attr($rd_coupon_code); ?>">
+                <?php echo esc_html($rd_coupon_code); ?>
+              </span>
+              <button
+                type="button"
+                class="button rd-checkout-payment-coupon__remove"
+                data-coupon="<?php echo esc_attr($rd_coupon_code); ?>"
+                aria-label="<?php echo esc_attr(sprintf(__('Remove coupon %s', 'matrix-starter'), $rd_coupon_code)); ?>"
+              >
+                <?php esc_html_e('Remove', 'matrix-starter'); ?>
+              </button>
+            </div>
+          <?php endforeach; ?>
+        <?php else : ?>
+          <label class="rd-checkout-payment-coupon__label" for="rd_payment_coupon_code">
+            <?php esc_html_e('Coupon / Gift voucher', 'matrix-starter'); ?>
+          </label>
+          <div class="rd-checkout-payment-coupon__row">
+            <input
+              type="text"
+              class="input-text rd-checkout-payment-coupon__input"
+              name="rd_payment_coupon_code"
+              id="rd_payment_coupon_code"
+              value=""
+              placeholder="<?php esc_attr_e('Enter code', 'matrix-starter'); ?>"
+              autocomplete="off"
+              aria-required="false"
+              spellcheck="false"
+            />
+            <button
+              type="button"
+              class="button rd-checkout-payment-coupon__apply coupon-btn"
+              name="rd_apply_coupon"
+              aria-label="<?php esc_attr_e('Apply coupon or gift voucher code', 'matrix-starter'); ?>"
+            >
+              <?php esc_html_e('Apply', 'matrix-starter'); ?>
+            </button>
+          </div>
+        <?php endif; ?>
       </div>
     <?php endif; ?>
 

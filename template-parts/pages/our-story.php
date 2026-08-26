@@ -101,7 +101,9 @@ $render_our_story_card = static function (string $mode, array $story, int $index
     </div>
 
     <div class="relative order-2 flex h-auto w-full flex-col items-center justify-center p-4 laptop:hidden">
+      <?php if ($title_mob !== '') : ?>
       <h3 class="flex w-full font-reg420 text-mob-xxl-font text-white"><?php echo esc_html($title_mob); ?></h3>
+      <?php endif; ?>
       <span class="flex w-full pb-2 font-laca text-sm-md-font font-medium text-white"><?php echo esc_html($span_one_mob); ?></span>
       <span class="flex w-full pb-4 font-laca text-sm-md-font text-white"><?php echo esc_html($span_two_mob); ?></span>
       <p class="flex w-full font-laca text-sm-font font-lighter text-white"><?php echo esc_html($description_mob); ?></p>
@@ -118,7 +120,9 @@ $render_our_story_card = static function (string $mode, array $story, int $index
               data-index="<?php echo (int) $index; ?>"
               <?php echo $index === 0 ? '' : ' style="display:none"'; ?>
             >
+              <?php if (trim((string) ($story['title'] ?? '')) !== '') : ?>
               <h3 class="w-full font-reg420 text-mob-xxl-font text-white"><?php echo esc_html((string) ($story['title'] ?? '')); ?></h3>
+              <?php endif; ?>
               <span class="w-full pb-2 font-laca text-sm-md-font font-medium text-white"><?php echo esc_html((string) ($story['span_one'] ?? '')); ?></span>
               <span class="w-full pb-4 font-laca text-sm-md-font text-white"><?php echo esc_html((string) ($story['span_two'] ?? '')); ?></span>
               <p class="w-full font-laca text-sm-font font-lighter text-white"><?php echo esc_html((string) ($story['description'] ?? '')); ?></p>

@@ -3,7 +3,7 @@
  * Home FAQ accordion (selected FAQs from front page).
  */
 $post_id = (int) get_option('page_on_front');
-$faq_img = matrix_rd_acf_image(get_field('faq_image', $post_id));
+$faq_img = matrix_rd_acf_image(get_field('faq_image', $post_id), '', 'large');
 $faq_btn = matrix_rd_faq_view_all_link(get_field('faq_button', $post_id), $post_id);
 $rows    = matrix_rd_acf_repeater_rows('selected_faqs', ['faq'], $post_id);
 $faqs    = [];
@@ -23,7 +23,7 @@ if ($faqs === [] && $faq_img['url'] === '') {
   <div class="<?php echo esc_attr(matrix_rd_section_inner_classes('flex flex-col items-start sm:flex-row')); ?>">
     <?php if ($faq_img['url']) : ?>
     <div class="block w-full pl-4 pr-4 mx-auto lg:mx-0 lg:p-0 lg:pr-0 lg:w-45">
-      <img class="m-auto lg:m-0 object-cover max-h-max-473 rounded-xl rounded-[15px] border-3 border-black-full" src="<?php echo esc_url($faq_img['url']); ?>" alt="<?php echo esc_attr($faq_img['alt']); ?>" />
+      <img class="m-auto lg:m-0 object-cover max-h-max-473 rounded-xl rounded-[15px] border-3 border-black-full" src="<?php echo esc_url($faq_img['url']); ?>" alt="<?php echo esc_attr($faq_img['alt']); ?>" loading="lazy" decoding="async" />
     </div>
     <?php endif; ?>
     <div class="flex flex-col justify-between w-full h-full px-4 py-4 content lg:bg-white lg:pl-8 lg:pr-10 lg:w-55">

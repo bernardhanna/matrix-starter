@@ -31,7 +31,7 @@ $query = new WP_Query([
       $thumb      = get_the_post_thumbnail_url($post_id, 'full');
       ?>
   <div class="relative flex flex-col pt-10 mb-4 bg-white location-item mobile:pt-0 mobile:border-black mobile:border-4 mobile:border-solid mobile:rounded-md-32 mobile:flex-row tablet-sm:pt-6 tablet-sm:pb-3">
-    <div class="flex flex-col mobile:p-4 lg:p-0 tablet-sm:mr-auto tablet-sm:ml-auto lg:w-30">
+    <div class="flex flex-col location-item__media mobile:p-4 lg:p-0 tablet-sm:mr-auto tablet-sm:ml-auto lg:w-30">
       <h4 class="hidden w-full pt-3 pb-8 leading-normal max-mobile:block text-font-28 tablet-sm:text-md-font font-reg420 text-black-full"><?php the_title(); ?></h4>
       <?php if ($thumb) : ?>
       <img class="max-mobile:border-black-full max-mobile:border-4 tablet-sm:pr-2 rounded-one object-cover w-full h-[270px] md:h-auto tablet-sm:h-[381px]" src="<?php echo esc_url($thumb); ?>" alt="<?php the_title_attribute(); ?>" />
@@ -84,7 +84,7 @@ $query = new WP_Query([
       </div>
       <?php endif; ?>
 
-      <div class="flex flex-col justify-between mt-4 max-mobile:order-3 tablet-sm:flex-row max-w-max-691">
+      <div class="flex flex-col justify-between mt-4 location-item__actions max-mobile:order-3 tablet-sm:flex-row max-w-max-691">
         <?php if ($directions['url'] !== '') : ?>
         <div x-data="{ isHovered: false }">
           <a

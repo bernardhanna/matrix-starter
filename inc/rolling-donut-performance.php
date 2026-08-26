@@ -38,16 +38,26 @@ add_filter('wp_resource_hints', static function (array $hints, string $relation)
 /**
  * Preload the home hero image (the LCP element) so the browser fetches it at
  * high priority instead of waiting for the render-blocking CSS to be parsed.
- * Desktop and mobile art are served from separate ACF fields, so each gets a
- * media-scoped preload.
+ * Uses the first hero slide's right-hand photo (desktop + mobile).
  */
 add_action('wp_head', static function (): void {
-    if (! is_front_page() || ! function_exists('get_field')) {
+    if (! is_front_page()) {
         return;
     }
 
-    $desktop = matrix_rd_perf_image_url(get_field('banner_left'));
-    $mobile  = matrix_rd_perf_image_url(get_field('banner_top_mobile'));
+    $desktop = '';
+    $mobile  = '';
+    if (function_exists('matrix_rd_get_home_hero_slides')) {
+        $slides = matrix_rd_get_home_hero_slides();
+        if (isset($slides[0]) && is_array($slides[0])) {
+            $desktop = (string) ($slides[0]['right_image']['url'] ?? '');
+            $mobile  = (string) ($slides[0]['right_image_mobile']['url'] ?? '');
+        }
+    }
+    if ($desktop === '' && function_exists('get_field')) {
+        $desktop = matrix_rd_perf_image_url(get_field('banner_right'));
+        $mobile  = matrix_rd_perf_image_url(get_field('banner_bottom_mobile'));
+    }
 
     if ($desktop !== '') {
         printf(
@@ -62,7 +72,6 @@ add_action('wp_head', static function (): void {
             esc_url($mobile)
         );
     } elseif ($desktop !== '') {
-        // Fall back to the desktop art on mobile if no dedicated mobile image.
         printf(
             '<link rel="preload" as="image" href="%s" media="(max-width: 1083px)" fetchpriority="high">' . "\n",
             esc_url($desktop)
@@ -71,22 +80,35 @@ add_action('wp_head', static function (): void {
 }, 2);
 
 /**
- * Load a small set of clearly non-critical, render-blocking stylesheets
- * asynchronously (media-swap trick) so they don't block first paint. These only
- * style below-the-fold UI: Font Awesome (footer/social icons) and the Slick
- * carousel (bestsellers strip below the hero).
+ * Load non-critical stylesheets asynchronously (media-swap trick) so they
+ * don't block first paint. On the homepage everything except the hero/nav
+ * stack is deferred; elsewhere only Font Awesome and Slick are.
  */
 add_filter('style_loader_tag', static function (string $tag, string $handle): string {
     if (is_admin()) {
         return $tag;
     }
-    // Never defer styles on the checkout/cart flow.
     if (function_exists('is_checkout') && (is_checkout() || is_cart())) {
         return $tag;
     }
 
-    $async_handles = array('fontawesome-6', 'font-awesome', 'slick-css');
-    if (! in_array($handle, $async_handles, true)) {
+    $always_async = array('fontawesome-6', 'font-awesome', 'slick-css');
+    $home_critical = array(
+        'matrix-rd-font-edmondsans',
+        'matrix-rd-font-laca',
+        'matrix-starter',
+        'matrix-rd-navbar',
+        'splide',
+        'matrix-rd-legacy',
+        'matrix-rd-fonts',
+        'matrix-rd-home-hero-slider',
+    );
+
+    $async = in_array($handle, $always_async, true);
+    if (is_front_page() && ! in_array($handle, $home_critical, true)) {
+        $async = true;
+    }
+    if (! $async) {
         return $tag;
     }
 
@@ -106,7 +128,7 @@ add_filter('style_loader_tag', static function (string $tag, string $handle): st
  */
 function matrix_rd_perf_image_url($image): string {
     if (function_exists('matrix_rd_acf_image')) {
-        $resolved = matrix_rd_acf_image($image);
+        $resolved = matrix_rd_acf_image($image, '', '1536x1536');
         if (is_array($resolved) && ! empty($resolved['url'])) {
             return (string) $resolved['url'];
         }
@@ -117,13 +139,13 @@ function matrix_rd_perf_image_url($image): string {
             return (string) $image['url'];
         }
         if (! empty($image['ID'])) {
-            $url = wp_get_attachment_image_url((int) $image['ID'], 'full');
+            $url = wp_get_attachment_image_url((int) $image['ID'], '1536x1536');
             return $url ?: '';
         }
     }
 
     if (is_numeric($image)) {
-        $url = wp_get_attachment_image_url((int) $image, 'full');
+        $url = wp_get_attachment_image_url((int) $image, '1536x1536');
         return $url ?: '';
     }
 
@@ -133,3 +155,163 @@ function matrix_rd_perf_image_url($image): string {
 
     return '';
 }
+
+/**
+ * Homepage does not need product-builder, share-cart, captcha, or Google Fonts
+ * stacks. Dequeue them late so plugin enqueue callbacks have already run.
+ */
+function matrix_rd_front_page_trim_assets(): void {
+    if (is_admin() || ! is_front_page()) {
+        return;
+    }
+
+    $script_handles = array(
+        'woo-variation-swatches',
+        'woosb-frontend',
+        'woosb-blocks',
+        'cxecrt-tip-tip',
+        'cxecrt-frontend-js',
+        'stat-counters',
+        'theme-forms',
+        'turnstile',
+        'recaptcha',
+        'alpine-intersect',
+        'jquery-migrate',
+    );
+    foreach ($script_handles as $handle) {
+        wp_dequeue_script($handle);
+    }
+
+    $style_handles = array(
+        'woo-variation-swatches',
+        'woosb-frontend',
+        'woosb-blocks',
+        'cxecrt-tip-tip',
+        'cxecrt-icon-font',
+        'cxecrt-css',
+        'wc-blocks-style',
+        'wc-blocks',
+        'matrix-google-fonts',
+        'iconic-wds-style',
+        'jckwds-style',
+    );
+    foreach ($style_handles as $handle) {
+        wp_dequeue_style($handle);
+    }
+
+    $scripts = wp_scripts();
+    if (isset($scripts->registered['jquery'])) {
+        $scripts->registered['jquery']->deps = array_values(array_diff(
+            (array) $scripts->registered['jquery']->deps,
+            array('jquery-migrate')
+        ));
+    }
+    if (isset($scripts->registered['alpine'])) {
+        $scripts->registered['alpine']->deps = array_values(array_diff(
+            (array) $scripts->registered['alpine']->deps,
+            array('alpine-intersect')
+        ));
+    }
+
+    $style_needles = array(
+        'woo-variation-swatches',
+        'woo-product-bundle-premium',
+        'woocommerce-email-cart',
+        'iconic-woo-delivery-slots',
+        '/woocommerce/assets/client/blocks/wc-blocks.css',
+        'fonts.googleapis.com',
+    );
+    $styles = wp_styles();
+    if ($styles && ! empty($styles->queue)) {
+        foreach ($styles->queue as $handle) {
+            $src = (string) ($styles->registered[ $handle ]->src ?? '');
+            foreach ($style_needles as $needle) {
+                if ($src !== '' && str_contains($src, $needle)) {
+                    wp_dequeue_style($handle);
+                    break;
+                }
+            }
+        }
+    }
+
+    $script_needles = array(
+        'woo-variation-swatches',
+        'woo-product-bundle-premium/assets/js/frontend',
+        'woocommerce-email-cart',
+        'stat-counters.js',
+        'challenges.cloudflare.com/turnstile',
+        'jquery-migrate',
+        '@alpinejs/intersect',
+    );
+    if ($scripts && ! empty($scripts->queue)) {
+        foreach ($scripts->queue as $handle) {
+            $src = (string) ($scripts->registered[ $handle ]->src ?? '');
+            foreach ($script_needles as $needle) {
+                if ($src !== '' && str_contains($src, $needle)) {
+                    wp_dequeue_script($handle);
+                    break;
+                }
+            }
+        }
+    }
+
+    // The plugin still dumps its modal HTML in wp_footer even after the CSS/JS
+    // that hide it are dequeued. Drop that markup on the homepage too.
+    matrix_rd_remove_share_cart_footer_markup();
+}
+add_action('wp_enqueue_scripts', 'matrix_rd_front_page_trim_assets', 999);
+add_action('wp_print_scripts', 'matrix_rd_front_page_trim_assets', 1);
+add_action('wp_print_styles', 'matrix_rd_front_page_trim_assets', 1);
+
+/**
+ * Stop WooCommerce Save & Share Cart from printing its modal in wp_footer.
+ */
+function matrix_rd_remove_share_cart_footer_markup(): void {
+    global $cxecrt;
+
+    if (! is_object($cxecrt) || ! method_exists($cxecrt, 'cart_page_load_form')) {
+        return;
+    }
+
+    remove_action('wp_footer', array($cxecrt, 'cart_page_load_form'));
+}
+
+/**
+ * Dashboard RSS widgets store multi-megabyte site transients in wp_options.
+ */
+function matrix_rd_disable_dashboard_rss_widgets(): void {
+    remove_meta_box('dashboard_primary', 'dashboard', 'side');
+    remove_meta_box('dashboard_primary', 'dashboard', 'normal');
+    remove_meta_box('dashboard_secondary', 'dashboard', 'side');
+    remove_meta_box('dashboard_secondary', 'dashboard', 'normal');
+}
+add_action('wp_dashboard_setup', 'matrix_rd_disable_dashboard_rss_widgets', 99);
+
+/**
+ * Drop expired / leftover options bloat that inflates the performance sample.
+ */
+function matrix_rd_trim_options_bloat(): void {
+    if (function_exists('delete_expired_transients')) {
+        delete_expired_transients(true);
+    }
+
+    delete_option('_wpallimport_session_new_');
+    delete_option('ptk_patterns');
+    delete_site_transient('t15s-registry-gforms');
+    delete_transient('woocommerce_admin_remote_inbox_notifications_specs');
+
+    global $wpdb;
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    $feed_names = $wpdb->get_col(
+        "SELECT option_name FROM {$wpdb->options}
+         WHERE option_name LIKE '_site_transient_feed_%'
+            OR option_name LIKE '_site_transient_timeout_feed_%'
+            OR option_name LIKE '_transient_feed_%'
+            OR option_name LIKE '_transient_timeout_feed_%'"
+    );
+    foreach ((array) $feed_names as $name) {
+        delete_option((string) $name);
+    }
+}
+add_action('wp_scheduled_delete', 'matrix_rd_trim_options_bloat');
+

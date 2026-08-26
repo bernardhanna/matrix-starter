@@ -13,7 +13,7 @@ $account_url = wc_get_page_permalink('myaccount');
 $cart_url    = wc_get_cart_url();
 ?>
 <div
-  class="top-nav relative top-0 z-[1000] mx-auto hidden w-full max-w-full min-w-0 py-0 lg:mb-0 lg:mt-4 lg:flex md:justify-end lg:justify-end laptop:my-4"
+  class="top-nav relative top-0 z-[1000] mx-auto hidden w-full max-w-full min-w-0 py-0 lg:mb-2 lg:mt-2 lg:flex md:justify-end lg:justify-end laptop:mt-2 laptop:mb-2"
 >
   <div class="flex min-w-0 flex-1 flex-row items-center justify-end gap-3 px-4 md:items-center md:justify-end md:px-4 lg:gap-4">
     <div class="hidden md:block md:pl-4" aria-hidden="true"></div>
@@ -26,7 +26,7 @@ $cart_url    = wc_get_cart_url();
         >
           <span class="iconify relative inline-flex h-8 w-8 shrink-0 items-center justify-center" data-icon="icon-park-twotone:phone-telephone" aria-hidden="true"></span>
           <div class="nav-line flex shrink-0 lg:hidden laptop:hidden" aria-hidden="true"></div>
-          <span class="text-reg-font font-reg420 relative -t-0-1 hidden laptop:flex"><?php echo esc_html($telephone); ?></span>
+          <span class="rd-topnav-phone text-reg-font font-reg420 relative -t-0-1 hidden laptop:flex whitespace-nowrap"><?php echo esc_html($telephone); ?></span>
         </a>
         <div class="nav-line hidden shrink-0 md:block lg:hidden" aria-hidden="true"></div>
       <?php endif; ?>
@@ -54,7 +54,7 @@ $cart_url    = wc_get_cart_url();
   </div>
 
   <div
-    class="js-cart-header flex shrink-0 items-center justify-center pl-2 pr-0 md:pl-4"
+    class="js-cart-header flex shrink-0 items-center justify-center p-0"
     data-rd-cart
     data-initial-count="<?php echo (int) $cart['count']; ?>"
     data-initial-total="<?php echo (int) $cart['count'] > 0 ? esc_attr($cart['total_plain']) : ''; ?>"
@@ -67,7 +67,7 @@ $cart_url    = wc_get_cart_url();
       title="<?php esc_attr_e('View your shopping cart', 'woocommerce'); ?>"
       <?php echo function_exists('matrix_rd_uses_side_cart') && matrix_rd_uses_side_cart() ? 'data-rd-side-cart-trigger' : ''; ?>
     >
-      <span class="iconify" data-icon="grommet-icons:basket" data-width="32" data-height="32" aria-hidden="true"></span>
+      <span class="iconify" data-icon="grommet-icons:cart" data-width="32" data-height="32" aria-hidden="true"></span>
       <span
         class="cart-contents-count text-tiny font-reg420 bg-red-critical w-[14px] h-[14px] flex items-center justify-center rounded-full border-2 border-black-border-solid p-2 basket-detail"
         x-text="cartCount"

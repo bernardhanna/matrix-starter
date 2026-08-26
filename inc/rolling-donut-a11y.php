@@ -12,6 +12,37 @@
 defined('ABSPATH') || exit;
 
 /**
+ * The Save & Share Cart plugin prints its modal in wp_footer on every page and
+ * relies on its own stylesheet to park it off-screen. If that CSS is missing
+ * (dequeued, delayed, unused-CSS stripped) the form dumps into document flow
+ * below the site footer. Keep a theme-owned hide so that cannot happen.
+ */
+add_action('wp_head', static function (): void {
+    echo '<style id="rd-share-cart-hide">'
+        . '#cxecrt-save-share-cart-modal.cxecrt-component-modal-content-hard-hide,'
+        . '.cxecrt-component-modal-content-hard-hide,'
+        . '.cxecrt-component-modal-cover.cxecrt-component-modal-hard-hide,'
+        . '.cxecrt-component-modal-popup.cxecrt-component-modal-hard-hide{'
+        . 'position:fixed!important;left:0!important;top:-200%!important;'
+        . 'visibility:hidden!important;pointer-events:none!important;'
+        . '}'
+        . '</style>' . "\n";
+}, 1);
+
+/**
+ * Preflight expects /accessibility-statement/; the published page slug is /accessibility/.
+ */
+add_action('template_redirect', static function (): void {
+    $path = (string) wp_parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+    if (! preg_match('#/accessibility-statement/?$#', $path)) {
+        return;
+    }
+
+    wp_safe_redirect(home_url('/accessibility/'), 301);
+    exit;
+});
+
+/**
  * Load the most recent accessibility scan report produced by
  * `npm run test:a11y:full` (scripts/run-a11y.js writes to tests/a11y-report/).
  *

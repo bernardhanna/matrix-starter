@@ -249,7 +249,7 @@
     }
 
     const desktop = window.innerWidth >= 1084;
-    const layoutDefault = !!hero.closest('.home-hero--layout-default');
+    const layoutDefault = !!hero.closest('.home-hero--layout-1');
     const controlsInSlide = !desktop || layoutDefault;
     hero.classList.toggle('home-hero-slider--controls-in-slide', controlsInSlide);
 
@@ -271,11 +271,13 @@
     }
 
     let target = null;
-    if (layoutDefault && desktop) {
+    // Prefer overlay so controls can span full panel width (arrows left, dots right).
+    if (layoutDefault) {
       target = slideEl.querySelector('.home-hero-slide__overlay');
     }
     if (!target) {
       target =
+        slideEl.querySelector('.home-hero-slide__overlay') ||
         slideEl.querySelector('.home-hero-slide__cta-wrap') ||
         slideEl.querySelector('.home-hero-slide__content');
     }

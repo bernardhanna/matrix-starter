@@ -22,14 +22,14 @@ const cliUrl = process.argv[3];
 const base = cliUrl || process.env.BASE_URL || process.env.WP_HOME || 'http://localhost:10029/';
 const baseUrl = new URL(base).href.replace(/\/$/, '');
 
-const quickPaths = ['/', '/our-donuts/', '/product/custom-order/'];
+const quickPaths = ['/', '/our-donuts/', '/product/midi-sourdough-donuts-box-of-20/'];
 const fullPaths = [
   '/',
   '/about-us/',
   '/our-shops/',
   '/our-donuts/',
   '/contact-us/',
-  '/product/custom-order/',
+  '/product/midi-sourdough-donuts-box-of-20/',
   '/cart/',
 ];
 

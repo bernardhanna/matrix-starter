@@ -7,6 +7,9 @@
 
 defined('ABSPATH') || exit;
 
+require_once __DIR__ . '/helpers/packing-slip-notes.php';
+require_once __DIR__ . '/helpers/checkout-fulfilment-rates.php';
+
 /**
  * Normalize Irish county/state values from autofill (e.g. "Co. Dublin" → "Dublin").
  */
@@ -203,26 +206,73 @@ function matrix_rd_checkout_collapse_per_order_shipping_packages(array $packages
         return $packages;
     }
 
-    return [reset($packages)];
+    // Keep delivery rates from a sibling shipping package. reset() used to
+    // discard that package, so Change after Collection showed pickup only.
+    return matrix_rd_checkout_merge_packages_for_method_choice($packages);
 }
+
+/**
+ * Remember a complete Delivery+Collection rate list during checkout calc.
+ *
+ * @param array<string, mixed> $rates   Package rates.
+ * @param array<string, mixed> $package Shipping package.
+ *
+ * @return array<string, mixed>
+ */
+function matrix_rd_checkout_snapshot_fulfilment_choice_rates($rates, $package) {
+    unset($package);
+
+    if (! is_array($rates) || ! matrix_rd_checkout_is_checkout_request()) {
+        return $rates;
+    }
+
+    if (matrix_rd_checkout_has_both_fulfilment_kinds($rates)) {
+        matrix_rd_checkout_fulfilment_rate_store($rates);
+    }
+
+    return $rates;
+}
+add_filter('woocommerce_package_rates', 'matrix_rd_checkout_snapshot_fulfilment_choice_rates', 999, 2);
+
+/**
+ * After Local Pickup Plus strips non-pickup rates, put Delivery back so the
+ * method step fragment still renders both radios.
+ *
+ * @param array<int|string, array<string, mixed>> $packages Shipping packages.
+ *
+ * @return array<int|string, array<string, mixed>>
+ */
+function matrix_rd_checkout_restore_fulfilment_choice_rates_on_packages(array $packages): array {
+    if (! matrix_rd_checkout_is_checkout_request() || $packages === []) {
+        return $packages;
+    }
+
+    $snapshot = matrix_rd_checkout_fulfilment_rate_store();
+
+    if ($snapshot === []) {
+        return $packages;
+    }
+
+    foreach ($packages as $index => $package) {
+        $rates = isset($package['rates']) && is_array($package['rates']) ? $package['rates'] : [];
+        $packages[$index]['rates'] = matrix_rd_checkout_restore_fulfilment_rates($rates, $snapshot);
+    }
+
+    return $packages;
+}
+add_filter('woocommerce_shipping_packages', 'matrix_rd_checkout_restore_fulfilment_choice_rates_on_packages', 1000);
 
 // Filter out shipping options based on whether the address is in Dublin or outside
 add_filter('woocommerce_package_rates', 'filter_local_pickup_plus_and_delivery_for_dublin', 20, 2);
 function filter_local_pickup_plus_and_delivery_for_dublin($rates, $package) {
     $is_dublin_address = matrix_rd_checkout_is_dublin_address($package);
+    $is_checkout = matrix_rd_checkout_is_checkout_request();
 
     foreach ($rates as $rate_id => $rate) {
-        $is_local_pickup_plus = strpos($rate_id, 'local_pickup_plus') !== false;
-        $is_free_shipping = strpos($rate_id, 'free_shipping') !== false;
+        unset($rate);
 
-        if ($is_dublin_address) {
-            if (!$is_local_pickup_plus && !$is_free_shipping && strpos($rate_id, 'flat_rate') === false) {
-                unset($rates[$rate_id]);
-            }
-        } else {
-            if (!$is_local_pickup_plus && !$is_free_shipping) {
-                unset($rates[$rate_id]);
-            }
+        if (! matrix_rd_checkout_should_keep_package_rate((string) $rate_id, $is_dublin_address, $is_checkout)) {
+            unset($rates[$rate_id]);
         }
     }
     return $rates;
@@ -743,4 +793,4 @@ function add_custom_shipping_eircode_to_address_display($formatted_address, $ord
     
     return $formatted_address;
 }
-?>
+

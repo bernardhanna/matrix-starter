@@ -37,6 +37,7 @@ if ($filter_cats !== []) {
 }
 
 $is_singular_product = is_singular('product');
+$is_lost_password    = function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('lost-password');
 $product_id          = $is_singular_product ? (int) get_queried_object_id() : 0;
 $product_type_slug   = $product_id && function_exists('matrix_rd_product_type_slug')
     ? matrix_rd_product_type_slug($product_id)
@@ -49,9 +50,9 @@ $center_header_text  = ! $is_singular_product || $is_box_product;
 $is_archive_header   = ! $is_singular_product;
 
 if ($is_archive_header) {
-    $inner_classes = 'rd-woo-header__inner relative w-full mx-auto lg:max-w-max-1549 flex flex-col items-stretch justify-start bg-black-full';
+    $inner_classes = 'rd-woo-header__inner absolute top-0 left-0 right-0 w-full h-full mx-auto lg:max-w-max-1549 flex flex-col items-stretch justify-start bg-black-full sm:bg-transparent min-h-[150px] max-md:min-h-[200px]';
     $bc_classes    = 'rd-woo-bc relative z-30 flex w-full items-start justify-start pt-4 px-4 desktop:p-0';
-    $band_classes  = 'rd-woo-header__band relative flex flex-col items-center justify-center gap-3 px-2 py-4 pb-8 text-center w-full mx-auto overflow-visible';
+    $band_classes  = 'rd-woo-header__band flex-1 relative flex flex-col items-center justify-center gap-3 px-2 py-4 text-center w-full mx-auto overflow-visible';
 } elseif ($center_header_text) {
     $inner_classes = 'rd-woo-header__inner bg-black-full sm:bg-transparent min-h-[150px] max-md:min-h-[200px] mobile:absolute top-0 left-0 right-0 w-full h-auto mobile:h-full mx-auto max-w-max-1485 flex flex-col items-center justify-center text-center';
     $bc_classes    = 'rd-woo-bc hidden w-full pl-4 md:flex lg:max-w-max-1485 desktop:pl-0';
@@ -63,10 +64,9 @@ if ($is_archive_header) {
 }
 ?>
 <style>
-/* Archive / shop headers: curved image band, then a solid title row below (not overlaid). */
+/* Archive / shop headers: title + breadcrumbs overlay the curved background. */
 .rd-woo-header--archive {
-  display: flex;
-  flex-direction: column;
+  position: relative;
 }
 
 .rd-woo-header--archive .rd-woo-header__media {
@@ -74,110 +74,216 @@ if ($is_archive_header) {
   line-height: 0;
 }
 
-.rd-woo-header--archive .rd-woo-header__inner {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  width: 100%;
-  background-color: #0E1217;
-}
+@media (min-width: 768px) {
+  .rd-woo-header--archive .rd-woo-header__inner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    height: 100%;
+    min-height: 243px;
+    background-color: transparent !important;
+  }
 
-.rd-woo-header--archive .rd-woo-bc {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: flex-start;
-  justify-content: flex-start;
-  width: 100%;
-}
+  .rd-woo-header--archive .rd-woo-bc {
+    display: flex !important;
+    flex: 0 0 auto;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+  }
 
-.rd-woo-header--archive .rd-woo-bc,
-.rd-woo-header--archive .rd-woo-bc a,
-.rd-woo-header--archive .rd-woo-bc span {
-  color: #fff;
-}
+  .rd-woo-header--archive .rd-woo-bc,
+  .rd-woo-header--archive .rd-woo-bc a,
+  .rd-woo-header--archive .rd-woo-bc span {
+    color: #fff;
+  }
 
-.rd-woo-header--archive .rd-woo-header__band {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  width: 100%;
-  margin: 0;
-  padding: 0.5rem 0.5rem 1.25rem;
-}
+  .rd-woo-header--archive .rd-woo-header__band {
+    flex: 1 1 auto;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.75rem;
+    height: auto !important;
+    margin: 0;
+    padding: 0.5rem 0.5rem 1.25rem;
+  }
 
-.rd-woo-header--archive .rd-woo-header__subtitle {
-  margin: 0;
-  max-width: 90%;
-  color: #fff !important;
-}
+  .rd-woo-header--archive .rd-woo-header__subtitle {
+    margin: 0;
+    max-width: 90%;
+    color: #fff !important;
+  }
 
-.rd-woo-header--archive .rd-woo-header__subtitle p {
-  margin: 0;
-  color: inherit !important;
-}
+  .rd-woo-header--archive .rd-woo-header__subtitle p {
+    margin: 0;
+    color: inherit !important;
+  }
 
-.rd-woo-header--archive .rd-woo-header__titlewrap {
-  margin: 0 !important;
-  padding: 0;
-}
+  .rd-woo-header--archive .rd-woo-header__titlewrap {
+    margin: 0 !important;
+    padding: 0;
+  }
 
-.rd-woo-header__toolbar {
-  position: relative;
-  z-index: 40;
-}
+  .rd-woo-header__toolbar {
+    position: relative;
+    z-index: 40;
+  }
 
-.rd-woo-header__toolbar .rd-woo-bc {
-  display: flex !important;
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 0;
-}
+  .rd-woo-header__toolbar .rd-woo-bc {
+    display: flex !important;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+  }
 
-.rd-woo-header__toolbar .rd-woo-filter {
-  margin: 0;
-  width: auto;
-  justify-content: flex-end;
-}
+  .rd-woo-header__toolbar .rd-woo-filter {
+    margin: 0;
+    width: auto;
+    justify-content: flex-end;
+  }
 
-.rd-woo-header--has-filter {
-  overflow: visible;
-}
+  .rd-woo-header--has-filter {
+    overflow: visible;
+  }
 
-.rd-woo-header--has-filter .rd-woo-header__inner {
-  overflow: visible;
-}
+  .rd-woo-header--has-filter .rd-woo-header__inner {
+    overflow: visible;
+  }
 
-.rd-woo-header--has-filter .rd-woo-header__headline {
-  position: relative;
-  width: 100%;
-}
+  .rd-woo-header--has-filter .rd-woo-header__headline {
+    position: relative;
+    width: 100%;
+  }
 
-.rd-woo-header--has-filter .rd-woo-filter__panel {
-  position: absolute;
-  top: calc(100% + 1rem);
-  right: 0;
-  left: 0;
-  z-index: 60;
-  margin-top: 0;
-  width: 100%;
+  .rd-woo-header--has-filter .rd-woo-filter__panel {
+    position: absolute;
+    top: calc(100% + 1rem);
+    right: 0;
+    left: 0;
+    z-index: 60;
+    margin-top: 0;
+    width: 100%;
+  }
 }
 
 @media (max-width: 767px) {
+  /*
+   * Phones: keep the title in document flow on a solid dark band.
+   * Overlaying a transparent inner on a 0-height / hidden mobile banner
+   * made the white H1 vanish over the white content below.
+   */
+  .rd-woo-header--archive {
+    background-color: #000;
+    min-height: 168px;
+  }
+
+  .rd-woo-header--archive .rd-woo-header__media {
+    display: none;
+  }
+
+  .rd-woo-header--archive .rd-woo-header__inner {
+    position: relative !important;
+    top: auto;
+    right: auto;
+    left: auto;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    width: 100%;
+    height: auto !important;
+    min-height: 168px !important;
+    background-color: #000 !important;
+    overflow: visible !important;
+  }
+
+  .rd-woo-header--has-filter.rd-woo-header--archive .rd-woo-header__inner {
+    overflow: visible;
+  }
+
+  .rd-woo-header--archive .rd-woo-bc {
+    display: flex !important;
+    position: relative;
+    z-index: 10;
+    width: 100%;
+  }
+
+  .rd-woo-header--archive .rd-woo-bc,
+  .rd-woo-header--archive .rd-woo-bc a,
+  .rd-woo-header--archive .rd-woo-bc span {
+    color: #fff;
+  }
+
   .rd-woo-header--archive .rd-woo-header__band {
+    position: relative;
+    z-index: 10;
+    flex: 1 1 auto;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
     gap: 12px;
+    width: 100%;
+    height: auto !important;
+    text-align: center;
     padding: 8px 16px 20px;
+  }
+
+  .rd-woo-header--archive .rd-woo-header__titlewrap {
+    margin: 0 !important;
+    padding: 0 0.5rem;
+    text-align: center;
   }
 
   .rd-woo-header--archive .rd-woo-header__titlewrap h1 {
     margin: 0;
     text-align: center;
-    font-size: 2rem;
-    line-height: 1.15;
+    color: #fff !important;
+    font-size: clamp(1.5rem, 7vw, 2rem) !important;
+    line-height: 1.15 !important;
+  }
+
+  .rd-woo-header--archive .rd-woo-header__subtitle {
+    color: #fff !important;
+  }
+
+  .rd-woo-header--archive .rd-woo-header__subtitle p {
+    margin: 0;
+    color: inherit !important;
+  }
+
+  .rd-woo-header__toolbar {
+    position: relative;
+    z-index: 40;
+  }
+
+  .rd-woo-header__toolbar .rd-woo-bc {
+    display: flex !important;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .rd-woo-header__toolbar .rd-woo-filter {
+    margin: 0;
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .rd-woo-header--has-filter .rd-woo-filter__panel {
+    position: absolute;
+    top: calc(100% + 1rem);
+    right: 0;
+    left: 0;
+    z-index: 60;
+    margin-top: 0;
+    width: 100%;
   }
 }
 
@@ -188,11 +294,16 @@ if ($is_archive_header) {
     margin-top: 0;
   }
 }
+
+/* Keep the current-page crumb yellow; the rules above force every span to white. */
+.rd-woo-header--archive .rd-woo-bc .breadcrumb-item.text-yellow-primary {
+  color: var(--rd-yellow-primary, #ffed56);
+}
 </style>
 <section class="rd-woo-header <?php echo $is_box_page ? 'rd-woo-header--box ' : ''; ?><?php echo $filter_cats !== [] ? 'rd-woo-header--has-filter ' : ''; ?><?php echo $is_singular_product ? '' : 'rd-woo-header--archive '; ?>relative z-50 w-full mb-0 <?php echo $is_box_product ? '' : 'lg:mb-12'; ?>"
   x-data="{
     activeTab: 'sign-in',
-    showLostPassword: false,
+    showLostPassword: <?php echo $is_lost_password ? 'true' : 'false'; ?>,
     isAccountPage: <?php echo is_account_page() ? 'true' : 'false'; ?>,
     isLoggedIn: <?php echo is_user_logged_in() ? 'true' : 'false'; ?>,
     isProductArchive: <?php echo $is_product_archive ? 'true' : 'false'; ?>,
@@ -210,7 +321,7 @@ if ($is_archive_header) {
     <img class="object-cover w-full min-h-[243px] hidden sm:block" src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($image_alt); ?>" <?php echo $image_srcset ? 'srcset="' . esc_attr($image_srcset) . '"' : ''; ?> sizes="(min-width: 640px) 100vw" />
     <?php endif; ?>
     <?php if ($image_url_mobile) : ?>
-    <img class="block w-full max-mobile:hidden sm:hidden" src="<?php echo esc_url($image_url_mobile); ?>" alt="<?php echo esc_attr($image_alt_mobile); ?>" <?php echo $image_srcset_mobile ? 'srcset="' . esc_attr($image_srcset_mobile) . '"' : ''; ?> sizes="(max-width: 639px) 100vw" />
+    <img class="block w-full sm:hidden" src="<?php echo esc_url($image_url_mobile); ?>" alt="<?php echo esc_attr($image_alt_mobile); ?>" <?php echo $image_srcset_mobile ? 'srcset="' . esc_attr($image_srcset_mobile) . '"' : ''; ?> sizes="(max-width: 639px) 100vw" />
     <?php endif; ?>
   </div>
   <?php endif; ?>

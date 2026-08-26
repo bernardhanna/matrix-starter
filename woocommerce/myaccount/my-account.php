@@ -49,8 +49,7 @@ if ($is_orders_page || $is_payment_methods_page) {
     $background_class = 'sm:bg-transparent lg:bg-white';
     $padding_class = 'p-0 rounded-none';
 } elseif ($is_view_order_page) {
-    // Ensure default padding is applied on "View Order" page, adjust as needed.
-    $padding_class = 'p-0'; // This ensures default padding is retained for "View Order" page.
+    $padding_class = 'p-0';
 }
 ?>
 <div class="mt-10"></div>

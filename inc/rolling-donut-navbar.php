@@ -6,9 +6,24 @@
 use Log1x\Navi\Navi;
 
 /**
+ * Whether this request is the WooCommerce thank-you (order received) page.
+ */
+function matrix_rd_nav_is_thankyou(): bool {
+    if (function_exists('is_order_received_page') && is_order_received_page()) {
+        return true;
+    }
+
+    return function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-received');
+}
+
+/**
  * Whether the main site navigation should render (hide on cart/checkout).
+ * Thank-you keeps a logo-only bar, matching legacy.
  */
 function matrix_rd_nav_should_show(): bool {
+    if (matrix_rd_nav_is_thankyou()) {
+        return true;
+    }
     if (function_exists('is_cart') && is_cart()) {
         return false;
     }
@@ -40,11 +55,43 @@ function matrix_rd_nav_items(): array {
  * @return array{left: array, right: array, all: array}
  */
 function matrix_rd_nav_split(array $items, int $left_count = 4): array {
+    $left  = array_slice($items, 0, $left_count);
+    $right = array_slice($items, $left_count);
+
     return [
-        'left'  => array_slice($items, 0, $left_count),
-        'right' => array_slice($items, $left_count),
+        'left'  => $left,
+        'right' => matrix_rd_nav_lead_with_label($right, 'merch'),
         'all'   => $items,
     ];
+}
+
+/**
+ * Move a labelled item to the front of a nav column (keeps Order now last).
+ *
+ * @param  array<int, object> $items
+ * @return array<int, object>
+ */
+function matrix_rd_nav_lead_with_label(array $items, string $label): array {
+    $want = strtolower($label);
+    $aliases = [$want, 'merchandise'];
+    $lead = [];
+    $cta  = [];
+    $rest = [];
+
+    foreach ($items as $item) {
+        $current = strtolower(trim((string) ($item->label ?? '')));
+        if (function_exists('matrix_rd_nav_is_order_cta') && matrix_rd_nav_is_order_cta($item)) {
+            $cta[] = $item;
+            continue;
+        }
+        if (in_array($current, $aliases, true)) {
+            $lead[] = $item;
+            continue;
+        }
+        $rest[] = $item;
+    }
+
+    return array_merge($lead, $rest, $cta);
 }
 
 /**
@@ -58,21 +105,33 @@ function matrix_rd_nav_split(array $items, int $left_count = 4): array {
  * }
  */
 /**
+ * Attachment ID from an ACF image field (ID, array, or URL).
+ */
+function matrix_rd_acf_image_id(mixed $value): int {
+    if (is_numeric($value)) {
+        return (int) $value;
+    }
+    if (is_array($value)) {
+        if (! empty($value['ID'])) {
+            return (int) $value['ID'];
+        }
+        if (! empty($value['id'])) {
+            return (int) $value['id'];
+        }
+    }
+    return 0;
+}
+
+/**
  * Normalize ACF image field (ID, array, or URL) for templates.
  *
  * @return array{url: string, alt: string, id: int}
  */
-function matrix_rd_acf_image(mixed $value, string $alt_fallback = ''): array {
-    $url = matrix_rd_acf_image_url($value);
+function matrix_rd_acf_image(mixed $value, string $alt_fallback = '', string $size = 'full'): array {
+    $id  = matrix_rd_acf_image_id($value);
+    $url = matrix_rd_acf_image_url($value, $size);
     if ($url === '') {
-        return ['url' => '', 'alt' => $alt_fallback, 'id' => 0];
-    }
-
-    $id = 0;
-    if (is_numeric($value)) {
-        $id = (int) $value;
-    } elseif (is_array($value) && ! empty($value['ID'])) {
-        $id = (int) $value['ID'];
+        return ['url' => '', 'alt' => $alt_fallback, 'id' => $id];
     }
 
     return [
@@ -82,23 +141,112 @@ function matrix_rd_acf_image(mixed $value, string $alt_fallback = ''): array {
     ];
 }
 
-function matrix_rd_acf_image_url(mixed $value): string {
+function matrix_rd_acf_image_url(mixed $value, string $size = 'full'): string {
     if (empty($value)) {
         return '';
     }
-    if (is_numeric($value)) {
-        $url = wp_get_attachment_image_url((int) $value, 'full');
-        return is_string($url) ? $url : '';
-    }
-    if (is_array($value)) {
-        if (! empty($value['url'])) {
-            return (string) $value['url'];
-        }
-        if (! empty($value['ID'])) {
-            return matrix_rd_acf_image_url($value['ID']);
+
+    $id = matrix_rd_acf_image_id($value);
+    if ($id > 0) {
+        $url = matrix_rd_attachment_display_url($id, $size);
+        if ($url !== '') {
+            return $url;
         }
     }
+
+    if (is_array($value) && ! empty($value['url']) && $size === 'full') {
+        return (string) $value['url'];
+    }
+
     return is_string($value) ? $value : '';
+}
+
+/**
+ * URL for an attachment at $size, falling back to a JPEG derivative when the
+ * file is still over 500KB (typical for uncompressed PNG photos).
+ */
+function matrix_rd_attachment_display_url(int $attachment_id, string $size = 'full'): string {
+    $url = wp_get_attachment_image_url($attachment_id, $size);
+    if (! is_string($url) || $url === '') {
+        $url = wp_get_attachment_image_url($attachment_id, 'full');
+    }
+    if (! is_string($url) || $url === '') {
+        return '';
+    }
+
+    $path = matrix_rd_local_path_from_url($url);
+    if ($path === '' || ! is_readable($path)) {
+        return $url;
+    }
+
+    if (filesize($path) <= 500 * 1024) {
+        return $url;
+    }
+
+    $jpeg = matrix_rd_ensure_jpeg_derivative($attachment_id, $path, 1600);
+    return $jpeg !== '' ? $jpeg : $url;
+}
+
+function matrix_rd_local_path_from_url(string $url): string {
+    $uploads = wp_get_upload_dir();
+    $baseurl = (string) ($uploads['baseurl'] ?? '');
+    $basedir = (string) ($uploads['basedir'] ?? '');
+    if ($baseurl === '' || $basedir === '' || ! str_starts_with($url, $baseurl)) {
+        return '';
+    }
+
+    $path = $basedir . substr($url, strlen($baseurl));
+    return is_readable($path) ? $path : '';
+}
+
+/**
+ * Write a resized JPEG next to an oversized photo and cache the path on the attachment.
+ */
+function matrix_rd_ensure_jpeg_derivative(int $attachment_id, string $source_path, int $max_width = 1600): string {
+    $meta_key = '_rd_jpeg_' . $max_width;
+    $cached   = get_post_meta($attachment_id, $meta_key, true);
+    if (is_array($cached)
+        && ! empty($cached['path'])
+        && is_readable((string) $cached['path'])
+        && filesize((string) $cached['path']) > 0
+        && ! empty($cached['url'])
+    ) {
+        return (string) $cached['url'];
+    }
+
+    if (! function_exists('wp_get_image_editor')) {
+        return '';
+    }
+
+    $editor = wp_get_image_editor($source_path);
+    if (is_wp_error($editor)) {
+        return '';
+    }
+
+    $dims = $editor->get_size();
+    if (! empty($dims['width']) && (int) $dims['width'] > $max_width) {
+        $editor->resize($max_width, $max_width, false);
+    }
+    $editor->set_quality(82);
+
+    $dest = (string) preg_replace('/\.[^.]+$/', '-rdw' . $max_width . '.jpg', $source_path);
+    if ($dest === '' || $dest === $source_path) {
+        $dest = $source_path . '-rdw' . $max_width . '.jpg';
+    }
+
+    $saved = $editor->save($dest, 'image/jpeg');
+    if (is_wp_error($saved) || empty($saved['path'])) {
+        return '';
+    }
+
+    $uploads = wp_get_upload_dir();
+    $url     = str_replace((string) $uploads['basedir'], (string) $uploads['baseurl'], (string) $saved['path']);
+    update_post_meta($attachment_id, $meta_key, [
+        'path' => (string) $saved['path'],
+        'url'  => $url,
+    ]);
+
+    return $url;
 }
 
 function matrix_rd_nav_logos(): array {
@@ -270,11 +418,13 @@ function matrix_rd_nav_enqueue_headroom(): void {
     }
 
     $theme_version = get_option('theme_css_version', '1.0');
+    $headroom_path = get_template_directory() . '/assets/js/rolling-donut-headroom.js';
+    $headroom_ver  = is_readable($headroom_path) ? (string) filemtime($headroom_path) : $theme_version;
     wp_enqueue_script(
         'matrix-rd-headroom',
         get_template_directory_uri() . '/assets/js/rolling-donut-headroom.js',
         [],
-        $theme_version,
+        $headroom_ver,
         true
     );
 }

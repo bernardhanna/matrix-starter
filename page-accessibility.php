@@ -16,7 +16,7 @@ get_header();
     while (have_posts()) :
         the_post();
         ?>
-      <div class="gutenburg max-w-max-720 mx-auto text-base-font font-lighter text-black-full">
+      <div class="gutenburg e-content rd-page-prose text-base-font font-lighter text-black-full">
         <?php
         if (trim(get_the_content()) !== '') {
             the_content();

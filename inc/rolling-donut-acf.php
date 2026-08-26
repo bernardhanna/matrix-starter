@@ -274,6 +274,18 @@ function matrix_rd_acf_file_url(mixed $value): string {
     if (empty($value)) {
         return '';
     }
+    if (is_array($value)) {
+        if (! empty($value['url']) && is_string($value['url'])) {
+            return $value['url'];
+        }
+        if (isset($value['ID']) && is_numeric($value['ID'])) {
+            $value = $value['ID'];
+        } elseif (isset($value['id']) && is_numeric($value['id'])) {
+            $value = $value['id'];
+        } else {
+            return '';
+        }
+    }
     if (is_numeric($value)) {
         $url = wp_get_attachment_url((int) $value);
         return is_string($url) ? $url : '';

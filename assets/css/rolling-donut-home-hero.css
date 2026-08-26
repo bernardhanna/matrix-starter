@@ -547,10 +547,10 @@
 }
 
 @media (max-width: 1083px) {
-  /* Controls are moved into the active slide (see placeHeroControls) so they sit
-   * in document flow directly below the CTA: [←] [• • •] [→]. */
+  /* Controls sit in the overlay as a full-width row below content: [←] …… [• • •] …… [→]. */
   .home-hero-slide__overlay {
-    padding-bottom: 45px;
+    flex-direction: column;
+    padding-bottom: 28px;
   }
 
   .home-hero-slide__cta-wrap {
@@ -567,14 +567,16 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    width: min(100%, 400px);
-    gap: clamp(16px, 8vw, 48px);
+    width: 100%;
+    max-width: none;
+    gap: 0;
     padding: 0;
-    margin: 0;
+    margin: 17px 0 0;
     transform: none;
     pointer-events: none;
   }
 
+  /* Flatten arrows so prev / pagination / next are three flex siblings */
   .home-hero-slider--controls-in-slide .splide__arrows.home-hero-slider__arrows {
     display: contents !important;
   }
@@ -585,16 +587,36 @@
 
   .home-hero-slider--controls-in-slide .home-hero-slider__pagination {
     order: 2;
-    flex: 1 1 auto;
+    position: absolute !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translateX(-50%) !important;
+    flex: 0 0 auto;
     display: flex !important;
     justify-content: center;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: auto;
   }
 
   .home-hero-slider--controls-in-slide .splide__arrow--next {
     order: 3;
   }
 
+  .home-hero-slider--controls-in-slide .home-hero-slide__overlay > .home-hero-slider__controls {
+    position: relative;
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 100%;
+    margin-top: 17px;
+  }
+
   .home-hero-slider--controls-in-slide .home-hero-slide__content > .home-hero-slider__controls {
+    position: relative;
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 100%;
     margin-top: 16px;
   }
 }
@@ -880,23 +902,23 @@
 }
 
 /* ==========================================================================
-   Layout: Default — full-bleed image + floating content card (Figma 7671:454 / 7638:1137)
+   Layout 1 — full-bleed image + floating content card (Figma 7671:454 / 7638:1137)
    Layout 2 keeps the split-panel styles above unchanged.
    ========================================================================== */
 
-.home-hero--layout-default .home-hero-slide__pattern {
+.home-hero--layout-1 .home-hero-slide__pattern {
   display: none;
 }
 
 /* Desktop: full-bleed photo, rounded overlay card on the left */
 @media (min-width: 1084px) {
-  .home-hero--layout-default .home-hero-slide {
+  .home-hero--layout-1 .home-hero-slide {
     position: relative;
     display: block;
     height: 589px;
   }
 
-  .home-hero--layout-default .home-hero-slide__right {
+  .home-hero--layout-1 .home-hero-slide__right {
     position: absolute;
     inset: 0;
     z-index: 0;
@@ -905,7 +927,7 @@
     min-height: 0;
   }
 
-  .home-hero--layout-default .home-hero-slide__left {
+  .home-hero--layout-1 .home-hero-slide__left {
     position: absolute;
     z-index: 2;
     top: 129px;
@@ -918,7 +940,7 @@
     background-color: transparent;
   }
 
-  .home-hero--layout-default .home-hero-slide__overlay {
+  .home-hero--layout-1 .home-hero-slide__overlay {
     flex: 1 1 auto;
     width: 100%;
     height: 100%;
@@ -930,13 +952,13 @@
     box-sizing: border-box;
   }
 
-  .home-hero--layout-default .home-hero-slide__content {
+  .home-hero--layout-1 .home-hero-slide__content {
     align-items: center;
     text-align: center;
   }
 
   /* Controls: arrows grouped left, pagination right */
-  .home-hero--layout-default .home-hero-slider--controls-in-slide .home-hero-slider__controls {
+  .home-hero--layout-1 .home-hero-slider--controls-in-slide .home-hero-slider__controls {
     position: absolute;
     left: 12px;
     right: 12px;
@@ -953,7 +975,7 @@
     pointer-events: none;
   }
 
-  .home-hero--layout-default .home-hero-slider--controls-in-slide .splide__arrows.home-hero-slider__arrows {
+  .home-hero--layout-1 .home-hero-slider--controls-in-slide .splide__arrows.home-hero-slider__arrows {
     position: static !important;
     display: flex !important;
     flex-direction: row;
@@ -968,7 +990,7 @@
     pointer-events: none;
   }
 
-  .home-hero--layout-default .home-hero-slider--controls-in-slide .home-hero-slider__pagination {
+  .home-hero--layout-1 .home-hero-slider--controls-in-slide .home-hero-slider__pagination {
     position: static !important;
     left: auto !important;
     right: auto !important;
@@ -981,11 +1003,11 @@
     padding: 0 !important;
   }
 
-  .home-hero--layout-default .home-hero-slider--controls-in-slide .home-hero-slide__overlay {
+  .home-hero--layout-1 .home-hero-slider--controls-in-slide .home-hero-slide__overlay {
     position: relative;
   }
 
-  .home-hero--layout-default .home-hero-slider--controls-in-slide .home-hero-slide__overlay > .home-hero-slider__controls {
+  .home-hero--layout-1 .home-hero-slider--controls-in-slide .home-hero-slide__overlay > .home-hero-slider__controls {
     position: absolute;
     left: 12px;
     right: 12px;
@@ -995,59 +1017,74 @@
 
 /* Mobile: image on top, solid black content panel below (Figma 7638:1137) */
 @media (max-width: 1083px) {
-  .home-hero--layout-default .home-hero-slide {
+  .home-hero--layout-1 .home-hero-slide {
     flex-direction: column-reverse;
   }
 
-  .home-hero--layout-default .home-hero-slide__right {
+  .home-hero--layout-1 .home-hero-slide__right {
     height: min(56vw, 446px);
     min-height: 280px;
   }
 
-  .home-hero--layout-default .home-hero-slide__left {
+  .home-hero--layout-1 .home-hero-slide__left {
     min-height: 0;
     background-color: #000;
   }
 
-  .home-hero--layout-default .home-hero-slide__overlay {
+  .home-hero--layout-1 .home-hero-slide__overlay {
+    flex-direction: column;
     padding: 24px 24px 28px;
     border-radius: 0;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    /* Opaque panel on mobile; desktop card keeps translucent CMS overlay. */
+    background: var(--home-hero-overlay-solid, #000) !important;
   }
 
-  .home-hero--layout-default .home-hero-slide__content {
+  .home-hero--layout-1 .home-hero-slide__content {
     max-width: 529px;
     gap: 11px;
   }
 
-  .home-hero--layout-default .home-hero-slide__heading {
+  .home-hero--layout-1 .home-hero-slide__heading {
     font-size: 32px;
     line-height: 52px;
   }
 
-  .home-hero--layout-default .home-hero-slide__cta-wrap {
+  .home-hero--layout-1 .home-hero-slide__cta-wrap {
     padding-top: 0;
   }
 
-  .home-hero--layout-default .home-hero-slider--controls-in-slide .home-hero-slider__controls {
-    width: min(100%, 400px);
-    gap: 16px;
+  .home-hero--layout-1 .home-hero-slider--controls-in-slide .home-hero-slider__controls {
+    position: relative;
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 100%;
+    max-width: none;
+    gap: 0;
     margin-top: 17px;
     justify-content: space-between;
   }
 
-  .home-hero--layout-default .home-hero-slider--controls-in-slide .splide__arrows.home-hero-slider__arrows {
-    display: flex !important;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
+  .home-hero--layout-1 .home-hero-slider--controls-in-slide .splide__arrows.home-hero-slider__arrows {
+    display: contents !important;
   }
 
-  .home-hero--layout-default .home-hero-slider--controls-in-slide .home-hero-slider__pagination {
-    order: 0;
+  .home-hero--layout-1 .home-hero-slider--controls-in-slide .splide__arrow--prev {
+    order: 1;
+  }
+
+  .home-hero--layout-1 .home-hero-slider--controls-in-slide .home-hero-slider__pagination {
+    order: 2;
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
     flex: 0 0 auto;
-    margin-left: auto;
-    justify-content: flex-end;
+    margin: 0 !important;
+    justify-content: center;
+  }
+
+  .home-hero--layout-1 .home-hero-slider--controls-in-slide .splide__arrow--next {
+    order: 3;
   }
 }

@@ -12,8 +12,53 @@ function matrix_rd_locations_enqueue_assets(): void {
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_locations_enqueue_assets', 28);
 
+function matrix_rd_locations_enqueue_card_styles(): void {
+    if (! matrix_rd_is_locations_page() || is_admin()) {
+        return;
+    }
+
+    $locations_css = get_template_directory() . '/assets/css/rolling-donut-locations.css';
+    if (is_readable($locations_css)) {
+        wp_enqueue_style(
+            'matrix-rd-locations',
+            get_template_directory_uri() . '/assets/css/rolling-donut-locations.css',
+            ['matrix-rd-legacy', 'matrix-starter'],
+            (string) filemtime($locations_css)
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'matrix_rd_locations_enqueue_card_styles', 35);
+
 function matrix_rd_is_locations_page(): bool {
     return is_page('our-shops');
+}
+
+/**
+ * Parse an ACF lat/lng value into a finite float, or null if empty/invalid.
+ */
+function matrix_rd_location_coord($value): ?float {
+    if ($value === null || $value === false || $value === '') {
+        return null;
+    }
+    if (! is_numeric($value)) {
+        return null;
+    }
+    $coord = (float) $value;
+    return is_finite($coord) ? $coord : null;
+}
+
+/**
+ * Theme-bundled pin, with the migrated uploads path as a fallback.
+ */
+function matrix_rd_locations_pin_url(): string {
+    $theme_rel  = '/assets/images/locations/map-pin.png';
+    $theme_path = get_template_directory() . $theme_rel;
+    if (is_readable($theme_path)) {
+        return get_template_directory_uri() . $theme_rel;
+    }
+
+    $uploads = wp_upload_dir();
+    return trailingslashit((string) ($uploads['baseurl'] ?? content_url('uploads'))) . '2023/09/13-1.png';
 }
 
 function matrix_rd_locations_map_script(): void {
@@ -27,18 +72,17 @@ function matrix_rd_locations_map_script(): void {
     if ($query->have_posts()) {
         while ($query->have_posts()) {
             $query->the_post();
+            $lat = matrix_rd_location_coord(get_field('latitude_coordinates'));
+            $lng = matrix_rd_location_coord(get_field('longitude_coordinates'));
             $locations[] = [
                 'address'     => (string) get_field('address'),
-                'coordinates' => [
-                    get_field('latitude_coordinates'),
-                    get_field('longitude_coordinates'),
-                ],
+                'coordinates' => ($lat !== null && $lng !== null) ? [$lat, $lng] : null,
             ];
         }
         wp_reset_postdata();
     }
 
-    $pin_url = content_url('uploads/2023/09/13-1.png');
+    $pin_url = matrix_rd_locations_pin_url();
     ?>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -71,23 +115,39 @@ function matrix_rd_locations_map_script(): void {
           maxZoom: 22
         }).addTo(map);
 
-        var customPin = L.icon({ iconUrl: pinUrl, iconSize: [75, 75] });
+        var customPin = L.icon({
+          iconUrl: pinUrl,
+          iconSize: [76, 76],
+          iconAnchor: [38, 76],
+          popupAnchor: [0, -70],
+          className: 'rd-shop-map-marker'
+        });
+
+        function hasCoords(coords) {
+          return Array.isArray(coords)
+            && coords.length >= 2
+            && Number.isFinite(Number(coords[0]))
+            && Number.isFinite(Number(coords[1]));
+        }
+
+        function addMarker(latlng, address) {
+          L.marker(latlng, { icon: customPin }).bindPopup(address).addTo(map);
+        }
 
         function geocodeAndAddMarker(address, fallbackCoordinates) {
-          fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address))
+          if (hasCoords(fallbackCoordinates)) {
+            addMarker([Number(fallbackCoordinates[0]), Number(fallbackCoordinates[1])], address);
+            return;
+          }
+
+          fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ie&q=' + encodeURIComponent(address))
             .then(function (r) { return r.json(); })
             .then(function (data) {
               if (data.length > 0) {
-                L.marker([data[0].lat, data[0].lon], { icon: customPin }).bindPopup(address).addTo(map);
-              } else if (fallbackCoordinates && fallbackCoordinates[0] && fallbackCoordinates[1]) {
-                L.marker(fallbackCoordinates, { icon: customPin }).bindPopup(address).addTo(map);
+                addMarker([data[0].lat, data[0].lon], address);
               }
             })
-            .catch(function () {
-              if (fallbackCoordinates && fallbackCoordinates[0] && fallbackCoordinates[1]) {
-                L.marker(fallbackCoordinates, { icon: customPin }).bindPopup(address).addTo(map);
-              }
-            });
+            .catch(function () {});
         }
 
         locations.forEach(function (loc) {

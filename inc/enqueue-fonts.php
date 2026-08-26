@@ -9,6 +9,9 @@ function matrix_starter_google_fonts_url() {
 }
 
 function matrix_starter_enqueue_fonts() {
+  if (is_front_page()) {
+    return;
+  }
   wp_enqueue_style(
     'matrix-google-fonts',
     matrix_starter_google_fonts_url(),

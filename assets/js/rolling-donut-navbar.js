@@ -76,7 +76,7 @@
       return;
     }
 
-    if (window.innerWidth < 1150 || !cart || !cta) {
+    if (window.innerWidth < 1211 || !cart || !cta) {
       topNav.style.setProperty('--rd-topnav-align-offset', '0px');
       return;
     }

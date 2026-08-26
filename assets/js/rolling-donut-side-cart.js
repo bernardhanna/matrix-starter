@@ -381,6 +381,9 @@
   window.matrixRdOpenSideCart = openSideCartWithRefresh;
   window.matrixRdCloseSideCart = closeSideCart;
   window.matrixRdRefreshSideCart = refreshSideCartContent;
+  window.matrixRdApplyCartHeader = applyCartHeaderData;
+  window.matrixRdShowSideCart = openSideCart;
+  window.matrixRdSetSideCartLoading = setLoadingState;
 
   document.addEventListener('DOMContentLoaded', function () {
     bindEvents();

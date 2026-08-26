@@ -89,6 +89,18 @@ function matrix_rd_checkout_enqueue_assets(): void {
     }).insertAfter(couponNoticeTarget($input));
   }
 
+  function flagPaymentRefresh() {
+    var $checkoutForm = $('form.checkout');
+    if (!$checkoutForm.length) {
+      return;
+    }
+    if (!$checkoutForm.find('input[name="rd_refresh_payment"]').length) {
+      $checkoutForm.append('<input type="hidden" name="rd_refresh_payment" id="rd_refresh_payment" value="1" />');
+    } else {
+      $checkoutForm.find('input[name="rd_refresh_payment"]').val('1');
+    }
+  }
+
   function applyPaymentCoupon() {
     var $input = $('#rd_payment_coupon_code');
     if (!$input.length) {
@@ -147,7 +159,7 @@ function matrix_rd_checkout_enqueue_assets(): void {
           $box.unblock();
         }
 
-        $('.woocommerce-error, .woocommerce-message, .is-error, .is-success, .checkout-inline-error-message').remove();
+        $('.woocommerce-NoticeGroup-checkout .woocommerce-error, .woocommerce-NoticeGroup-checkout .woocommerce-message, .rd-checkout-payment-coupon .woocommerce-error, .rd-checkout-payment-coupon .woocommerce-message, .rd-checkout-payment-coupon .woocommerce-info').remove();
 
         var isError =
           !response ||
@@ -163,6 +175,10 @@ function matrix_rd_checkout_enqueue_assets(): void {
             // Surface success near the payment coupon UI (not the legacy form).
             $box.prepend(response);
           }
+          // Flag before applied_coupon_in_checkout so the follow-up
+          // update_order_review serializes with a payment-fragment rebuild.
+          flagPaymentRefresh();
+
           // Only fire "applied" on success — the listener clears inline errors.
           $(document.body).trigger('applied_coupon_in_checkout', [code]);
         }
@@ -181,9 +197,72 @@ function matrix_rd_checkout_enqueue_assets(): void {
     });
   }
 
+  function removePaymentCoupon(code) {
+    code = String(code || '').trim();
+    if (!code) {
+      return;
+    }
+
+    if (typeof wc_checkout_params === 'undefined' || !wc_checkout_params.wc_ajax_url) {
+      return;
+    }
+
+    var $box = $('.rd-checkout-payment-coupon').first();
+    if ($box.hasClass('processing')) {
+      return;
+    }
+
+    $box.addClass('processing');
+    if ($.fn.block) {
+      $box.block({
+        message: null,
+        overlayCSS: { background: '#fff', opacity: 0.6 },
+      });
+    }
+
+    $.ajax({
+      type: 'POST',
+      url: wc_checkout_params.wc_ajax_url
+        .toString()
+        .replace('%%endpoint%%', 'remove_coupon'),
+      data: {
+        security: wc_checkout_params.remove_coupon_nonce,
+        coupon: code,
+      },
+      dataType: 'html',
+      success: function () {
+        $box.removeClass('processing');
+        if ($.fn.unblock) {
+          $box.unblock();
+        }
+
+        flagPaymentRefresh();
+        $(document.body).trigger('removed_coupon_in_checkout', [code]);
+        $(document.body).trigger('update_checkout', {
+          update_shipping_method: false,
+        });
+      },
+      error: function () {
+        $box.removeClass('processing');
+        if ($.fn.unblock) {
+          $box.unblock();
+        }
+        $(document.body).trigger('update_checkout', {
+          update_shipping_method: false,
+        });
+      },
+    });
+  }
+
   $(document.body).on('click', '.rd-checkout-payment-coupon__apply', function (e) {
     e.preventDefault();
     applyPaymentCoupon();
+  });
+
+  $(document.body).on('click', '.rd-checkout-payment-coupon__remove', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    removePaymentCoupon($(this).data('coupon'));
   });
 
   $(document.body).on('keydown', '#rd_payment_coupon_code', function (e) {
@@ -381,14 +460,40 @@ function matrix_rd_checkout_fix_lpp_shipping_markup(): void {
 add_action('wp', 'matrix_rd_checkout_fix_lpp_shipping_markup');
 
 /**
- * Keep Stripe UPE mounted — replacing #payment on updated_checkout wipes card inputs.
+ * Whether this order-review refresh must rebuild #payment (coupon apply/remove).
+ * Stripe UPE has to remount against the new total; preserving the old fragment
+ * leaves an empty payment box and checkout then fails with "Invalid payment method."
+ */
+function matrix_rd_checkout_should_refresh_payment_fragment(): bool {
+    $post_data = isset($_POST['post_data']) ? wp_unslash($_POST['post_data']) : '';
+
+    if (! is_string($post_data) || $post_data === '') {
+        return false;
+    }
+
+    parse_str($post_data, $parsed);
+
+    if (! is_array($parsed)) {
+        return false;
+    }
+
+    return ! empty($parsed['rd_refresh_payment']);
+}
+
+/**
+ * Keep Stripe UPE mounted on ordinary address/shipping refreshes — replacing
+ * #payment wipes card inputs. After a coupon, allow the fragment through.
  */
 function matrix_rd_checkout_preserve_payment_fragment(array $fragments): array {
+    if (matrix_rd_checkout_should_refresh_payment_fragment()) {
+        return $fragments;
+    }
+
     unset($fragments['#payment'], $fragments['.woocommerce-checkout-payment']);
 
     return $fragments;
 }
-add_filter('woocommerce_update_order_review_fragments', 'matrix_rd_checkout_preserve_payment_fragment', 20);
+add_filter('woocommerce_update_order_review_fragments', 'matrix_rd_checkout_preserve_payment_fragment', 99);
 
 function matrix_rd_checkout_packages_count(): void {
     static $output = false;
@@ -433,6 +538,10 @@ function matrix_rd_checkout_output_notices(): void {
  * Pay now button (legacy).
  */
 function matrix_rd_checkout_order_button_text(): string {
+    if (WC()->cart && ! WC()->cart->needs_payment()) {
+        return __('Get it for Free!', 'matrix-starter');
+    }
+
     return __('Pay now', 'matrix-starter');
 }
 add_filter('woocommerce_order_button_text', 'matrix_rd_checkout_order_button_text');
@@ -1342,6 +1451,68 @@ function matrix_rd_checkout_footer_scripts(): void {
     <?php
 }
 add_action('wp_footer', 'matrix_rd_checkout_footer_scripts', 100);
+
+/**
+ * Strip All-in-One Security Google reCAPTCHA from WooCommerce login / checkout.
+ * Live login uses Cloudflare Turnstile from Theme Options instead.
+ */
+function matrix_rd_checkout_disable_aios_captcha(): void {
+    global $aio_wp_security, $wp_filter;
+
+    if (isset($aio_wp_security->captcha_obj)) {
+        foreach ([
+            'woocommerce_after_checkout_billing_form',
+            'woocommerce_login_form',
+            'woocommerce_register_form',
+            'woocommerce_lostpassword_form',
+        ] as $hook) {
+            remove_action($hook, [$aio_wp_security->captcha_obj, 'insert_captcha_question_form']);
+        }
+    }
+
+    $validation_hooks = [
+        'woocommerce_after_checkout_validation' => 'aiowps_validate_woo_checkout_captcha',
+        'woocommerce_process_login_errors'      => 'aiowps_validate_woo_login_or_reg_captcha',
+        'woocommerce_process_registration_errors' => 'aiowps_validate_woo_login_or_reg_captcha',
+    ];
+
+    foreach ($validation_hooks as $hook => $method) {
+        if (empty($wp_filter[$hook]) || ! is_object($wp_filter[$hook])) {
+            continue;
+        }
+
+        foreach ($wp_filter[$hook]->callbacks as $priority => $callbacks) {
+            foreach ($callbacks as $callback) {
+                $fn = $callback['function'] ?? null;
+                if (is_array($fn) && isset($fn[1]) && $fn[1] === $method) {
+                    remove_filter($hook, $fn, (int) $priority);
+                }
+            }
+        }
+    }
+}
+add_action('init', 'matrix_rd_checkout_disable_aios_captcha', 20);
+
+/**
+ * Stop All-in-One Security from printing Google reCAPTCHA's API on checkout
+ * and My Account. Those screens use live-only Turnstile instead.
+ */
+function matrix_rd_disable_aios_captcha_footer(): void {
+    global $aio_wp_security;
+
+    if (! isset($aio_wp_security) || ! is_object($aio_wp_security)) {
+        return;
+    }
+
+    $on_checkout = function_exists('is_checkout') && is_checkout();
+    $on_account  = function_exists('is_account_page') && is_account_page();
+    if (! $on_checkout && ! $on_account) {
+        return;
+    }
+
+    remove_action('wp_footer', [$aio_wp_security, 'aiowps_footer_content']);
+}
+add_action('wp', 'matrix_rd_disable_aios_captcha_footer');
 
 add_filter('body_class', function (array $classes): array {
     if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-received')) {

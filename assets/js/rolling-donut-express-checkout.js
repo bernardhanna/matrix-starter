@@ -28,6 +28,12 @@
     // The Continue buttons stay as a manual fallback. Can be disabled by the
     // server via `autoAdvance: false`.
     var autoAdvanceEnabled = config.autoAdvance !== false;
+    // When the customer uses Change / Back to reopen a completed step, do not
+    // auto-advance off it. Delivery validates immediately, so auto-advance would
+    // yank them forward before they can switch method. Resume on the next
+    // forward move (Continue or a later auto-advance from a later step).
+    var autoAdvanceSuspended = false;
+    var placeOrderSubmitting = false;
 
     function isDesktopOrderSummary() {
         return window.matchMedia('(min-width: 1024px)').matches;
@@ -99,6 +105,7 @@
         var $payment = $('#payment.woocommerce-checkout-payment');
         var $reviewTable = $('.woocommerce-checkout-review-order-table');
         var $orderReview = $('#order_review');
+        var $wdsFields = $('#jckwds-fields, .iconic-wds-fields');
 
         if ($form.length) {
             $form.unblock();
@@ -120,6 +127,16 @@
             $orderReview.unblock();
             $orderReview.find('.blockUI.blockOverlay').remove();
         }
+
+        // Iconic WDS calls block_checkout() (which also disables #place_order) on
+        // every order-review refresh. When the date step is collapsed the plugin
+        // often never unblocks, so Pay now stays disabled and clicks do nothing.
+        if ($wdsFields.length) {
+            $wdsFields.unblock();
+            $wdsFields.find('.blockUI').remove();
+        }
+
+        syncPlaceOrderAvailability();
     }
 
     function closePickupLocationDropdowns() {
@@ -600,7 +617,90 @@
         }, 400);
     }
 
+    // Last method-step list that contained both Delivery and Collection.
+    // WooCommerce's order-review fragment can replace the list with pickup-only
+    // rates after Collection is chosen; we put the missing radio back from this.
+    var methodChoiceSnapshot = [];
+
+    function snapshotMethodChoices() {
+        var $lis = $('#rd-checkout-step-method ul.woocommerce-shipping-methods > li');
+        var hasPickup = false;
+        var hasDelivery = false;
+        var snapshot = [];
+
+        $lis.each(function () {
+            var value = $(this).find('input.shipping_method').first().val() || '';
+
+            if (!value) {
+                return;
+            }
+
+            if (isPickupMethod(value)) {
+                hasPickup = true;
+            } else {
+                hasDelivery = true;
+            }
+
+            snapshot.push({ value: value, html: this.outerHTML });
+        });
+
+        if (hasPickup && hasDelivery) {
+            methodChoiceSnapshot = snapshot;
+        }
+    }
+
+    function restoreMissingMethodChoices() {
+        var $ul = $('#rd-checkout-step-method ul.woocommerce-shipping-methods').first();
+
+        if (!$ul.length) {
+            return;
+        }
+
+        var existing = {};
+
+        $ul.find('> li input.shipping_method').each(function () {
+            existing[$(this).val()] = true;
+        });
+
+        var hasPickup = Object.keys(existing).some(isPickupMethod);
+        var hasDelivery = Object.keys(existing).some(function (value) {
+            return value && !isPickupMethod(value);
+        });
+
+        if (hasPickup && hasDelivery) {
+            snapshotMethodChoices();
+            return;
+        }
+
+        if (!methodChoiceSnapshot.length) {
+            snapshotMethodChoices();
+            return;
+        }
+
+        methodChoiceSnapshot.forEach(function (item) {
+            if (!item.value || existing[item.value]) {
+                return;
+            }
+
+            var $li = $(item.html);
+
+            $li.find('input.shipping_method').prop('checked', false);
+
+            if (isPickupMethod(item.value)) {
+                $ul.append($li);
+            } else {
+                $ul.prepend($li);
+            }
+
+            existing[item.value] = true;
+        });
+
+        snapshotMethodChoices();
+    }
+
     function decorateShippingOptions() {
+        restoreMissingMethodChoices();
+
         $('#rd-checkout-step-method ul.woocommerce-shipping-methods').each(function () {
             $(this)
                 .find('> li')
@@ -1853,7 +1953,7 @@
 
         var $date = $('#jckwds-delivery-date');
 
-        if ($date.length && $date.prop('required') && !$date.val()) {
+        if ($date.length && hasScheduleDatesAvailable() && !$.trim($date.val() || '')) {
             if (applyHighlights) {
                 $('#jckwds-delivery-date-wrapper, .jckwds-delivery-date, #jckwds-delivery-date_field').addClass(
                     'woocommerce-invalid woocommerce-invalid-required-field'
@@ -2059,24 +2159,165 @@
 
     function hasScheduleDatesAvailable() {
         var $fields = $('#jckwds-fields, .iconic-wds-fields').first();
+        var dates;
 
         if (!$fields.length) {
             return true;
         }
 
-        return !$fields.hasClass('iconic-wds-fields--has-error');
+        if ($fields.hasClass('iconic-wds-fields--has-error')) {
+            return false;
+        }
+
+        dates = window.jckwds_vars && window.jckwds_vars.bookable_dates;
+
+        if (Array.isArray(dates) && dates.length === 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function shouldAllowPlaceOrder() {
+        var $date = $('#jckwds-delivery-date');
+
+        if (!$date.length) {
+            return true;
+        }
+
+        if (!hasScheduleDatesAvailable()) {
+            return false;
+        }
+
+        return $.trim($date.val() || '') !== '';
+    }
+
+    function getPlaceOrderIdleLabel() {
+        var $btn = $('#place_order');
+
+        // Prefer the freshly rendered button copy (Pay now vs Get it for Free!)
+        // over a cached data-rd-original-label from a previous cart total.
+        return (
+            $.trim($btn.attr('data-value') || '')
+            || $.trim($btn.text() || '')
+            || $btn.attr('data-rd-original-label')
+            || config.mobilePayLabel
+            || 'Pay now'
+        );
+    }
+
+    function syncPlaceOrderIdleLabels() {
+        var $btn = $('#place_order');
+        var $mobile = $('.rd-mobile-pay-bar__button');
+        var label = getPlaceOrderIdleLabel();
+
+        if ($btn.length) {
+            $btn.attr('data-rd-original-label', label);
+            if (!placeOrderSubmitting) {
+                $btn.text(label).val(label);
+            }
+        }
+
+        if ($mobile.length) {
+            $mobile.attr('data-rd-original-label', label);
+            if (!placeOrderSubmitting) {
+                $mobile.text(label);
+            }
+        }
+    }
+
+    function getProcessingLabel() {
+        return config.processingLabel || 'Processing...';
+    }
+
+    function setPlaceOrderProcessing(isProcessing) {
+        var $btn = $('#place_order');
+        var $mobile = $('.rd-mobile-pay-bar__button');
+        var processingLabel = getProcessingLabel();
+        var original;
+
+        placeOrderSubmitting = !!isProcessing;
+
+        if ($btn.length) {
+            if (!$btn.attr('data-rd-original-label')) {
+                $btn.attr('data-rd-original-label', getPlaceOrderIdleLabel());
+            }
+
+            original = $btn.attr('data-rd-original-label');
+
+            if (isProcessing) {
+                $btn.text(processingLabel).val(processingLabel).attr('aria-busy', 'true');
+            } else {
+                $btn.text(original).val(original).removeAttr('aria-busy');
+            }
+        }
+
+        if ($mobile.length) {
+            if (!$mobile.attr('data-rd-original-label')) {
+                $mobile.attr(
+                    'data-rd-original-label',
+                    $.trim($mobile.text() || '') || config.mobilePayLabel || 'Place Order'
+                );
+            }
+
+            original = $mobile.attr('data-rd-original-label');
+
+            if (isProcessing) {
+                $mobile.text(processingLabel).attr('aria-busy', 'true');
+            } else {
+                $mobile.text(original).removeAttr('aria-busy');
+            }
+        }
+    }
+
+    function syncPlaceOrderAvailability() {
+        var $btn = $('#place_order');
+        var allow;
+        var isDisabled;
+
+        if (!$btn.length) {
+            return;
+        }
+
+        if (placeOrderSubmitting) {
+            setPlaceOrderProcessing(true);
+        }
+
+        allow = shouldAllowPlaceOrder();
+        isDisabled = !!$btn.prop('disabled');
+
+        if (allow && isDisabled) {
+            $btn.prop('disabled', false).removeAttr('disabled');
+        } else if (!allow && !isDisabled) {
+            $btn.prop('disabled', true);
+        }
+    }
+
+    function watchPlaceOrderLock() {
+        var btn = document.getElementById('place_order');
+
+        if (!btn || btn.getAttribute('data-rd-place-order-watched') === '1') {
+            return;
+        }
+
+        btn.setAttribute('data-rd-place-order-watched', '1');
+
+        new MutationObserver(function () {
+            syncPlaceOrderAvailability();
+        }).observe(btn, { attributes: true, attributeFilter: ['disabled'] });
     }
 
     function updateScheduleUnavailableState() {
         var $panel = $('#rd-schedule-unavailable');
         var $fields = $('#jckwds-fields, .iconic-wds-fields').first();
-        var unavailable = $fields.length && $fields.hasClass('iconic-wds-fields--has-error');
+        var unavailable = $fields.length && !hasScheduleDatesAvailable();
 
         if ($panel.length) {
             $panel.prop('hidden', !unavailable);
         }
 
         $('#rd-checkout-step-schedule .rd-checkout-step__continue').prop('disabled', unavailable);
+        syncPlaceOrderAvailability();
     }
 
     function selectCollectionShipping() {
@@ -2125,18 +2366,20 @@
     }
 
     function syncMobilePayBarTotal() {
-        var $amount = $('.rd-express-checkout__summary .order-total .amount').first();
+        var $amount = $('.rd-order-summary__total .amount').first();
+        var payLabel = getPlaceOrderIdleLabel();
+        var $mobile = $('.rd-mobile-pay-bar__button');
 
         if (!$amount.length) {
-            $amount = $('#order_review .order-total .amount').first();
+            $amount = $('#order_review .order-total .amount, .rd-express-checkout__summary .order-total .amount').first();
         }
 
         if ($amount.length) {
-            var amountHtml = $amount.html();
-            var payLabel = config.mobilePayLabel || 'Place Order';
+            $('.rd-mobile-pay-bar__amount').html($amount.html());
+        }
 
-            $('.rd-mobile-pay-bar__amount').html(amountHtml);
-            $('.rd-mobile-pay-bar__button').text(payLabel);
+        if ($mobile.length && !placeOrderSubmitting) {
+            $mobile.attr('data-rd-original-label', payLabel).text(payLabel);
         }
     }
 
@@ -2468,7 +2711,14 @@
             return;
         }
 
+        if (index < currentWizardStep) {
+            autoAdvanceSuspended = true;
+        } else if (index > currentWizardStep) {
+            autoAdvanceSuspended = false;
+        }
+
         currentWizardStep = index;
+        syncCheckoutStepField();
 
         if (wizardSteps[index] !== 'method') {
             closePickupLocationDropdowns();
@@ -2483,7 +2733,12 @@
         applyOrderSummaryState();
 
         if (wizardSteps[index] === 'pay') {
+            watchPlaceOrderLock();
+            watchStripeUpeMount();
             clearCheckoutBlockUi();
+            window.setTimeout(clearCheckoutBlockUi, 400);
+            window.setTimeout(clearCheckoutBlockUi, 1200);
+            window.setTimeout(remountStripeIfNeeded, 200);
         }
 
         if (options.scroll !== false) {
@@ -2514,8 +2769,9 @@
     // customer keeps using the step until it's satisfied. Only advances forward
     // and only from the step the customer is currently on, so a programmatic
     // refresh or a tweak to an already-completed step can't yank them forward.
+    // Change / Back suspends this until the customer continues again.
     function maybeAutoAdvanceStep(index) {
-        if (!autoAdvanceEnabled) {
+        if (!autoAdvanceEnabled || autoAdvanceSuspended) {
             return;
         }
 
@@ -2637,7 +2893,10 @@
 
         wizardReady = true;
         currentWizardStep = 0;
+        syncCheckoutStepField();
         refreshWizardStepStates();
+        watchPlaceOrderLock();
+        syncPlaceOrderAvailability();
     }
 
     function bindCheckoutWizardEvents() {
@@ -2678,6 +2937,12 @@
             }
 
             goToWizardStep(getWizardStepIndex(slug), { force: true });
+
+            if (slug === 'method') {
+                restoreMissingMethodChoices();
+                decorateShippingOptions();
+                syncPickupVisibility();
+            }
         });
 
         $(document).on('click', '.rd-checkout-progress__trigger:not(:disabled)', function (event) {
@@ -2709,6 +2974,7 @@
                 }
 
                 updateWizardSummaries();
+                syncPlaceOrderAvailability();
             }
         );
 
@@ -2732,16 +2998,26 @@
         });
 
         $(document).on('click', '#place_order', function (event) {
+            ensurePaymentMethodSelected();
+
             if (!goToPayment({ scroll: false })) {
                 event.preventDefault();
+                setPlaceOrderProcessing(false);
                 return false;
             }
 
             if (!validatePaymentStep()) {
                 event.preventDefault();
+                setPlaceOrderProcessing(false);
                 scrollToPayment();
                 return false;
             }
+
+            setPlaceOrderProcessing(true);
+        });
+
+        $('form.checkout').on('checkout_place_order', function () {
+            setPlaceOrderProcessing(true);
         });
     }
 
@@ -2753,8 +3029,147 @@
         }
 
         $payment.show();
+        $payment.find('ul.wc_payment_methods, ul.payment_methods').show();
         $payment.find('.payment_box.payment_method_stripe').show();
-        $payment.find('.wc-stripe-upe-element, .wc-upe-form').show();
+        $payment.find('.wc-stripe-upe-element, .wc-upe-form, #wc-stripe-upe-form').show();
+    }
+
+    function ensurePaymentMethodSelected() {
+        var $methods = $('form.checkout input[name="payment_method"]');
+
+        if (!$methods.length) {
+            return;
+        }
+
+        if (!$methods.filter(':checked').length) {
+            $methods.first().prop('checked', true).trigger('click');
+        }
+
+        ensureStripePaymentVisible();
+        remountStripeIfNeeded();
+    }
+
+    // After a coupon, #payment is rebuilt (or Stripe unmounts the card iframe
+    // against the new total). Stripe UPE only remounts on payment_method
+    // `change`, not on a checked radio sitting in a fresh empty container.
+    var stripeRemountAttempts = 0;
+    var stripeRemountTimer = null;
+
+    function remountStripeIfNeeded() {
+        var $el;
+        var $checked;
+
+        if (wizardSteps[currentWizardStep] !== 'pay') {
+            return;
+        }
+
+        $el = $('#payment .wc-stripe-upe-element');
+
+        if (!$el.length) {
+            return;
+        }
+
+        if ($el.find('iframe').length) {
+            stripeRemountAttempts = 0;
+            return;
+        }
+
+        $checked = $('form.checkout input[name="payment_method"]:checked');
+
+        if (!$checked.length || stripeRemountAttempts >= 8) {
+            return;
+        }
+
+        if (stripeRemountTimer) {
+            return;
+        }
+
+        stripeRemountTimer = window.setTimeout(function () {
+            var $live;
+
+            stripeRemountTimer = null;
+            $live = $('form.checkout input[name="payment_method"]:checked');
+
+            if (!$live.length || $('#payment .wc-stripe-upe-element iframe').length) {
+                if ($('#payment .wc-stripe-upe-element iframe').length) {
+                    stripeRemountAttempts = 0;
+                }
+
+                return;
+            }
+
+            stripeRemountAttempts += 1;
+            $live.trigger('change');
+        }, 120);
+    }
+
+    function watchStripeUpeMount() {
+        var payment = document.getElementById('payment');
+
+        if (!payment || payment.getAttribute('data-rd-upe-watched') === '1') {
+            return;
+        }
+
+        payment.setAttribute('data-rd-upe-watched', '1');
+
+        new MutationObserver(function () {
+            remountStripeIfNeeded();
+        }).observe(payment, { childList: true, subtree: true });
+    }
+
+    function syncCheckoutStepField() {
+        var $form = $('form.checkout');
+        var slug = wizardSteps[currentWizardStep] || '';
+        var $field;
+
+        if (!$form.length) {
+            return;
+        }
+
+        $field = $form.find('input[name="rd_checkout_step"]');
+
+        if (!$field.length) {
+            $field = $('<input>', {
+                type: 'hidden',
+                name: 'rd_checkout_step',
+                id: 'rd_checkout_step',
+            });
+            $form.append($field);
+        }
+
+        $field.val(slug);
+    }
+
+    var checkoutTermsChecked = false;
+
+    function rememberCheckoutTermsState() {
+        var $terms = $('#terms');
+
+        if ($terms.length) {
+            checkoutTermsChecked = $terms.is(':checked');
+        }
+    }
+
+    function restoreCheckoutTermsState() {
+        var $terms = $('#terms');
+
+        if ($terms.length && checkoutTermsChecked && !$terms.is(':checked')) {
+            $terms.prop('checked', true).trigger('change');
+        }
+    }
+
+    function markPaymentFragmentRefresh() {
+        var $form = $('form.checkout');
+
+        if (!$form.length) {
+            return;
+        }
+
+        if (!$form.find('input[name="rd_refresh_payment"]').length) {
+            $form.append('<input type="hidden" name="rd_refresh_payment" id="rd_refresh_payment" value="1" />');
+        } else {
+            $form.find('input[name="rd_refresh_payment"]').val('1');
+        }
     }
 
     var stripeExpressCheckoutRefreshQueued = false;
@@ -2803,7 +3218,9 @@
         syncCheckoutAddressAutofill();
         ensureStripePaymentVisible();
         ensureStripeExpressCheckoutVisible();
+        ensurePaymentMethodSelected();
         updateScheduleUnavailableState();
+        syncPlaceOrderIdleLabels();
         syncMobilePayBarTotal();
         refreshWizardStepStates();
         schedulePickupWarmup();
@@ -2860,9 +3277,35 @@
         setPickupLocationLoading(true, $li);
     });
 
+    $(document.body).on('update_checkout', rememberCheckoutTermsState);
+
+    $(document.body).on(
+        'applied_coupon_in_checkout removed_coupon_in_checkout applied_coupon removed_coupon',
+        function () {
+            markPaymentFragmentRefresh();
+            stripeRemountAttempts = 0;
+            window.setTimeout(remountStripeIfNeeded, 400);
+            window.setTimeout(remountStripeIfNeeded, 1200);
+        }
+    );
+
     $(document.body).on('updated_checkout', function () {
+        // Keep the flag through Woo's follow-up update_checkout (~5–120ms)
+        // so a second request still rebuilds #payment after a coupon.
+        window.setTimeout(function () {
+            $('#rd_refresh_payment').remove();
+        }, 2000);
+        restoreCheckoutTermsState();
+        watchPlaceOrderLock();
+        watchStripeUpeMount();
+        if (placeOrderSubmitting) {
+            setPlaceOrderProcessing(true);
+        }
         clearCheckoutBlockUi();
         window.setTimeout(clearCheckoutBlockUi, 0);
+        // Iconic WDS binds the same event and may re-block / disable Pay now
+        // after our first pass, especially once the date step is collapsed.
+        window.setTimeout(clearCheckoutBlockUi, 150);
         refreshExpressCheckout();
         updateScheduleDateLabel();
         syncMobilePayBarTotal();
@@ -2882,6 +3325,10 @@
             syncPickupLocationLoading($li.length ? $li : null);
         }, 0);
         updateFulfilmentScheduleSummary();
+        window.setTimeout(ensurePaymentMethodSelected, 50);
+        window.setTimeout(remountStripeIfNeeded, 300);
+        window.setTimeout(remountStripeIfNeeded, 800);
+        window.setTimeout(remountStripeIfNeeded, 1600);
 
         if (typeof window.rdRefreshBoxContentsScroll === 'function') {
             window.setTimeout(window.rdRefreshBoxContentsScroll, 0);
@@ -3024,6 +3471,7 @@
     });
 
     $(document.body).on('checkout_error', function () {
+        setPlaceOrderProcessing(false);
         window.setTimeout(routeCheckoutErrors, 0);
     });
 

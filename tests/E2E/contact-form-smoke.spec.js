@@ -79,6 +79,24 @@ test.describe('Contact Us form', () => {
     await expect(form.locator('textarea[name="message"]')).toHaveAttribute('required', '');
   });
 
+  test('Turnstile is only active on therollingdonut.ie', async ({ page }) => {
+    const form = page.locator(FORM).first();
+    test.skip((await form.count()) === 0, `No contact form on ${FORM_PATH}.`);
+
+    const host = new URL(page.url()).hostname.replace(/^www\./, '');
+    const live = host === 'therollingdonut.ie';
+    const widget = form.locator('.cf-turnstile');
+    const api = page.locator('script[src*="challenges.cloudflare.com/turnstile"]');
+
+    if (live) {
+      await expect(widget).toHaveCount(1);
+      await expect(api).toHaveCount(1);
+    } else {
+      await expect(widget).toHaveCount(0);
+      await expect(api).toHaveCount(0);
+    }
+  });
+
   test('inputs accept and retain typed values', async ({ page }) => {
     const form = page.locator(FORM).first();
     test.skip((await form.count()) === 0, `No contact form on ${FORM_PATH}.`);

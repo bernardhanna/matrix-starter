@@ -9,8 +9,10 @@
   @click="open = !open"
   :aria-expanded="open.toString()"
   aria-controls="rd-mobile-menu"
+  aria-label="<?php esc_attr_e('Open menu', 'matrix-starter'); ?>"
   :aria-label="open ? '<?php echo esc_attr(__('Close menu', 'matrix-starter')); ?>' : '<?php echo esc_attr(__('Open menu', 'matrix-starter')); ?>'"
 >
+  <span class="sr-only"><?php esc_html_e('Open menu', 'matrix-starter'); ?></span>
   <span class="relative z-[100] flex h-10 w-10 items-center justify-center overflow-visible">
     <template x-if="!open">
       <span class="hamburger_close block" aria-hidden="true"></span>

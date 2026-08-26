@@ -64,3 +64,34 @@ function matrix_rd_enqueue_font_base_styles(): void {
     );
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_enqueue_font_base_styles', 100);
+
+/**
+ * Page Gutenberg/legal copy after Matrix .entry-content tokens.
+ */
+function matrix_rd_enqueue_prose_styles(): void {
+    if (is_admin() || ! is_page()) {
+        return;
+    }
+
+    if (function_exists('is_account_page') && is_account_page()) {
+        return;
+    }
+
+    $prose_css = get_template_directory() . '/assets/css/rolling-donut-prose.css';
+    if (! is_readable($prose_css)) {
+        return;
+    }
+
+    $deps = ['matrix-rd-fonts', 'matrix-starter'];
+    if (wp_style_is('matrix-rd-legacy', 'enqueued') || wp_style_is('matrix-rd-legacy', 'registered')) {
+        $deps[] = 'matrix-rd-legacy';
+    }
+
+    wp_enqueue_style(
+        'matrix-rd-prose',
+        get_template_directory_uri() . '/assets/css/rolling-donut-prose.css',
+        $deps,
+        (string) filemtime($prose_css)
+    );
+}
+add_action('wp_enqueue_scripts', 'matrix_rd_enqueue_prose_styles', 110);

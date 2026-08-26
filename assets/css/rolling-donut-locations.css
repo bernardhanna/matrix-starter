@@ -1,0 +1,60 @@
+/**
+ * Our Shops location cards.
+ */
+
+@media (min-width: 575px) {
+  .location-item__media {
+    max-width: 45%;
+  }
+}
+
+/*
+ * CTA row is two 340px pills. Below lg the details column is too
+ * narrow (especially with the 45% image cap), so stack them full width.
+ */
+.location-item__actions {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 1rem;
+  width: 100%;
+  max-width: none;
+}
+
+.location-item__actions > div,
+.location-item__actions > a {
+  width: 100%;
+  max-width: none;
+  flex: 0 0 auto;
+}
+
+.location-item__actions a {
+  width: 100%;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.location-item__actions a span {
+  white-space: nowrap;
+}
+
+@media (min-width: 1085px) {
+  .location-item__actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+    max-width: 43.188rem;
+  }
+
+  .location-item__actions > div,
+  .location-item__actions > a {
+    width: 340px;
+    max-width: 340px;
+    flex: 0 0 340px;
+  }
+
+  .location-item__actions a {
+    width: 340px;
+    max-width: 340px;
+  }
+}

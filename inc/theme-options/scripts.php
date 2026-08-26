@@ -25,6 +25,11 @@ $fields
     ],
     'layout'       => 'vertical',
   ])
+  ->addText('cookie_script_id', [
+    'label'        => 'CookieScript ID',
+    'instructions' => '32-character ID from CookieScript (cdn.cookie-script.com/s/{ID}.js). The banner only appears on domains allowed in the CookieScript dashboard — typically the live host, not localhost. Leave empty to use the built-in live ID.',
+    'placeholder'  => defined('MATRIX_RD_COOKIESCRIPT_ID') ? MATRIX_RD_COOKIESCRIPT_ID : '',
+  ])
   ->addAccordion('scripts_settings_end')->endpoint();
 
 return $fields;

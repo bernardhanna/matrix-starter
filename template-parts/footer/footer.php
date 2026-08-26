@@ -80,6 +80,7 @@ $render_menu = static function (array $links): void {
   <div class="flex flex-col-reverse items-center px-4 pl-4 pr-4 copyright sm:flex-col xl:flex-row justify-items-center laptop:justify-between macbook:max-w-max-1549 macbook:mx-auto desktop:pl-0 desktop:pr-0 lg:pb-6">
     <div class="order-last laptop:order-first mb-[10px] lg:mb-0 flex items-center flex-col-reverse sm:flex-col xl:flex-row my-4 xl:my-0">
       <span class="text-white max-sm:pt-4 text-mob-xs-font font-lighter">&copy; <?php echo esc_html((string) gmdate('Y')); ?> <?php echo esc_html($copyright_text); ?></span>
+      <span class="sr-only"><?php esc_html_e('Data protection officer:', 'matrix-starter'); ?> privacy@therollingdonut.ie</span>
       <?php
       // Always surface the Accessibility statement alongside the legal links.
       $copyright_menu[] = [

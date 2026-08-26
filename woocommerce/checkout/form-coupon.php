@@ -29,6 +29,24 @@ if (!wc_coupons_enabled()) { // @codingStandardsIgnoreLine.
     return;
 }
 
+$rd_greeting_name = '';
+if (is_user_logged_in()) {
+    $rd_user            = wp_get_current_user();
+    $rd_greeting_name   = trim((string) $rd_user->first_name);
+    if ($rd_greeting_name === '' && function_exists('WC') && WC()->customer) {
+        $rd_greeting_name = trim((string) WC()->customer->get_first_name());
+        if ($rd_greeting_name === '') {
+            $rd_greeting_name = trim((string) WC()->customer->get_billing_first_name());
+        }
+    }
+    if ($rd_greeting_name === '') {
+        $rd_greeting_name = trim((string) $rd_user->display_name);
+    }
+    if ($rd_greeting_name !== '' && is_email($rd_greeting_name)) {
+        $rd_greeting_name = '';
+    }
+}
+
 ?>
 <style>
     .checkout_coupon button {
@@ -40,9 +58,33 @@ if (!wc_coupons_enabled()) { // @codingStandardsIgnoreLine.
         font-weight: 420;
         line-height: 1.625rem;
     }
+    .rd-checkout-logged-in-greeting strong {
+        font-weight: 700;
+        font-family: Edmondsans, edmondsans, sans-serif;
+    }
 </style>
 
 <div class="flex flex-col justify-start px-0 mx-auto text-left max-w-max-1568 rd-checkout-coupon-legacy">
+    <?php if (is_user_logged_in()) : ?>
+        <p class="rd-checkout-logged-in-greeting mb-2 text-black-full text-lg-font font-reg420">
+            <?php
+            if ($rd_greeting_name !== '') {
+                echo wp_kses(
+                    sprintf(
+                        /* translators: %s: customer first name */
+                        __('Hi %s,', 'matrix-starter'),
+                        '<strong>' . esc_html($rd_greeting_name) . '</strong>'
+                    ),
+                    array(
+                        'strong' => array(),
+                    )
+                );
+            } else {
+                echo esc_html__('Hi', 'matrix-starter');
+            }
+            ?>
+        </p>
+    <?php endif; ?>
     <div class="woocommerce-form-coupon-toggle"><?php
                                                 wc_print_notice(
                                                     apply_filters(

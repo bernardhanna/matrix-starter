@@ -1,6 +1,7 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
+const { installCookieBlocker } = require('./helpers/cookie-blocker');
 
 /**
  * Real end-to-end paid orders through the express checkout, using the Stripe
@@ -347,6 +348,7 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Real Stripe-paid orders', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 1000 });
+    await installCookieBlocker(page);
   });
 
   test('box product with a product option (Football Team -> Arsenal)', async ({ page }) => {
@@ -355,9 +357,9 @@ test.describe('Real Stripe-paid orders', () => {
     await page.goto(BOX_OPTION_PATH);
     await dismissBlockingUi(page);
 
-    await page
-      .locator('select[name="custom_dropdown_groups[football_team]"]')
-      .selectOption('Arsenal');
+    const team = page.locator('select[name^="custom_dropdown_groups"]').first();
+    await expect(team).toBeVisible({ timeout: 15000 });
+    await team.selectOption({ label: /Arsenal/i });
 
     await page.locator('form.cart .single_add_to_cart_button').first().click();
     await page.waitForTimeout(2500);
@@ -376,9 +378,9 @@ test.describe('Real Stripe-paid orders', () => {
     await page.goto(BOX_OPTION_PATH);
     await dismissBlockingUi(page);
 
-    await page
-      .locator('select[name="custom_dropdown_groups[football_team]"]')
-      .selectOption('Arsenal');
+    const team = page.locator('select[name^="custom_dropdown_groups"]').first();
+    await expect(team).toBeVisible({ timeout: 15000 });
+    await team.selectOption({ label: /Arsenal/i });
 
     await page.locator('form.cart .single_add_to_cart_button').first().click();
     await page.waitForTimeout(2500);

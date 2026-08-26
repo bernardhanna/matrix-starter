@@ -4,9 +4,11 @@
  */
 
 require_once __DIR__ . '/rolling-donut-myaccount-auth.php';
+require_once __DIR__ . '/rolling-donut-account-captcha.php';
 require_once __DIR__ . '/rolling-donut-cart.php';
 require_once __DIR__ . '/rolling-donut-side-cart.php';
 require_once __DIR__ . '/rolling-donut-checkout.php';
+require_once __DIR__ . '/rolling-donut-custom-order-access.php';
 
 function matrix_rd_register_product_taxonomy(): void {
     if (taxonomy_exists('rd_product_type')) {
@@ -204,6 +206,245 @@ function matrix_rd_product_type_slug(int $product_id): ?string {
 }
 
 /**
+ * Standalone donut flavours are not sold on their own — send their product
+ * URLs to the Our Donuts shop instead of rendering a single-product page.
+ */
+function matrix_rd_redirect_single_donut_product_pages(): void {
+    if (is_admin() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        return;
+    }
+    if (! function_exists('is_product') || ! is_product()) {
+        return;
+    }
+
+    $product_id = (int) get_queried_object_id();
+    if ($product_id <= 0) {
+        return;
+    }
+
+    if (function_exists('wc_get_product')) {
+        $product = wc_get_product($product_id);
+        if ($product instanceof WC_Product && $product->is_type('variation')) {
+            $product_id = (int) $product->get_parent_id();
+        }
+    }
+
+    $is_donut = function_exists('matrix_rd_is_single_donut_product')
+        ? matrix_rd_is_single_donut_product($product_id)
+        : matrix_rd_product_type_slug($product_id) === 'donut';
+
+    if (! $is_donut) {
+        return;
+    }
+
+    wp_safe_redirect(home_url('/our-donuts/'), 301);
+    exit;
+}
+add_action('template_redirect', 'matrix_rd_redirect_single_donut_product_pages', 5);
+
+/**
+ * Legacy Custom Order product id (slug "custom-order"), resolved from the
+ * product permalink with a hard-coded fallback used across box-builder code.
+ */
+function matrix_rd_custom_order_product_id(): int {
+    static $id = null;
+    if ($id !== null) {
+        return $id;
+    }
+
+    $id = 0;
+    $post = get_page_by_path('custom-order', OBJECT, 'product');
+    if ($post instanceof WP_Post) {
+        $id = (int) $post->ID;
+
+        return $id;
+    }
+
+    if (function_exists('wc_get_product')) {
+        $legacy = wc_get_product(3947);
+        if ($legacy instanceof WC_Product && $legacy->get_slug() === 'custom-order') {
+            $id = 3947;
+        }
+    }
+
+    return $id;
+}
+
+function matrix_rd_is_custom_order_product(int $product_id): bool {
+    if ($product_id <= 0) {
+        return false;
+    }
+
+    $custom_id = matrix_rd_custom_order_product_id();
+    if ($custom_id > 0 && $product_id === $custom_id) {
+        return true;
+    }
+
+    if (! function_exists('wc_get_product')) {
+        return false;
+    }
+
+    $product = wc_get_product($product_id);
+
+    return $product instanceof WC_Product && $product->get_slug() === 'custom-order';
+}
+
+function matrix_rd_cart_contains_custom_order(): bool {
+    if (! function_exists('WC') || ! WC()->cart) {
+        return false;
+    }
+
+    $custom_id = matrix_rd_custom_order_product_id();
+    if ($custom_id <= 0) {
+        return false;
+    }
+
+    foreach (WC()->cart->get_cart() as $item) {
+        if ((int) ($item['product_id'] ?? 0) === $custom_id) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function matrix_rd_custom_order_login_url(string $return_url): string {
+    $account = function_exists('wc_get_page_permalink')
+        ? (string) wc_get_page_permalink('myaccount')
+        : '';
+
+    // Apache/Local 403s query strings that embed a full http:// URL.
+    $relative = function_exists('wp_make_link_relative')
+        ? wp_make_link_relative($return_url)
+        : (string) (wp_parse_url($return_url, PHP_URL_PATH) ?: '');
+    if ($relative === '') {
+        $relative = '/product/custom-order/';
+    }
+
+    if ($account === '') {
+        return wp_login_url($relative);
+    }
+
+    return add_query_arg('redirect', $relative, $account);
+}
+
+/**
+ * Staff-only Custom Order builder. Shared-cart recipients are guests and must
+ * still reach cart/checkout — never this product page.
+ */
+function matrix_rd_redirect_guest_custom_order_page(): void {
+    if (is_admin() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        return;
+    }
+    if (! function_exists('is_product') || ! is_product()) {
+        return;
+    }
+
+    $product_id = (int) get_queried_object_id();
+    if (! matrix_rd_is_custom_order_product($product_id)) {
+        return;
+    }
+
+    $permalink = get_permalink($product_id);
+    $login_url = matrix_rd_custom_order_login_url(
+        is_string($permalink) && $permalink !== '' ? $permalink : home_url('/custom-order/')
+    );
+    $cart_url = function_exists('wc_get_cart_url') ? (string) wc_get_cart_url() : home_url('/cart/');
+
+    $destination = matrix_rd_guest_custom_order_redirect_url(
+        is_user_logged_in(),
+        matrix_rd_cart_contains_custom_order(),
+        $cart_url,
+        $login_url
+    );
+
+    if ($destination === null || $destination === '') {
+        return;
+    }
+
+    wp_safe_redirect($destination, 302);
+    exit;
+}
+add_action('template_redirect', 'matrix_rd_redirect_guest_custom_order_page', 6);
+
+/**
+ * Keep Custom Order out of shop loops, related products, and catalog widgets.
+ * Cart restore / shared-cart retrieve still work because those use purchasable,
+ * not visibility.
+ */
+function matrix_rd_hide_custom_order_from_catalog(bool $visible, $product_id): bool {
+    if (matrix_rd_is_custom_order_product((int) $product_id)) {
+        return false;
+    }
+
+    return $visible;
+}
+add_filter('woocommerce_product_is_visible', 'matrix_rd_hide_custom_order_from_catalog', 10, 2);
+
+function matrix_rd_exclude_custom_order_from_sitemaps(array $ids): array {
+    $custom_id = matrix_rd_custom_order_product_id();
+    if ($custom_id > 0) {
+        $ids[] = $custom_id;
+    }
+
+    return $ids;
+}
+add_filter('wpseo_exclude_from_sitemap_by_post_ids', 'matrix_rd_exclude_custom_order_from_sitemaps');
+
+function matrix_rd_custom_order_robots(array $robots): array {
+    if (function_exists('is_product') && is_product()
+        && matrix_rd_is_custom_order_product((int) get_queried_object_id())
+    ) {
+        $robots['noindex'] = true;
+        $robots['nofollow'] = true;
+    }
+
+    return $robots;
+}
+add_filter('wp_robots', 'matrix_rd_custom_order_robots');
+
+/**
+ * Guests must not create a Custom Order via the box-builder AJAX endpoint.
+ * Shared-cart retrieve loads session data and never hits this action.
+ */
+function matrix_rd_block_guest_custom_order_ajax(): void {
+    $product_id = isset($_POST['donut_box_product_id']) ? (int) $_POST['donut_box_product_id'] : 0;
+    if ($product_id <= 0 || ! matrix_rd_is_custom_order_product($product_id)) {
+        return;
+    }
+
+    wp_send_json([
+        'success' => false,
+        'message' => __('Please log in to create a custom order.', 'matrix-starter'),
+        'data'    => [
+            'message' => __('Please log in to create a custom order.', 'matrix-starter'),
+        ],
+    ]);
+}
+add_action('wp_ajax_nopriv_donut_box_add_to_cart', 'matrix_rd_block_guest_custom_order_ajax', 1);
+
+/**
+ * Block the plain ?add-to-cart= custom-order URL for guests. Session restore
+ * and site-monitor add_to_cart() calls do not set that request key.
+ */
+function matrix_rd_block_guest_custom_order_add_to_cart(bool $passed, $product_id): bool {
+    if (! $passed || is_user_logged_in() || is_admin()) {
+        return $passed;
+    }
+    if (! isset($_REQUEST['add-to-cart'])) {
+        return $passed;
+    }
+    if (! matrix_rd_is_custom_order_product((int) $product_id)) {
+        return $passed;
+    }
+
+    wc_add_notice(__('Please log in to create a custom order.', 'matrix-starter'), 'error');
+
+    return false;
+}
+add_filter('woocommerce_add_to_cart_validation', 'matrix_rd_block_guest_custom_order_add_to_cart', 10, 2);
+
+/**
  * Body classes used by woocommerce-header.php (legacy rd-product-type-{slug}).
  */
 function matrix_rd_product_type_body_class(array $classes): array {
@@ -362,17 +603,26 @@ function matrix_rd_pages_enqueue_assets(): void {
 
     if (function_exists('is_account_page') && is_account_page()
         && is_readable(get_template_directory() . '/assets/css/rolling-donut-myaccount.css')) {
+        $myaccount_css = get_template_directory() . '/assets/css/rolling-donut-myaccount.css';
         wp_enqueue_style(
             'matrix-rd-myaccount',
             get_template_directory_uri() . '/assets/css/rolling-donut-myaccount.css',
             ['matrix-rd-legacy', 'matrix-starter'],
-            $theme_version
+            (string) filemtime($myaccount_css)
         );
     }
 
     if (function_exists('is_shop') && is_shop()) {
         wp_enqueue_style('slick-css');
         wp_enqueue_script('slick-js');
+    }
+
+    if (function_exists('is_product') && is_product()) {
+        $product = wc_get_product(get_queried_object_id());
+        if ($product instanceof WC_Product && $product->get_type() === 'donut_box_builder') {
+            wp_enqueue_style('slick-css');
+            wp_enqueue_script('slick-js');
+        }
     }
 
     if (is_page('our-shops')) {
@@ -414,6 +664,41 @@ function matrix_rd_cart_scripts(): void {
     );
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_cart_scripts', 35);
+
+/**
+ * WP_Query args for catalog listings that should match the shop (published, visible, stable order).
+ *
+ * @param array<string, mixed> $args Extra args such as tax_query.
+ * @return array<string, mixed>
+ */
+function matrix_rd_catalog_product_query_args(array $args = []): array {
+    $defaults = [
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+        'orderby'        => [
+            'date' => 'DESC',
+            'ID'   => 'DESC',
+        ],
+    ];
+
+    $merged = array_merge($defaults, $args);
+
+    $visibility = [
+        'taxonomy' => 'product_visibility',
+        'field'    => 'name',
+        'terms'    => ['exclude-from-catalog', 'exclude-from-search'],
+        'operator' => 'NOT IN',
+    ];
+
+    if (! isset($merged['tax_query']) || ! is_array($merged['tax_query'])) {
+        $merged['tax_query'] = [$visibility];
+    } else {
+        $merged['tax_query'][] = $visibility;
+    }
+
+    return $merged;
+}
 
 /**
  * Render products from a custom query using the theme product card.
@@ -475,11 +760,9 @@ function matrix_rd_ajax_filter_products(): void {
         ];
     }
 
-    $products = new WP_Query([
-        'post_type'      => 'product',
-        'posts_per_page' => -1,
-        'tax_query'      => $tax_query,
-    ]);
+    $products = new WP_Query(matrix_rd_catalog_product_query_args([
+        'tax_query' => $tax_query,
+    ]));
 
     ob_start();
     if ($products->have_posts()) {
@@ -514,6 +797,17 @@ function matrix_rd_product_filter_scripts(): void {
 
     $product_type = is_page('merch') ? 'Merch' : 'Box';
     $version      = get_option('theme_css_version', '1.0');
+
+    $gallery_path = get_template_directory() . '/assets/js/rolling-donut-box-gallery.js';
+    if (is_readable($gallery_path)) {
+        wp_enqueue_script(
+            'matrix-rd-box-gallery',
+            get_template_directory_uri() . '/assets/js/rolling-donut-box-gallery.js',
+            [],
+            (string) filemtime($gallery_path),
+            true
+        );
+    }
 
     wp_enqueue_script(
         'matrix-rd-product-filter',
@@ -568,11 +862,12 @@ function matrix_rd_single_product_assets(): void {
         true
     );
 
+    $product_css = get_template_directory() . '/assets/css/rolling-donut-product.css';
     wp_enqueue_style(
         'matrix-rd-product',
         get_template_directory_uri() . '/assets/css/rolling-donut-product.css',
         ['matrix-rd-legacy', 'splide'],
-        $version
+        file_exists($product_css) ? (string) filemtime($product_css) : $version
     );
 
     wp_enqueue_script(
@@ -617,15 +912,29 @@ add_action('wp_enqueue_scripts', 'matrix_rd_single_product_assets', 40);
  *     e.g. "Midi Sourdough Donuts → Blueberry Cheesecake";
  *   - the "🌈" emoji in "Pride Edition 🌈 …" product titles.
  *
- * This only runs in the PDF document context (`wpo_wcpdf_order_item_name`), so the
- * website, cart and emails keep the original arrow and emoji untouched.
+ * WPC also prefixes each bundled flavour with the parent box title
+ * ("Football Team – Large Sourdough → Mini Nutella and Marshmallow - Large").
+ * Legacy invoices printed only the flavour name; packing slips already do that
+ * via `$item->get_name()`. Drop the parent prefix here so invoices match.
  *
- * @param string $name Item name (may contain HTML such as an anchor tag).
+ * This only runs in the PDF document context (`wpo_wcpdf_order_item_name`), so the
+ * website, cart and emails keep the original arrow, emoji and prefix untouched.
+ *
+ * @param string $name  Item name (may contain HTML such as an anchor tag).
+ * @param mixed  $item  WC_Order_Item or array from WCPDF.
+ * @param mixed  $order Unused; accepted so the filter can receive 3 arguments.
  * @return string
  */
-function matrix_rd_clean_pdf_item_name($name) {
+function matrix_rd_clean_pdf_item_name($name, $item = null, $order = null) {
+    unset($order);
+
     if (! is_string($name) || $name === '') {
         return $name;
+    }
+
+    $stored = matrix_rd_pdf_item_stored_name($item);
+    if ($stored !== '' && (matrix_rd_pdf_item_is_bundled_child($item) || matrix_rd_pdf_name_has_bundle_prefix($name, $stored))) {
+        $name = $stored;
     }
 
     // Normalise the bundle separator (→) to an en dash the PDF font can render.
@@ -649,7 +958,78 @@ function matrix_rd_clean_pdf_item_name($name) {
 
     return trim($name);
 }
-add_filter('wpo_wcpdf_order_item_name', 'matrix_rd_clean_pdf_item_name', 20);
+add_filter('wpo_wcpdf_order_item_name', 'matrix_rd_clean_pdf_item_name', 20, 3);
+
+/**
+ * Stored order-item name (no WPC parent-box prefix).
+ *
+ * @param mixed $item WC_Order_Item, array with a nested item, or null.
+ * @return string
+ */
+function matrix_rd_pdf_item_stored_name($item) {
+    $item = matrix_rd_pdf_unwrap_item($item);
+
+    if (is_object($item) && method_exists($item, 'get_name')) {
+        return (string) $item->get_name();
+    }
+
+    return '';
+}
+
+/**
+ * True when the line is a WPC bundled flavour (child of a box).
+ *
+ * @param mixed $item
+ */
+function matrix_rd_pdf_item_is_bundled_child($item): bool {
+    $item = matrix_rd_pdf_unwrap_item($item);
+
+    if (is_object($item) && method_exists($item, 'get_meta')) {
+        if ($item->get_meta('_woosb_parent_id') || $item->get_meta('woosb_parent_id')) {
+            return true;
+        }
+    }
+
+    if (is_array($item) || (is_object($item) && $item instanceof \ArrayAccess)) {
+        if (! empty($item['woosb_parent_id']) || ! empty($item['_woosb_parent_id'])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * True when $name is "Parent → Child" (or en/em dash) and $stored is "Child".
+ *
+ * ASCII hyphen is ignored so "Mini Nutella - Large" is not treated as a prefix.
+ */
+function matrix_rd_pdf_name_has_bundle_prefix(string $name, string $stored): bool {
+    $stored_plain = trim(wp_strip_all_tags($stored));
+    $name_plain   = trim(wp_strip_all_tags(html_entity_decode($name, ENT_QUOTES, 'UTF-8')));
+    if ($stored_plain === '' || $name_plain === $stored_plain || ! str_ends_with($name_plain, $stored_plain)) {
+        return false;
+    }
+
+    $prefix = rtrim(substr($name_plain, 0, -strlen($stored_plain)));
+    if ($prefix === '') {
+        return false;
+    }
+
+    return (bool) preg_match('/(?:→|–|—)$/u', $prefix);
+}
+
+/**
+ * @param mixed $item
+ * @return mixed
+ */
+function matrix_rd_pdf_unwrap_item($item) {
+    if (is_array($item) && isset($item['item'])) {
+        return $item['item'];
+    }
+
+    return $item;
+}
 
 /**
  * Use a single, unambiguous "Collection / Delivery Date" label on the PDF documents.
@@ -664,8 +1044,82 @@ add_filter('wpo_wcpdf_order_item_name', 'matrix_rd_clean_pdf_item_name', 20);
  */
 function matrix_rd_pdf_register_delivery_label($document_type = '', $order = null) {
     add_filter('iconic_wds_labels_by_type', 'matrix_rd_pdf_combined_delivery_label', 20);
+    add_filter('woocommerce_order_item_get_formatted_meta_data', 'matrix_rd_pdf_strip_internal_item_meta', 20, 2);
 }
 add_action('wpo_wcpdf_before_document', 'matrix_rd_pdf_register_delivery_label', 10, 2);
+
+/**
+ * Drop internal box-builder / bundle keys from PDF line items.
+ *
+ * Legacy packing slips only printed customer-facing meta such as "Logo Upload".
+ * WPC Bundles stores a "box: Default Box" row that should not appear.
+ *
+ * @param array<int, object> $formatted_meta
+ * @param mixed              $item
+ * @return array<int, object>
+ */
+function matrix_rd_pdf_strip_internal_item_meta($formatted_meta, $item) {
+    if (! is_array($formatted_meta) || $formatted_meta === []) {
+        return $formatted_meta;
+    }
+
+    $hide = [
+        'box',
+        '_box',
+        'pa_size',
+        '_pa_size',
+        'unique_key',
+        '_unique_key',
+        'part_of_box',
+        '_part_of_box',
+        'parent_item_key',
+        '_parent_item_key',
+        'donut_box_contents',
+        '_donut_box_contents',
+    ];
+
+    foreach ($formatted_meta as $meta_id => $meta) {
+        $key = isset($meta->key) ? (string) $meta->key : '';
+        $display_key = isset($meta->display_key) ? (string) $meta->display_key : '';
+        if (in_array($key, $hide, true) || in_array(strtolower($display_key), $hide, true)) {
+            unset($formatted_meta[$meta_id]);
+        }
+    }
+
+    return $formatted_meta;
+}
+
+/**
+ * PDF engine cannot render GIF/WebP logos. Prefer a PNG sibling, then the site stamp.
+ *
+ * @param int|string $logo_id
+ * @return int
+ */
+function matrix_rd_pdf_header_logo_id($logo_id, $document = null) {
+    $id = absint($logo_id);
+    $file = $id ? (string) get_attached_file($id) : '';
+    $ext = $file !== '' ? strtolower((string) pathinfo($file, PATHINFO_EXTENSION)) : '';
+
+    if ($file !== '' && is_readable($file) && ! in_array($ext, ['gif', 'webp'], true)) {
+        return $id;
+    }
+
+    $png_id = absint(get_option('matrix_rd_pdf_logo_attachment_id'));
+    if ($png_id > 0) {
+        $png_file = (string) get_attached_file($png_id);
+        if ($png_file !== '' && is_readable($png_file)) {
+            return $png_id;
+        }
+    }
+
+    $site_logo = absint(get_theme_mod('custom_logo'));
+    if ($site_logo > 0 && $site_logo !== $id) {
+        return (int) matrix_rd_pdf_header_logo_id($site_logo, $document);
+    }
+
+    return $id;
+}
+add_filter('wpo_wcpdf_header_logo_id', 'matrix_rd_pdf_header_logo_id', 20, 2);
 
 /**
  * @param array $labels Iconic labels grouped by 'delivery' / 'collection'.
@@ -686,5 +1140,123 @@ function matrix_rd_pdf_combined_delivery_label($labels) {
     }
 
     return $labels;
+}
+
+/**
+ * Pickup location name + address for My Account view-order (legacy order-details-customer).
+ *
+ * Local Pickup Plus stores these on the shipping line item, not order post meta.
+ *
+ * @return array{name: string, address: string}
+ */
+function matrix_rd_get_order_pickup_display($order): array {
+    $empty = ['name' => '', 'address' => ''];
+    if (! $order instanceof WC_Order) {
+        return $empty;
+    }
+
+    $name    = '';
+    $address = '';
+
+    foreach ($order->get_items('shipping') as $item) {
+        $item_name = trim((string) $item->get_meta('_pickup_location_name'));
+        $item_addr = $item->get_meta('_pickup_location_address');
+        if ($item_name === '' && $item_addr === '' && $item_addr !== '0') {
+            continue;
+        }
+        if ($item_name !== '') {
+            $name = $item_name;
+        }
+        if ($item_addr !== '' && $item_addr !== null && $item_addr !== false) {
+            $address = matrix_rd_format_pickup_address($item_addr);
+        }
+        if ($name !== '' || $address !== '') {
+            break;
+        }
+    }
+
+    if ($name === '') {
+        $name = trim((string) $order->get_meta('_pickup_location_name'));
+    }
+    if ($address === '') {
+        $order_addr = $order->get_meta('_pickup_location_address');
+        if ($order_addr !== '' && $order_addr !== null && $order_addr !== false) {
+            $address = matrix_rd_format_pickup_address($order_addr);
+        }
+    }
+
+    return [
+        'name'    => $name,
+        'address' => $address,
+    ];
+}
+
+/**
+ * @param mixed $address Serialized array, WC address array, or plain string.
+ */
+function matrix_rd_format_pickup_address($address): string {
+    if (is_string($address)) {
+        $maybe = maybe_unserialize($address);
+        if (is_array($maybe)) {
+            $address = $maybe;
+        } else {
+            return nl2br(esc_html($address));
+        }
+    }
+
+    if (! is_array($address) || $address === []) {
+        return '';
+    }
+
+    if (function_exists('WC') && WC()->countries) {
+        $formatted = WC()->countries->get_formatted_address($address);
+        if (is_string($formatted) && $formatted !== '') {
+            return $formatted;
+        }
+    }
+
+    $parts = [];
+    foreach ($address as $value) {
+        if (is_string($value) && trim($value) !== '') {
+            $parts[] = $value;
+        }
+    }
+
+    return $parts === [] ? '' : esc_html(implode(', ', $parts));
+}
+
+/**
+ * One Product / Total row on the view-order page (legacy flex layout).
+ */
+function matrix_rd_render_view_order_item_row($item_id, $item, $order): void {
+    if (! $item || ! $order instanceof WC_Order) {
+        return;
+    }
+
+    if (! apply_filters('woocommerce_order_item_visible', true, $item)) {
+        return;
+    }
+
+    $product = $item->get_product();
+    ?>
+    <div class="rd-view-order__row flex justify-between bg-white border-b-2 line-item border-grey-disabled last:border-b-0">
+        <div class="rd-view-order__product px-4 mobile:px-10 py-5 text-left item-ordered">
+            <?php
+            wc_get_template('order/order-details-item.php', [
+                'item_id'            => $item_id,
+                'item'               => $item,
+                'order'              => $order,
+                'product'            => $product,
+                'show_purchase_note' => $order->has_status(apply_filters('woocommerce_purchase_note_order_statuses', ['completed', 'processing'])),
+                'purchase_note'      => $product ? $product->get_purchase_note() : '',
+                'show_price'         => false,
+            ]);
+            ?>
+        </div>
+        <div class="rd-view-order__total px-4 mobile:px-10 py-5 text-center">
+            <span class="woocommerce-Price-amount amount"><?php echo $order->get_formatted_line_subtotal($item); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+        </div>
+    </div>
+    <?php
 }
 

@@ -167,7 +167,7 @@ $woo_product
     ])
     ->addRepeater('product_with_additional_cost', [
         'label'        => 'Add Product to box',
-        'instructions' => 'Add product add ons.',
+        'instructions' => 'Optional extras. On Custom Order, published Box products are listed automatically — use this only for non-box add-ons (or boxes you want to include on other products).',
         'layout'       => 'block',
         'button_label' => 'Add Product',
     ])

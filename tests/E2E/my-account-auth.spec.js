@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { installCookieBlocker } = require('./helpers/cookie-blocker');
 
 const MY_ACCOUNT_PATH = process.env.MY_ACCOUNT_PATH || '/my-account/';
 const TEST_EMAIL = process.env.MY_ACCOUNT_TEST_EMAIL || '';
@@ -21,6 +22,7 @@ async function dismissBlockingUi(page) {
 }
 
 async function openMyAccount(page) {
+  await installCookieBlocker(page);
   await page.goto(MY_ACCOUNT_PATH);
   await dismissBlockingUi(page);
   await expect(page.getByTestId('rd-auth-card')).toBeVisible();
@@ -141,6 +143,21 @@ test.describe('My Account auth forms', () => {
     await page.getByTestId('rd-link-forgot-password').click();
     await expect(page.getByTestId('rd-form-lost-password')).toBeVisible();
     await expect(page.getByTestId('rd-field-user-login')).toBeVisible();
+  });
+
+  test('Turnstile is only active on therollingdonut.ie', async ({ page }) => {
+    const host = new URL(page.url()).hostname.replace(/^www\./, '');
+    const live = host === 'therollingdonut.ie';
+    const widget = page.locator('.rd-account-captcha');
+    const api = page.locator('script[src*="challenges.cloudflare.com/turnstile"]');
+
+    if (live) {
+      await expect(widget.first()).toBeVisible();
+      await expect(api).toHaveCount(1);
+    } else {
+      await expect(widget).toHaveCount(0);
+      await expect(api).toHaveCount(0);
+    }
   });
 
   test('auth card has side padding on small screens', async ({ page }) => {

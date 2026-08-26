@@ -27,7 +27,30 @@ $text      = (string) get_field('footer_newsletter_text', 'option');
     </div>
     <div class="w-full newsletter-form lg:w-full max-lg:py-4">
       <div class="klaviyo-form-VEZU7S"></div>
-      <script async src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=XwQPcq"></script>
+      <?php
+      /*
+       * The embed is an empty shell until klaviyo.js hydrates it. The WooCommerce
+       * Klaviyo plugin does not load that script locally (no public API key), so
+       * the theme must print the onsite loader — same snippet as the old site.
+       * Clear this form's "already closed/submitted" flag first so the footer
+       * signup stays available after a visitor has already opted in.
+       */
+      ?>
+      <script>
+      (function () {
+        var formId = 'VEZU7S';
+        try {
+          var raw = localStorage.getItem('klaviyoOnsite');
+          if (!raw) { return; }
+          var data = JSON.parse(raw);
+          var modal = data && data.viewedForms && data.viewedForms.modal;
+          if (!modal || !modal.disabledForms || !modal.disabledForms[formId]) { return; }
+          delete modal.disabledForms[formId];
+          localStorage.setItem('klaviyoOnsite', JSON.stringify(data));
+        } catch (e) {}
+      })();
+      </script>
+      <script async type="text/javascript" src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=XwQPcq"></script>
       <label class="newsletter-consent">
         <input type="checkbox" class="newsletter-consent__check">
         <span class="newsletter-consent__text">By signing up to our newsletter, you agree to our Terms &amp; Conditions &amp; Privacy Policy.</span>

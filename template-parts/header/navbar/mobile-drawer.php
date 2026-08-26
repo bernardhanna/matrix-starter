@@ -11,7 +11,7 @@ $menu_bg_class  = $mobile_menu_bg !== '' ? 'rd-mobile-menu--has-bg' : 'bg-black-
 ?>
 <div
   id="rd-mobile-menu"
-  @resize.window="if (window.innerWidth > 1149) open = false"
+  @resize.window="if (window.innerWidth > 1210) open = false"
   x-cloak
   x-show="open"
   x-transition:enter="transition ease-out duration-500"
@@ -64,6 +64,7 @@ $menu_bg_class  = $mobile_menu_bg !== '' ? 'rd-mobile-menu--has-bg' : 'bg-black-
                 :aria-expanded="isOpen.toString()"
                 aria-label="<?php echo esc_attr(sprintf(__('Toggle %s submenu', 'matrix-starter'), $nav_item->label)); ?>"
               >
+                <span class="sr-only"><?php echo esc_html(sprintf(__('Toggle %s submenu', 'matrix-starter'), $nav_item->label)); ?></span>
                 <span x-show="!isOpen" class="iconify text-white" data-icon="mdi:chevron-down" data-width="32" data-height="32" aria-hidden="true"></span>
                 <span x-show="isOpen" class="iconify text-white" data-icon="mdi:chevron-up" data-width="32" data-height="32" aria-hidden="true"></span>
               </button>

@@ -80,6 +80,8 @@ $style_attr     = $mobile_menu_bg !== '' ? '--mobile-bg-image: url(' . esc_url($
                 <img
                   class="rd-product-search__thumb"
                   x-show="item.image"
+                  src=""
+                  alt=""
                   :src="item.image"
                   :alt="item.title"
                   width="56"
@@ -111,6 +113,7 @@ $style_attr     = $mobile_menu_bg !== '' ? '--mobile-bg-image: url(' . esc_url($
       @click="showSearch = false"
       aria-label="<?php esc_attr_e('Close search', 'matrix-starter'); ?>"
     >
+      <span class="sr-only"><?php esc_html_e('Close search', 'matrix-starter'); ?></span>
       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
         <path d="M0.659928 3.12523L3.10369 0.681466L5.97737 3.55515L8.87368 0.658838L11.3174 3.1026L8.42113 5.99891L11.3174 8.89522L8.87368 11.339L5.97737 8.44267L3.10369 11.3164L0.659929 8.87259L3.53361 5.99891L0.659928 3.12523Z" fill="black"/>
       </svg>

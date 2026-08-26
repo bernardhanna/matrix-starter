@@ -113,6 +113,7 @@ add_filter('script_loader_tag', function ($tag, $handle) {
         'wc-checkout','woocommerce',
         'wc-country-select','wc-address-i18n',
         'selectWoo','jquery-blockui','jquery-payment',
+        'slick-js',
         'wc-add-to-cart-variation','wc-password-strength-meter',
         'wc-credit-card-form','wc-cart','wc-cart-fragments'
     ];
@@ -263,6 +264,9 @@ add_filter('body_class', function (array $classes) {
   if (function_exists('is_account_page') && is_account_page() && !is_user_logged_in()) {
     $classes[] = 'tw-auth';
   }
+  if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('lost-password')) {
+    $classes[] = 'tw-lost-password';
+  }
   return $classes;
 });
 
@@ -272,11 +276,11 @@ add_action('after_setup_theme', function () {
   $enforce = (bool) get_field('woo_email_enforce', 'option');
   if (! $enforce) return;
 
-  $preset   = get_field('woo_email_preset', 'option') ?: 'brand_red';
-  $base     = get_field('woo_email_base_color', 'option') ?: '#ED1C24';
-  $bg       = get_field('woo_email_background_color', 'option') ?: '#ffffff';
+  $preset   = get_field('woo_email_preset', 'option') ?: 'black';
+  $base     = get_field('woo_email_base_color', 'option') ?: '#000000';
+  $bg       = get_field('woo_email_background_color', 'option') ?: '#f7f7f7';
   $body_bg  = get_field('woo_email_body_background_color', 'option') ?: '#ffffff';
-  $text     = get_field('woo_email_text_color', 'option') ?: '#101828';
+  $text     = get_field('woo_email_text_color', 'option') ?: '#3c3c3c';
 
   // Presets override manual unless "custom"
   if ($preset === 'brand_red') {
@@ -285,10 +289,11 @@ add_action('after_setup_theme', function () {
     $body_bg = '#ffffff';
     $text    = '#101828';
   } elseif ($preset === 'black') {
-    $base    = '#ED1C24';   // keep brand buttons red; change to #000 if you want black buttons
-    $bg      = '#000000';
-    $body_bg = '#000000';
-    $text    = '#ffffff';
+    // Rolling Donut site branding: black header / headings / links on the light Woo template.
+    $base    = '#000000';
+    $bg      = '#f7f7f7';
+    $body_bg = '#ffffff';
+    $text    = '#3c3c3c';
   } // else 'custom' uses pickers
 
   // 1) Force Woo option values (these feed Woo’s templater + inliner)
@@ -300,7 +305,9 @@ add_action('after_setup_theme', function () {
   // 2) Extra CSS for hover states, links and headings
   add_filter('woocommerce_email_styles', function ($css) use ($base, $text) {
     // lighten/darken brand a touch for hover (simple fallback)
-    $brandDark = '#D00008';
+    $brandDark = (strcasecmp($base, '#000000') === 0 || strcasecmp($base, '#000') === 0)
+      ? '#333333'
+      : '#D00008';
     $textOnBrand = '#ffffff';
 
     $custom = "
@@ -313,8 +320,11 @@ add_action('after_setup_theme', function () {
         color: {$brandDark} !important;
         text-decoration: underline;
       }
-      h1, h2, h3, h4 {
-        color: {$text} !important;
+      #template_header h1 {
+        color: #ffffff !important;
+      }
+      h2, h3, h4 {
+        color: {$base} !important;
         margin-top: 0;
       }
 

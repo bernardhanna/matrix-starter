@@ -37,7 +37,7 @@ $cart_count  = (int) $cart['count'];
     <span
       class="iconify inline-flex h-8 w-8 shrink-0 items-center justify-center text-black-full"
       :class="{ 'text-white': open }"
-      data-icon="grommet-icons:basket"
+      data-icon="grommet-icons:cart"
       data-width="30"
       data-height="30"
       aria-hidden="true"

@@ -140,22 +140,22 @@ $woocommerce
       'label'        => 'Preset',
       'instructions' => 'Choose a quick preset or use manual colours below.',
       'choices'      => [
+        'black'     => 'Black accents (header, headings, links)',
         'brand_red' => 'Brand Red (#ED1C24 accents)',
-        'black'     => 'Black (dark background, white text)',
         'custom'    => 'Custom (use pickers below)',
       ],
-      'default_value' => 'brand_red',
+      'default_value' => 'black',
       'ui'            => 1,
     ])
 
     // Manual overrides (used when preset = custom, but always visible for clarity)
     ->addColorPicker('woo_email_base_color', [
       'label'         => 'Base Color (buttons/accents)',
-      'default_value' => '#ED1C24',
+      'default_value' => '#000000',
     ])
     ->addColorPicker('woo_email_background_color', [
       'label'         => 'Outer Background',
-      'default_value' => '#ffffff',
+      'default_value' => '#f7f7f7',
     ])
     ->addColorPicker('woo_email_body_background_color', [
       'label'         => 'Inner Body Background',
@@ -163,7 +163,7 @@ $woocommerce
     ])
     ->addColorPicker('woo_email_text_color', [
       'label'         => 'Body Text',
-      'default_value' => '#101828',
+      'default_value' => '#3c3c3c',
     ]);
 
 return $woocommerce;

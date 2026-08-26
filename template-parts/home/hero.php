@@ -10,8 +10,8 @@ if ($slides === []) {
 }
 
 $slide_count = count($slides);
-$hero_layout = function_exists('matrix_rd_get_home_hero_layout') ? matrix_rd_get_home_hero_layout() : 'default';
-$hero_layout_class = $hero_layout === 'layout_2' ? 'home-hero--layout-2' : 'home-hero--layout-default';
+$hero_layout = function_exists('matrix_rd_get_home_hero_layout') ? matrix_rd_get_home_hero_layout() : 'layout_1';
+$hero_layout_class = $hero_layout === 'layout_2' ? 'home-hero--layout-2' : 'home-hero--layout-1';
 
 $hero_arrow_prev_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.4375 11.1094H6.72422L14.932 3.98438C15.0633 3.86953 14.9836 3.65625 14.8102 3.65625H12.7359C12.6445 3.65625 12.5578 3.68906 12.4898 3.74766L3.63281 11.4328C3.46868 11.5751 3.37438 11.7816 3.37438 11.9988C3.37438 12.216 3.46868 12.4226 3.63281 12.5648L12.5414 20.2969C12.5766 20.3273 12.6188 20.3438 12.6633 20.3438H14.8078C14.9813 20.3438 15.0609 20.1281 14.9297 20.0156L6.72422 12.8906H20.4375C20.5406 12.8906 20.625 12.8062 20.625 12.7031V11.2969C20.625 11.1938 20.5406 11.1094 20.4375 11.1094Z" fill="currentColor"/></svg>';
 
@@ -29,7 +29,8 @@ $render_responsive_image = static function (
     array $mobile,
     string $class,
     string $alt = '',
-    bool $eager = false
+    bool $eager = false,
+    bool $decorative = false
 ): void {
     if ($desktop['url'] === '' && $mobile['url'] === '') {
         return;
@@ -37,7 +38,9 @@ $render_responsive_image = static function (
 
     $desktop_url = $desktop['url'] !== '' ? $desktop['url'] : $mobile['url'];
     $mobile_url  = $mobile['url'] !== '' ? $mobile['url'] : $desktop['url'];
-    $alt_text    = $alt !== '' ? $alt : ($desktop['alt'] !== '' ? $desktop['alt'] : $mobile['alt']);
+    $alt_text    = $decorative
+        ? ''
+        : ($alt !== '' ? $alt : ($desktop['alt'] !== '' ? $desktop['alt'] : $mobile['alt']));
 
     if ($mobile_url !== '' && $mobile_url !== $desktop_url) : ?>
       <picture class="<?php echo esc_attr($class); ?>">
@@ -100,7 +103,6 @@ $render_responsive_image = static function (
           $overlay_style       = function_exists('matrix_rd_home_hero_overlay_style')
               ? matrix_rd_home_hero_overlay_style($slide)
               : '';
-          $right_alt           = $right_image['alt'] !== '' ? $right_image['alt'] : __('Rolling Donut hero', 'matrix-starter');
           $title_image_alt     = $left_image['alt'] !== '' ? $left_image['alt'] : $heading;
           $cta_icon_fill       = function_exists('matrix_rd_home_hero_cta_icon_fill')
               ? matrix_rd_home_hero_cta_icon_fill($button_style)
@@ -121,7 +123,10 @@ $render_responsive_image = static function (
                     $render_responsive_image(
                         $left_pattern,
                         $left_pattern_mobile,
-                        'home-hero-slide__pattern-img'
+                        'home-hero-slide__pattern-img',
+                        '',
+                        false,
+                        true
                     );
                     ?>
                   </div>
@@ -129,7 +134,7 @@ $render_responsive_image = static function (
 
                 <div class="home-hero-slide__overlay"<?php echo $overlay_style !== '' ? ' style="' . esc_attr($overlay_style) . '"' : ''; ?>>
                   <div class="home-hero-slide__content">
-                    <?php if ($hero_layout !== 'default' && ($left_image['url'] !== '' || $left_image_mobile['url'] !== '')) : ?>
+                    <?php if ($hero_layout === 'layout_2' && ($left_image['url'] !== '' || $left_image_mobile['url'] !== '')) : ?>
                       <div class="home-hero-slide__title-image<?php echo $hide_title_on_mobile ? ' home-hero-slide__title-image--desktop-only' : ''; ?>">
                         <?php
                         $render_responsive_image(
@@ -204,8 +209,9 @@ $render_responsive_image = static function (
                         $right_image,
                         $right_image_mobile,
                         'home-hero-slide__right-layer',
-                        $right_alt,
-                        $index === 0
+                        '',
+                        $index === 0,
+                        true
                     );
                     ?>
                   <?php endif; ?>
@@ -227,6 +233,7 @@ $render_responsive_image = static function (
             aria-controls="home-hero-slider-track"
           >
             <?php echo $hero_arrow_prev_svg; ?>
+            <span class="sr-only"><?php esc_html_e('Previous slide', 'matrix-starter'); ?></span>
           </button>
           <button
             class="splide__arrow splide__arrow--next"
@@ -235,6 +242,7 @@ $render_responsive_image = static function (
             aria-controls="home-hero-slider-track"
           >
             <?php echo $hero_arrow_next_svg; ?>
+            <span class="sr-only"><?php esc_html_e('Next slide', 'matrix-starter'); ?></span>
           </button>
         </div>
         <ul

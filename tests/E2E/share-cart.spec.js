@@ -26,13 +26,13 @@ const { test, expect } = require('@playwright/test');
  *
  * Env:
  *   BASE_URL                  - site origin (see playwright.config.cjs)
- *   RD_SHARE_CART_PRODUCT_ID  - a simple, purchasable product id used to fill the
- *                               cart (default 41707 "Branded Mug", shared with the
+ *   RD_SHARE_CART_PRODUCT_ID  - a purchasable box product id used to fill the
+ *                               cart (default 1959 Midi box of 20, shared with the
  *                               coupons spec).
  */
 
 const PRODUCT_ID =
-  process.env.RD_SHARE_CART_PRODUCT_ID || process.env.RD_COUPON_TEST_PRODUCT_ID || '41707';
+  process.env.RD_SHARE_CART_PRODUCT_ID || process.env.RD_COUPON_TEST_PRODUCT_ID || '1959';
 
 const MODAL_CONTENT = '#cxecrt-save-share-cart-modal';
 const MODAL_POPUP = '.cxecrt-component-modal-popup:not(.cxecrt-component-modal-hard-hide)';
@@ -82,6 +82,23 @@ async function openShareCart(page) {
   return popup;
 }
 
+test.describe('Save & Share Cart — stays hidden until opened', () => {
+  for (const path of ['/', '/about-us/', '/cart/']) {
+    test(`does not dump the form at the bottom of ${path}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.goto(path);
+
+      const modal = page.locator('#cxecrt-save-share-cart-modal');
+      if ((await modal.count()) === 0) {
+        return;
+      }
+
+      await expect(modal).not.toBeInViewport();
+      await expect(page.locator('#cxecrt_submit_get_link')).not.toBeInViewport();
+    });
+  }
+});
+
 test.describe('Save & Share Cart — open + a11y enhancements', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -94,6 +111,16 @@ test.describe('Save & Share Cart — open + a11y enhancements', () => {
 
   test('the deep-link trigger opens the share-cart modal', async ({ page }) => {
     await openShareCart(page);
+  });
+
+  test('a cart with items is not treated as empty', async ({ page }) => {
+    const popup = await openShareCart(page);
+
+    await expect(
+      popup.locator('.cxecrt-save-get-button-slide-3.cxecrt-component-slide-current')
+    ).toHaveCount(0);
+    await expect(popup.locator('#cxecrt_submit_get_link')).toBeVisible();
+    await expect(popup.getByText('Empty cart. Please add products before saving')).toBeHidden();
   });
 
   test('every form control in the modal has an accessible name (theme a11y fix)', async ({ page }) => {

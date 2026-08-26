@@ -1,0 +1,93 @@
+================================================================================
+CLIENT REPLY (copy for Lisa → Luiz)
+================================================================================
+
+Hi Luiz,
+
+For the homepage hero slider, we need two versions of the main photo for each
+slide — one for desktop and one for mobile.
+
+Desktop (the large image on the right on a computer screen):
+  • Size to prepare: 1920 pixels wide × 1200 pixels tall
+  • Landscape photo (wider than it is tall)
+  • JPG format is fine
+
+Mobile (the photo strip at the top on a phone):
+  • Size to prepare: 1200 pixels wide × 800 pixels tall
+  • Landscape photo (wider than it is tall)
+  • JPG format is fine
+
+Please keep the main subject (e.g. the donut box or product) roughly in the
+centre of the image — the edges may be cropped slightly on different screen
+sizes.
+
+If it’s easier, Luiz can send the desktop version first and we can use that
+as a starting point, but a separate mobile crop will look best on phones.
+
+Many thanks,
+Lisa
+
+================================================================================
+TECHNICAL REFERENCE (for developers / CMS)
+================================================================================
+
+Homepage hero slider — image size guide
+=======================================
+
+Right panel image (desktop) and top strip image (mobile) for hero slides.
+Edit in WP Admin: Pages → Homepage → Hero tab → each slide → Right panel.
+
+How images are displayed
+------------------------
+- Images use object-fit: cover (fill the box; edges may crop).
+- Keep the main subject centred so cropping looks intentional.
+- If no mobile image is uploaded, the desktop image is used on mobile (often crops badly on the short mobile strip).
+
+Display sizes (on screen)
+-------------------------
+Desktop (1084px and up)
+  Field:  Right image (desktop)
+  Box:    50% of viewport width × 589px fixed height
+  Layout: Right half of the hero
+  Example at 1440px wide: ~720 × 589px
+
+Mobile (under 1084px)
+  Field:  Right image (mobile)
+  Box:    Full width × 268px fixed height
+  Layout: Top strip above the text panel
+  Example at ~402px wide: ~402 × 268px (Figma reference)
+
+Recommended upload sizes
+------------------------
+Desktop — Right image (desktop)
+  Ideal:     1440 × 1180 px  (≈ 1.22:1, matches Figma at 1440px)
+  Retina:    1920 × 1200 px  (safe for large screens)
+  Ratio:     Landscape, roughly 5:4 to 3:2
+  Format:    JPG or WebP, compressed for web
+
+Mobile — Right image (mobile)
+  Ideal:     828 × 552 px     (2× for ~414px-wide phones)
+  Safe max:  1200 × 800 px    (3:2)
+  Ratio:     Landscape, roughly 3:2 (≈ 1.5:1)
+  Format:    JPG or WebP
+
+Quick reference
+---------------
+Field                    On-screen target          Recommended file
+Right image (desktop)    ~720×589 to ~960×589      1920 × 1200 px
+Right image (mobile)     full width × 268px        1200 × 800 px
+
+Composition tips
+----------------
+- Mobile: Place subject in the middle third vertically; top and bottom are cropped in the 268px band.
+- Desktop: Slightly wider compositions work; the panel grows on large monitors (up to ~50% of viewport).
+- Avoid very tall/portrait images unless the subject is centred; cover will crop heavily.
+
+Related ACF fields (same slide)
+-------------------------------
+- Title image (desktop) / Title image (mobile) — left panel neon or graphic
+- Background pattern (desktop) / Background pattern (mobile) — left panel repeat
+- Heading, subtext, button — left panel copy (not the right image)
+
+Theme reference: assets/css/rolling-donut-home-hero.css
+Figma mobile example: node 6041-14897

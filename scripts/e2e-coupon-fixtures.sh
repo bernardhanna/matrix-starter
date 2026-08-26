@@ -17,6 +17,7 @@
 #   RD_COUPON_PERCENT   (default rd-e2e-10pct)     10% off, no restrictions
 #   RD_COUPON_MINSPEND  (default rd-e2e-min500)    10% off, requires €500 min spend
 #   RD_COUPON_EXPIRED   (default rd-e2e-expired)   10% off, expired yesterday
+#   RD_COUPON_FREE      (default rd-e2e-100pct)    100% off, no restrictions
 #
 # Requires WP-CLI with WooCommerce active (resolves WP from the current path).
 
@@ -27,6 +28,7 @@ ACTION="${1:-}"
 export RD_COUPON_PERCENT="${RD_COUPON_PERCENT:-rd-e2e-10pct}"
 export RD_COUPON_MINSPEND="${RD_COUPON_MINSPEND:-rd-e2e-min500}"
 export RD_COUPON_EXPIRED="${RD_COUPON_EXPIRED:-rd-e2e-expired}"
+export RD_COUPON_FREE="${RD_COUPON_FREE:-rd-e2e-100pct}"
 
 if ! command -v wp >/dev/null 2>&1; then
   echo "error: wp (WP-CLI) not found on PATH" >&2
@@ -40,6 +42,7 @@ case "$ACTION" in
         "percent"  => [getenv("RD_COUPON_PERCENT"),  ["type" => "percent", "amount" => 10]],
         "minspend" => [getenv("RD_COUPON_MINSPEND"), ["type" => "percent", "amount" => 10, "min" => 500]],
         "expired"  => [getenv("RD_COUPON_EXPIRED"),  ["type" => "percent", "amount" => 10, "expires" => "yesterday"]],
+        "free"     => [getenv("RD_COUPON_FREE"),     ["type" => "percent", "amount" => 100]],
       ];
       foreach ($codes as $cfg) {
         list($code, $args) = $cfg;
@@ -59,7 +62,7 @@ case "$ACTION" in
     ;;
   down)
     wp eval '
-      foreach ([getenv("RD_COUPON_PERCENT"), getenv("RD_COUPON_MINSPEND"), getenv("RD_COUPON_EXPIRED")] as $code) {
+      foreach ([getenv("RD_COUPON_PERCENT"), getenv("RD_COUPON_MINSPEND"), getenv("RD_COUPON_EXPIRED"), getenv("RD_COUPON_FREE")] as $code) {
         $id = wc_get_coupon_id_by_code($code);
         if ($id) { wp_delete_post($id, true); echo "removed {$code} (#{$id})\n"; }
         else     { echo "absent {$code}\n"; }

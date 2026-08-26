@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { installCookieBlocker } = require('./helpers/cookie-blocker');
 
 /**
  * Box builder — basket stepper flow.
@@ -30,6 +31,8 @@ const STEPPER = '.rd-bb-cart-stepper--main';
 const STEP_QTY = `${STEPPER} .rd-bb-cart-qty`;
 const STEP_PLUS = `${STEPPER} .rd-bb-cart-step--plus`;
 const STEP_MINUS = `${STEPPER} .rd-bb-cart-step--minus`;
+const TOGGLE = '.rd-bb-toggle';
+const BUILDER = '#rd-bb';
 
 const SIDE_CART = '[data-rd-side-cart]';
 const SIDE_CART_CLOSE = `${SIDE_CART} [data-rd-side-cart-close]`;
@@ -48,12 +51,30 @@ async function dismissBlockingUi(page) {
     }
     break;
   }
+  await page.evaluate(() => {
+    document.querySelectorAll('#cookiescript_injected, #cookiescript_injected_wrapper, .cookiescript_badge').forEach((el) => {
+      el.remove();
+    });
+  }).catch(() => {});
   await page.keyboard.press('Escape').catch(() => {});
+}
+
+async function closeSideCart(page) {
+  const closer = page.locator(SIDE_CART_CLOSE).first();
+  if (await closer.isVisible().catch(() => false)) {
+    await closer.click({ force: true }).catch(() => {});
+    await expect(page.locator(SIDE_CART)).not.toHaveClass(/is-open/);
+  }
+}
+
+async function waitCartIdle(page) {
+  await expect(page.locator('form.cart')).not.toHaveClass(/rd-bb-cart-busy/, { timeout: 15_000 });
 }
 
 test.describe('Box builder — basket stepper', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
+    await installCookieBlocker(page);
     await page.goto(PRODUCT_PATH);
     await dismissBlockingUi(page);
   });
@@ -81,16 +102,22 @@ test.describe('Box builder — basket stepper', () => {
     await expect(stepper).toBeVisible();
     await expect(qty).toHaveText('1');
     await expect(addBtn).toBeHidden();
+    await waitCartIdle(page);
+    await closeSideCart(page);
 
     // 3) + / − adjust the quantity of the box in the basket.
-    await page.locator(STEP_PLUS).click();
+    await page.locator(STEP_PLUS).click({ force: true });
     await expect(qty).toHaveText('2');
+    await waitCartIdle(page);
+    await closeSideCart(page);
 
-    await page.locator(STEP_MINUS).click();
+    await page.locator(STEP_MINUS).click({ force: true });
     await expect(qty).toHaveText('1');
+    await waitCartIdle(page);
+    await closeSideCart(page);
 
     // 4) Decrementing to zero removes the box and restores "Add to Basket".
-    await page.locator(STEP_MINUS).click();
+    await page.locator(STEP_MINUS).click({ force: true });
     await expect(addBtn).toBeVisible();
     await expect(stepper).toBeHidden();
   });
@@ -119,9 +146,13 @@ test.describe('Box builder — basket stepper', () => {
     // it now reads 2; decrement back to zero to remove it for a clean re-run.
     await page.locator(ADD_BTN).first().click();
     await expect(qty).toHaveText('2');
-    await page.locator(STEP_MINUS).click();
+    await waitCartIdle(page);
+    await closeSideCart(page);
+    await page.locator(STEP_MINUS).click({ force: true });
     await expect(qty).toHaveText('1');
-    await page.locator(STEP_MINUS).click();
+    await waitCartIdle(page);
+    await closeSideCart(page);
+    await page.locator(STEP_MINUS).click({ force: true });
     await expect(page.locator(ADD_BTN).first()).toBeVisible();
   });
 
@@ -162,9 +193,76 @@ test.describe('Box builder — basket stepper', () => {
     await expect(checkout).toHaveAttribute('href', /checkout/i);
 
     // Clean up: remove the box from the basket for a clean re-run.
-    await page.locator(STEP_MINUS).click();
+    await waitCartIdle(page);
+    await closeSideCart(page);
+    await page.locator(STEP_MINUS).click({ force: true });
     await expect(qty).toHaveText('1');
-    await page.locator(STEP_MINUS).click();
+    await waitCartIdle(page);
+    await closeSideCart(page);
+    await page.locator(STEP_MINUS).click({ force: true });
     await expect(addBtn).toBeVisible();
+  });
+
+  // Regression: in builder mode the header/side-cart total used to stay stale
+  // until the (slow) bundle qty AJAX returned. The stepper must update the
+  // visible total immediately, even if that request is delayed.
+  test('stepper updates cart total immediately even if the qty request is slow', async ({ page }) => {
+    test.setTimeout(90_000);
+    const stepper = page.locator(STEPPER);
+    test.skip((await stepper.count()) === 0, `No box-builder stepper on ${PRODUCT_PATH}.`);
+
+    const sideCart = page.locator(SIDE_CART);
+    test.skip(
+      (await sideCart.count()) === 0,
+      'This build does not use the side-cart slide-out (notice-popup mode).'
+    );
+
+    const addBtn = page.locator(ADD_BTN).first();
+    const qty = page.locator(STEP_QTY);
+    const sideTotal = page.locator(`${SIDE_CART} .rd-side-cart__subtotal-amount`);
+
+    const toggle = page.locator(TOGGLE).first();
+    if (await toggle.isVisible().catch(() => false)) {
+      await toggle.click({ force: true });
+      await expect(page.locator(BUILDER)).toBeVisible();
+    }
+
+    await expect(addBtn).toBeEnabled();
+    await addBtn.click({ force: true });
+    await expect(qty).toHaveText('1');
+    await expect(sideCart).toHaveClass(/is-open/);
+    await expect(sideTotal).toContainText(/€|\$|£/);
+
+    const startAmount = parseFloat((await sideTotal.innerText()).replace(/[^\d.]/g, '')) || 0;
+    const unitText = await page
+      .locator('.rd-summary-price, .rd-bb-title-price, .woosb-sync-price')
+      .first()
+      .innerText();
+    const unitAmount = parseFloat(unitText.replace(/[^\d.]/g, '')) || 0;
+    test.skip(!startAmount || !unitAmount, 'Could not read the box unit price.');
+
+    await page.locator(SIDE_CART_CLOSE).first().click({ force: true });
+    await expect(sideCart).not.toHaveClass(/is-open/);
+
+    await page.route('**/admin-ajax.php*', async (route) => {
+      const post = route.request().postData() || '';
+      if (post.includes('rd_bb_set_qty')) {
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+      }
+      await route.continue().catch(() => {});
+    });
+
+    await page.locator(STEP_PLUS).click({ force: true });
+    await expect(qty).toHaveText('2', { timeout: 5000 });
+    await expect(sideTotal).toContainText(String(Math.round(startAmount + unitAmount)), {
+      timeout: 5000,
+    });
+
+    await expect(page.locator('form.cart')).not.toHaveClass(/rd-bb-cart-busy/, { timeout: 15_000 });
+    await page.unroute('**/admin-ajax.php*').catch(() => {});
+    const closer = page.locator(SIDE_CART_CLOSE).first();
+    if (await closer.isVisible().catch(() => false)) {
+      await closer.click({ force: true }).catch(() => {});
+    }
   });
 });

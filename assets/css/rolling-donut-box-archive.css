@@ -49,6 +49,15 @@
   width: 100%;
 }
 
+.woocommerce[data-product-type="Box"] ul.rd-box-products-grid > .product-category-title,
+.woocommerce[data-product-type="Box"] ul.rd-box-products-grid > li.product {
+  scroll-margin-top: calc(var(--site-header-height, 110px) + 1rem);
+}
+
+.rd-box-product-gallery .rd-box-gallery-arrow {
+  pointer-events: auto;
+}
+
 /* Desktop: 3-column grid with even gaps (avoids space-between stretching 2-up rows). */
 @media (min-width: 1084px) {
   .woocommerce[data-product-type="Box"] ul.rd-box-products-grid {

@@ -23,7 +23,7 @@ const { test, expect } = require('@playwright/test');
  */
 
 const CHECKOUT_PATH = process.env.CHECKOUT_PATH || '/checkout/';
-const ADD_TO_CART_ID = process.env.CHECKOUT_ADD_TO_CART || '';
+const ADD_TO_CART_ID = process.env.CHECKOUT_ADD_TO_CART || '1959';
 
 const METHOD_STEP = '#rd-checkout-step-method';
 const SCHEDULE_STEP = '#rd-checkout-step-schedule';
@@ -37,7 +37,7 @@ const DATE_INPUT = '#jckwds-delivery-date';
 async function dismissBlockingUi(page) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const closeDialog = page
-      .getByRole('button', { name: /close dialog|no thanks|close|dismiss/i })
+      .getByRole('button', { name: /close dialog|no thanks|close|dismiss|accept/i })
       .first();
     if (await closeDialog.isVisible().catch(() => false)) {
       await closeDialog.click({ force: true }).catch(() => {});
@@ -46,6 +46,11 @@ async function dismissBlockingUi(page) {
     }
     break;
   }
+  await page.evaluate(() => {
+    document.querySelectorAll('#cookiescript_injected, #cookiescript_injected_wrapper, .cookiescript_badge').forEach((el) => {
+      el.remove();
+    });
+  }).catch(() => {});
   await page.keyboard.press('Escape').catch(() => {});
 }
 
@@ -73,11 +78,12 @@ async function selectMethodAndSettle(page, locator) {
 
 async function openCheckout(page) {
   if (ADD_TO_CART_ID) {
-    await page.goto(`/?add-to-cart=${encodeURIComponent(ADD_TO_CART_ID)}`);
-    await page.waitForLoadState('networkidle').catch(() => {});
+    await page.goto(`/?add-to-cart=${encodeURIComponent(ADD_TO_CART_ID)}`, {
+      waitUntil: 'domcontentloaded',
+    });
   }
 
-  await page.goto(CHECKOUT_PATH);
+  await page.goto(CHECKOUT_PATH, { waitUntil: 'domcontentloaded' });
   await dismissBlockingUi(page);
   await waitForCheckoutSettled(page);
 }
@@ -135,7 +141,14 @@ test.describe('Express checkout — step auto-advance', () => {
     // The Method step starts active.
     await expectStepActive(page, METHOD_STEP, 'initial');
 
-    await selectMethodAndSettle(page, delivery);
+    await delivery.evaluate((el) => {
+      if (!(el instanceof HTMLInputElement)) {
+        return;
+      }
+      el.checked = true;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await waitForCheckoutSettled(page);
 
     // Choosing delivery completes Method and reveals Schedule automatically.
     await expectStepActive(page, SCHEDULE_STEP, 'after delivery selected');
@@ -201,5 +214,49 @@ test.describe('Express checkout — step auto-advance', () => {
     // A chosen date completes Schedule and opens Details automatically.
     await expectStepActive(page, DETAILS_STEP, 'after date chosen');
     await expectStepCollapsed(page, SCHEDULE_STEP, 'after date chosen');
+  });
+
+  test('Change on Method keeps both options visible and does not auto-advance', async ({ page }) => {
+    const delivery = page.locator(NON_PICKUP_RADIO).first();
+    const pickup = page.locator(PICKUP_RADIO).first();
+    test.skip((await delivery.count()) === 0, 'No delivery (non-pickup) method available.');
+    test.skip((await pickup.count()) === 0, 'No collection (local pickup) method available.');
+
+    if (await delivery.isChecked().catch(() => false)) {
+      await page.locator(`${METHOD_STEP} .rd-checkout-step__continue`).click({ force: true });
+    } else {
+      await selectMethodAndSettle(page, delivery);
+    }
+    await expectStepActive(page, SCHEDULE_STEP, 'after delivery selected');
+    await expectStepCollapsed(page, METHOD_STEP, 'after delivery selected');
+
+    await page.locator(`${METHOD_STEP} .rd-checkout-step__change`).click();
+
+    await expectStepActive(page, METHOD_STEP, 'after Change');
+    await expect(
+      page.locator(`${METHOD_STEP} li`).filter({ has: page.locator('input.shipping_method:not([value*="local_pickup"])') })
+    ).toBeVisible();
+    await expect(
+      page.locator(`${METHOD_STEP} li`).filter({ has: page.locator('input.shipping_method[value*="local_pickup"]') })
+    ).toBeVisible();
+    await expect(page.locator(`${METHOD_STEP} label`).filter({ hasText: /^Delivery/ })).toBeVisible();
+    await expect(page.locator(`${METHOD_STEP} label`).filter({ hasText: /Free Collection/i })).toBeVisible();
+
+    await selectMethodAndSettle(page, pickup);
+
+    // Editing after Change must not yank the customer forward. Collection still
+    // needs a location, and Delivery must also stay put until Continue.
+    await expectStepActive(page, METHOD_STEP, 'after switching to collection via Change');
+    await expect(
+      page.locator(`${METHOD_STEP} li`).filter({ has: page.locator('input.shipping_method:not([value*="local_pickup"])') })
+    ).toBeVisible();
+    await expect(
+      page.locator(`${METHOD_STEP} li`).filter({ has: page.locator('input.shipping_method[value*="local_pickup"]') })
+    ).toBeVisible();
+    await expect(page.locator(`${METHOD_STEP} label`).filter({ hasText: /^Delivery/ })).toBeVisible();
+
+    await selectMethodAndSettle(page, delivery);
+    await expectStepActive(page, METHOD_STEP, 'after switching back to delivery via Change');
+    await expect(delivery).toBeChecked();
   });
 });

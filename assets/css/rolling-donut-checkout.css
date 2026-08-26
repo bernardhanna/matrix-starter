@@ -392,7 +392,8 @@ label[for="payment_method_stripe"]::after {
   border-color: #000 !important;
 }
 
-.rd-checkout-payment-coupon__apply.button {
+.rd-checkout-payment-coupon__apply.button,
+.rd-checkout-payment-coupon__remove.button {
   flex: 0 0 auto;
   min-width: 7.5rem;
   height: 3.25rem;
@@ -413,10 +414,33 @@ label[for="payment_method_stripe"]::after {
 }
 
 .rd-checkout-payment-coupon__apply.button:hover,
-.rd-checkout-payment-coupon__apply.button:focus-visible {
+.rd-checkout-payment-coupon__apply.button:focus-visible,
+.rd-checkout-payment-coupon__remove.button:hover,
+.rd-checkout-payment-coupon__remove.button:focus-visible {
   background: #ffed56 !important;
   color: #000 !important;
   border-color: #000 !important;
+}
+
+.rd-checkout-payment-coupon__code {
+  flex: 1 1 12rem;
+  min-width: 0;
+  height: 3.25rem;
+  margin: 0;
+  padding: 0 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid #000;
+  border-radius: 999px;
+  background: #fff;
+  box-sizing: border-box;
+  font-family: "Laca Pro", Laca, sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rd-checkout-payment-coupon__input.has-error {
@@ -447,7 +471,37 @@ label[for="payment_method_stripe"]::after {
     padding-right: 1rem;
   }
 
-  .rd-checkout-payment-coupon__apply.button {
+  .rd-checkout-payment-coupon__apply.button,
+  .rd-checkout-payment-coupon__remove.button {
     width: 100%;
   }
+}
+
+/* Custom Order / box lines: collapse empty meta and pickup wrappers. */
+.woocommerce-checkout-review-order-table .product-name {
+  line-height: 1.35;
+}
+
+.woocommerce-checkout-review-order-table .product-name .product-quantity {
+  display: inline-block;
+  margin: 0.15rem 0 0.2rem;
+}
+
+.woocommerce-checkout-review-order-table .product-name small:empty,
+.woocommerce-checkout-review-order-table .product-name li:empty,
+.woocommerce-checkout-review-order-table .product-name ul:not(:has(li:not(:empty))) {
+  display: none;
+}
+
+.woocommerce-checkout-review-order-table .product-name .donut-box-builder-items {
+  margin: 0.2rem 0 0.35rem;
+  padding-left: 1.1rem;
+}
+
+.woocommerce-checkout-review-order-table .product-name .rd-bb-cart-acc {
+  margin-top: 0.2rem;
+}
+
+.woocommerce-checkout-review-order-table .pickup-location-cart-item-field:not(:has(select, input, label, button, a, small)) {
+  display: none;
 }

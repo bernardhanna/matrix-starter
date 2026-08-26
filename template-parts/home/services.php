@@ -36,7 +36,7 @@ $inner_class = $is_box_page
     <div class="lg:flex lg:justify-center lg:w-full">
       <div class="<?php echo esc_attr($inner_class); ?>">
         <?php foreach ($services as $service) :
-            $image = matrix_rd_acf_image($service['image'] ?? null);
+            $image = matrix_rd_acf_image($service['image'] ?? null, '', 'medium_large');
             $video = matrix_rd_acf_file_url($service['video'] ?? null);
             $title = isset($service['title']) ? (string) $service['title'] : '';
             $desc  = isset($service['description']) ? (string) $service['description'] : '';
@@ -50,25 +50,35 @@ $inner_class = $is_box_page
         >
           <div
             class="relative w-[150px] h-[150px] xxl:w-[200px] xxl:h-[200px] cursor-pointer"
-            @mouseover="isHovered = true; $refs.videoElement && $refs.videoElement.play()"
-            @mouseout="isHovered = false; $refs.videoElement && $refs.videoElement.pause()"
+            @mouseenter="isHovered = true; $refs.videoElement && $refs.videoElement.play().catch(() => {})"
+            @mouseleave="isHovered = false; $refs.videoElement && $refs.videoElement.pause()"
           >
             <img
-              class="absolute top-0 left-0 z-10 w-full h-full transition-opacity duration-300 opacity-100"
+              class="absolute top-0 left-0 z-10 w-full h-full object-contain transition-opacity duration-300 opacity-100 pointer-events-none"
               :class="{ 'opacity-0': isHovered, 'opacity-100': !isHovered }"
               src="<?php echo esc_url($image['url']); ?>"
               alt="<?php echo esc_attr($image['alt']); ?>"
+              loading="lazy"
+              decoding="async"
             />
             <?php if ($video !== '') : ?>
             <video
-              class="absolute top-0 left-0 z-50 w-full h-full transition-opacity duration-300 opacity-0"
+              class="absolute top-0 left-0 z-0 w-full h-full object-contain transition-opacity duration-300 opacity-0 pointer-events-none"
               :class="{ 'opacity-0': !isHovered, 'opacity-100': isHovered }"
-              preload="none"
+              preload="metadata"
               x-ref="videoElement"
               muted
+              loop
               playsinline
+              aria-hidden="true"
             >
               <source src="<?php echo esc_url($video); ?>" type="video/mp4" />
+              <track
+                kind="captions"
+                srclang="en"
+                label="<?php esc_attr_e('Captions', 'matrix-starter'); ?>"
+                src="<?php echo esc_url(get_template_directory_uri() . '/assets/captions/decorative-muted.vtt'); ?>"
+              />
             </video>
             <?php endif; ?>
           </div>

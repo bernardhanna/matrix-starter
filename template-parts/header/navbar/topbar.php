@@ -27,7 +27,7 @@ if ($topbar_text === '' && $discount_text === '') {
 ?>
 <section
   id="topbar"
-  class="rd-topbar flextopbar relative z-[100] w-full bg-black-full transition-all duration-300"
+  class="rd-topbar flextopbar relative z-[50] w-full bg-black-full transition-all duration-300"
   data-rd-topbar
 >
   <div class="mx-auto flex w-full max-w-max-1514 items-center justify-between px-4 max-lg:px-4 lg:px-8">
@@ -39,6 +39,8 @@ if ($topbar_text === '' && $discount_text === '') {
           alt="<?php echo esc_attr($icon['alt']); ?>"
           width="28"
           height="28"
+          loading="lazy"
+          decoding="async"
         />
       <?php endif; ?>
       <span class="relative text-center font-laca text-xs-font font-lighter leading-tight tracking-widest text-yellow-primary lg:text-left">
@@ -60,6 +62,7 @@ if ($topbar_text === '' && $discount_text === '') {
       </span>
     </div>
     <button type="button" id="topbar-close" class="p-2 text-white" aria-label="<?php esc_attr_e('Close announcement', 'matrix-starter'); ?>">
+      <span class="sr-only"><?php esc_html_e('Close announcement', 'matrix-starter'); ?></span>
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M16.2126 5.70711C16.6031 5.31658 17.2363 5.31658 17.6268 5.70711C18.0173 6.09763 18.0173 6.7308 17.6268 7.12132L7.12137 17.6267C6.73084 18.0173 6.09768 18.0173 5.70715 17.6267C5.31663 17.2362 5.31663 16.603 5.70715 16.2125L16.2126 5.70711Z" fill="currentColor"/>
         <path d="M7.12141 5.70711C6.73089 5.31658 6.09772 5.31658 5.7072 5.70711C5.31668 6.09763 5.31668 6.7308 5.7072 7.12132L16.2126 17.6267C16.6031 18.0173 17.2363 18.0173 17.6268 17.6267C18.0174 17.2362 18.0174 16.603 17.6268 16.2125L7.12141 5.70711Z" fill="currentColor"/>

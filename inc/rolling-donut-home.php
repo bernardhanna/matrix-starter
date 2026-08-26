@@ -52,13 +52,6 @@ function matrix_rd_home_enqueue_assets(): void {
         '4.1.4',
         true
     );
-    wp_enqueue_script(
-        'splide-autoplay',
-        'https://cdn.jsdelivr.net/npm/@splidejs/splide-extension-auto-play@0.5.3/dist/js/splide-extension-auto-play.min.js',
-        ['splide'],
-        '0.5.3',
-        true
-    );
 
     $theme_version = get_option('theme_css_version', '1.0');
     $legacy_css    = get_template_directory() . '/assets/css/rolling-donut-legacy.css';
@@ -74,7 +67,7 @@ function matrix_rd_home_enqueue_assets(): void {
     wp_enqueue_script(
         'matrix-rd-home',
         get_template_directory_uri() . '/assets/js/rolling-donut-home.js',
-        ['splide', 'splide-autoplay', 'jquery', 'alpine'],
+        ['splide', 'jquery', 'alpine'],
         $theme_version,
         true
     );
@@ -191,8 +184,8 @@ function matrix_rd_normalize_featured_slide(array $row): ?array {
         return null;
     };
 
-    $image        = matrix_rd_acf_image($pick($row, ['slide_image', 'image']) ?? null);
-    $image_mobile = matrix_rd_acf_image($pick($row, ['slide_image_mobile', 'image_mobile']) ?? null);
+    $image        = matrix_rd_acf_image($pick($row, ['slide_image', 'image']) ?? null, '', 'large');
+    $image_mobile = matrix_rd_acf_image($pick($row, ['slide_image_mobile', 'image_mobile']) ?? null, '', 'large');
     $heading      = trim((string) ($pick($row, ['slide_heading', 'heading']) ?? ''));
     $text         = trim((string) ($pick($row, ['slide_text', 'text', 'description']) ?? ''));
     $bg_color     = trim((string) ($pick($row, ['slide_bg_color', 'bg_color']) ?? ''));
@@ -455,7 +448,7 @@ function matrix_rd_theme_hero_attachment_id(string $filename): int {
 }
 
 /**
- * Homepage hero layout: default (full-bleed card) or layout_2 (split panels).
+ * Homepage hero layout: layout_1 (full-bleed card) or layout_2 (split panels).
  */
 function matrix_rd_get_home_hero_layout(): string {
     $layout = function_exists('get_field') ? get_field('hero_layout') : null;
@@ -463,7 +456,12 @@ function matrix_rd_get_home_hero_layout(): string {
         $layout = (string) get_post_meta(get_queried_object_id(), 'hero_layout', true);
     }
 
-    return in_array($layout, ['default', 'layout_2'], true) ? $layout : 'default';
+    // Legacy value "default" maps to Layout 1.
+    if ($layout === 'default' || $layout === 'layout_1') {
+        return 'layout_1';
+    }
+
+    return $layout === 'layout_2' ? 'layout_2' : 'layout_1';
 }
 
 /**
@@ -699,7 +697,20 @@ function matrix_rd_home_hero_overlay_style(array $slide): string {
         default       => 'rgba(0, 0, 0, 0.71)',
     };
 
-    return 'background:' . esc_attr($background) . ';';
+    // Solid fallback for Layout 1 mobile panel (Figma uses an opaque content block).
+    $solid = match ($preset) {
+        'transparent' => 'transparent',
+        'dark_brown'  => '#332923',
+        'yellow'      => '#f1da1a',
+        'custom'      => $custom !== '' ? $custom : '#000000',
+        default       => '#000000',
+    };
+
+    return sprintf(
+        'background:%1$s;--home-hero-overlay:%1$s;--home-hero-overlay-solid:%2$s;',
+        esc_attr($background),
+        esc_attr($solid)
+    );
 }
 
 /**
@@ -779,12 +790,12 @@ function matrix_rd_home_hero_render_body_html(string $html, bool $highlight = fa
 function matrix_rd_normalize_home_hero_slide(array $row): ?array {
     $row = matrix_rd_map_hero_slide_acf_row($row);
 
-    $left_pattern         = matrix_rd_acf_image($row['left_pattern'] ?? null);
-    $left_pattern_mobile  = matrix_rd_acf_image($row['left_pattern_mobile'] ?? null);
-    $left_image           = matrix_rd_acf_image($row['left_image'] ?? null);
-    $left_image_mobile    = matrix_rd_acf_image($row['left_image_mobile'] ?? null);
-    $right_image          = matrix_rd_acf_image($row['right_image'] ?? null);
-    $right_image_mobile   = matrix_rd_acf_image($row['right_image_mobile'] ?? null);
+    $left_pattern         = matrix_rd_acf_image($row['left_pattern'] ?? null, '', 'large');
+    $left_pattern_mobile  = matrix_rd_acf_image($row['left_pattern_mobile'] ?? null, '', 'large');
+    $left_image           = matrix_rd_acf_image($row['left_image'] ?? null, '', 'large');
+    $left_image_mobile    = matrix_rd_acf_image($row['left_image_mobile'] ?? null, '', 'large');
+    $right_image          = matrix_rd_acf_image($row['right_image'] ?? null, '', '1536x1536');
+    $right_image_mobile   = matrix_rd_acf_image($row['right_image_mobile'] ?? null, '', '1536x1536');
 
     $heading         = trim((string) ($row['heading'] ?? ''));
     $heading_mobile  = trim((string) ($row['heading_mobile'] ?? ''));

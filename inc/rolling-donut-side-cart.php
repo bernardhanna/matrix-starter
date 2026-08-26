@@ -24,6 +24,10 @@ function matrix_rd_uses_side_cart(): bool {
  * Whether a cart line is a child of a donut box or WPC product bundle.
  */
 function matrix_rd_side_cart_is_child_line(array $cart_item): bool {
+    if (function_exists('dbb_cart_item_is_box_child') && dbb_cart_item_is_box_child($cart_item)) {
+        return true;
+    }
+
     if (isset($cart_item['part_of_box']) && $cart_item['part_of_box'] === true) {
         return true;
     }
@@ -39,13 +43,19 @@ function matrix_rd_side_cart_is_child_line(array $cart_item): bool {
  * Whether a cart line is a box/bundle parent that should show as a single title in the side cart.
  */
 function matrix_rd_side_cart_is_box_parent(array $cart_item): bool {
+    if (class_exists('RD_Box_Builder_Cart_Edit') && RD_Box_Builder_Cart_Edit::is_box_parent($cart_item)) {
+        return true;
+    }
+
     $product = $cart_item['data'] ?? null;
     if (! $product instanceof WC_Product) {
         return false;
     }
 
     if ($product->get_type() === 'donut_box_builder') {
-        return isset($cart_item['part_of_box']) && $cart_item['part_of_box'] === false;
+        return function_exists('dbb_cart_item_is_box_parent')
+            ? dbb_cart_item_is_box_parent($cart_item)
+            : (isset($cart_item['part_of_box']) && empty($cart_item['part_of_box']));
     }
 
     if ($product->is_type('woosb') || ! empty($cart_item['woosb_ids'])) {
@@ -71,7 +81,7 @@ add_filter('woocommerce_widget_cart_item_visible', 'matrix_rd_side_cart_item_vis
  * Plain product title for side cart rows (no nested flavour/bundle breakdown).
  */
 function matrix_rd_side_cart_item_name(string $product_name, array $cart_item, string $cart_item_key): string {
-    if (matrix_rd_side_cart_is_box_parent($cart_item)) {
+    if (class_exists('RD_Box_Builder_Cart_Edit') && RD_Box_Builder_Cart_Edit::is_box_parent($cart_item)) {
         return esc_html($product_name);
     }
 
@@ -124,7 +134,7 @@ function matrix_rd_render_side_cart_shell(): void {
         data-rd-side-cart-close
         aria-label="<?php esc_attr_e('Close cart', 'matrix-starter'); ?>"
         tabindex="-1"
-      ></button>
+      ><span class="sr-only"><?php esc_html_e('Close cart', 'matrix-starter'); ?></span></button>
       <aside
         class="rd-side-cart__panel"
         role="dialog"
@@ -155,6 +165,10 @@ function matrix_rd_ajax_fetch_side_cart(): void {
 
     if (is_null(WC()->cart)) {
         wc_load_cart();
+    }
+
+    if (WC()->cart) {
+        WC()->cart->calculate_totals();
     }
 
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');

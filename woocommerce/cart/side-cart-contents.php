@@ -35,7 +35,7 @@ $item_count = $is_empty ? 0 : $cart->get_cart_contents_count();
 
 <?php if ($is_empty) : ?>
   <div class="rd-side-cart__empty flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
-    <span class="iconify mb-4 text-black-full" data-icon="grommet-icons:basket" data-width="48" data-height="48" aria-hidden="true"></span>
+    <span class="iconify mb-4 text-black-full" data-icon="grommet-icons:cart" data-width="48" data-height="48" aria-hidden="true"></span>
     <p class="font-laca text-base-font text-black-full"><?php esc_html_e('Your cart is empty.', 'matrix-starter'); ?></p>
     <button
       type="button"
@@ -102,10 +102,10 @@ $item_count = $is_empty ? 0 : $cart->get_cart_contents_count();
               </button>
             </div>
             <?php
-            if (! function_exists('matrix_rd_side_cart_is_box_parent') || ! matrix_rd_side_cart_is_box_parent($cart_item)) {
-                echo wc_get_formatted_cart_item_data($cart_item); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            } elseif (class_exists('RD_Box_Builder_Cart_Edit') && RD_Box_Builder_Cart_Edit::is_box_parent($cart_item)) {
+            if (class_exists('RD_Box_Builder_Cart_Edit') && RD_Box_Builder_Cart_Edit::is_box_parent($cart_item)) {
                 echo RD_Box_Builder_Cart_Edit::render($cart_item_key, $cart_item, 'side'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            } elseif (! function_exists('matrix_rd_side_cart_is_box_parent') || ! matrix_rd_side_cart_is_box_parent($cart_item)) {
+                echo wc_get_formatted_cart_item_data($cart_item); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             }
             ?>
             <div class="rd-side-cart__item-meta font-reg420 text-sm-md-font text-black-full">

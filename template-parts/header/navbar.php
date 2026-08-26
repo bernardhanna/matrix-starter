@@ -14,21 +14,22 @@ $logos       = matrix_rd_nav_logos();
 $telephone   = matrix_rd_nav_telephone();
 $cart        = matrix_rd_nav_cart();
 $mobile_bg   = matrix_rd_nav_mobile_bg();
-$is_thankyou = function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-received');
+$is_thankyou = matrix_rd_nav_is_thankyou();
 
 $show_topbar = true;
-if (function_exists('is_cart') && (is_cart() || is_checkout()) && is_user_logged_in()) {
+if ($is_thankyou || (function_exists('is_cart') && (is_cart() || is_checkout()) && is_user_logged_in())) {
     $show_topbar = false;
 }
 
 $inner_args = [
-    'nav_split'   => $nav_split,
-    'nav_all'     => $nav_all,
-    'logos'       => $logos,
-    'telephone'   => $telephone,
-    'cart'        => $cart,
-    'mobile_bg'   => $mobile_bg,
-    'is_thankyou' => $is_thankyou,
+    'nav_split'    => $nav_split,
+    'nav_all'      => $nav_all,
+    'logos'        => $logos,
+    'telephone'    => $telephone,
+    'cart'         => $cart,
+    'mobile_bg'    => $mobile_bg,
+    'is_thankyou'  => $is_thankyou,
+    'show_topnav'  => ! $is_thankyou,
 ];
 
 $is_cart_or_checkout = (function_exists('is_cart') && is_cart())
@@ -67,10 +68,11 @@ $is_cart_or_checkout = (function_exists('is_cart') && is_cart())
   <div class="rd-header-spacer" :style="{ height: spacerHeight }" aria-hidden="true"></div>
 
   <?php
-  get_template_part('template-parts/header/navbar/search-panel', null, [
-      'mobile_menu_bg' => $mobile_bg,
-  ]);
-
+  if (! $is_thankyou) {
+      get_template_part('template-parts/header/navbar/search-panel', null, [
+          'mobile_menu_bg' => $mobile_bg,
+      ]);
+  }
   ?>
 
 </header>

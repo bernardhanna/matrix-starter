@@ -346,8 +346,8 @@ function matrix_rd_enqueue_variation_validation_script(): void {
 
     wp_localize_script('matrix-rd-variation-validation', 'matrixRdVariation', [
         'selectPrefix'   => __('Please select', 'rolling-donut'),
-        'selectSuffix'   => __('before adding to your basket.', 'rolling-donut'),
-        'genericMessage' => __('Please choose your product options before adding to your basket.', 'rolling-donut'),
+        'selectSuffix'   => __('before adding to your cart.', 'rolling-donut'),
+        'genericMessage' => __('Please choose your product options before adding to your cart.', 'rolling-donut'),
     ]);
 }
 add_action('wp_enqueue_scripts', 'matrix_rd_enqueue_variation_validation_script', 31);

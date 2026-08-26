@@ -82,6 +82,7 @@ require_once get_template_directory() . '/inc/rolling-donut-home.php';
 require_once get_template_directory() . '/inc/rolling-donut-footer.php';
 require_once get_template_directory() . '/inc/rolling-donut-woocommerce.php';
 require_once get_template_directory() . '/inc/rolling-donut-a11y.php';
+require_once get_template_directory() . '/inc/rolling-donut-cookiescript.php';
 require_once get_template_directory() . '/inc/rolling-donut-performance.php';
 require_once get_template_directory() . '/inc/rolling-donut-single-product.php';
 require_once get_template_directory() . '/inc/rolling-donut-locations.php';
@@ -376,9 +377,6 @@ add_action('after_setup_theme', function () {
     $path = trailingslashit( get_stylesheet_directory() ) . 'acf-fields/register-team-fields.php';
     if ( file_exists( $path ) ) {
         require_once $path;
-    } else {
-        // Optional: log instead of fatal error
-        error_log('[ACF] Missing file: ' . $path);
     }
 });
 
@@ -390,13 +388,6 @@ add_action('wp_footer', function () {
         echo '<!-- Theme_Forms loaded -->';
     }
 });
-
-/**
- * Enqueue jQuery UI draggable early
- */
-add_action('wp_enqueue_scripts', function () {
-    wp_enqueue_script('jquery-ui-draggable');
-}, 1);
 
 /**
  * Build ACF Select choices from menus

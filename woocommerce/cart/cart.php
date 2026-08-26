@@ -634,16 +634,3 @@ do_action('woocommerce_before_cart'); ?>
         $(document).ready(toggleShippingContents);
     });
 </script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  if (typeof jQuery === 'undefined') return;
-
-  jQuery(document.body).on('wc_fragments_refreshed', function () {
-    try {
-      if (typeof Cookies !== 'undefined') {
-        Cookies.set('woocommerce_items_in_cart', '1', { path: '/' });
-      }
-    } catch (e) {}
-  });
-});
-</script>

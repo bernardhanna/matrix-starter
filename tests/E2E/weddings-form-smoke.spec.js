@@ -91,6 +91,24 @@ test.describe('Weddings & Events form', () => {
     await expect(form.locator('button[type="submit"]')).toBeVisible();
   });
 
+  test('Turnstile is only active on therollingdonut.ie', async ({ page }) => {
+    const form = page.locator(FORM).first();
+    test.skip((await form.count()) === 0, `No weddings form on ${FORM_PATH}.`);
+
+    const host = new URL(page.url()).hostname.replace(/^www\./, '');
+    const live = host === 'therollingdonut.ie';
+    const widget = form.locator('.cf-turnstile');
+    const api = page.locator('script[src*="challenges.cloudflare.com/turnstile"]');
+
+    if (live) {
+      await expect(widget).toHaveCount(1);
+      await expect(api).toHaveCount(1);
+    } else {
+      await expect(widget).toHaveCount(0);
+      await expect(api).toHaveCount(0);
+    }
+  });
+
   test('inputs and checkboxes accept and retain values', async ({ page }) => {
     const form = page.locator(FORM).first();
     test.skip((await form.count()) === 0, `No weddings form on ${FORM_PATH}.`);

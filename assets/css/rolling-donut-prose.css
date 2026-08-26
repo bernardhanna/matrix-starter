@@ -1,0 +1,236 @@
+/**
+ * Default / legal page copy — Edmondsans headings + Laca body.
+ * Overrides Matrix .entry-content (Public Sans / navy) so Cookie Policy,
+ * Terms, Privacy, and similar pages match blog / accessibility.
+ */
+
+body.page:not(.woocommerce-page) .rd-page-prose,
+body.page:not(.woocommerce-page) .gutenburg {
+  max-width: 45rem;
+  margin-left: auto;
+  margin-right: auto;
+  color: #000;
+  font-family: Laca, Montserrat, sans-serif;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.5;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose h1,
+body.page:not(.woocommerce-page) .rd-page-prose h2,
+body.page:not(.woocommerce-page) .rd-page-prose h3,
+body.page:not(.woocommerce-page) .gutenburg h1,
+body.page:not(.woocommerce-page) .gutenburg h2,
+body.page:not(.woocommerce-page) .gutenburg h3,
+body.page:not(.woocommerce-page) .gutenburg h1.wp-block-heading,
+body.page:not(.woocommerce-page) .gutenburg h2.wp-block-heading,
+body.page:not(.woocommerce-page) .gutenburg h3.wp-block-heading {
+  padding: 0 0 1rem;
+  margin: 1.5rem 0 0;
+  font-family: Edmondsans, edmondsans, sans-serif;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: #000;
+  letter-spacing: normal;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose h4,
+body.page:not(.woocommerce-page) .gutenburg h4,
+body.page:not(.woocommerce-page) .gutenburg h4.wp-block-heading {
+  padding: 0;
+  margin: 1.75rem 0 0.5rem;
+  font-family: Edmondsans, edmondsans, sans-serif;
+  font-size: 24px;
+  font-weight: 420;
+  line-height: 1.3;
+  color: #000;
+  letter-spacing: normal;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose h5,
+body.page:not(.woocommerce-page) .rd-page-prose h6,
+body.page:not(.woocommerce-page) .gutenburg h5,
+body.page:not(.woocommerce-page) .gutenburg h6,
+body.page:not(.woocommerce-page) .gutenburg h5.wp-block-heading,
+body.page:not(.woocommerce-page) .gutenburg h6.wp-block-heading {
+  padding: 0;
+  margin: 1.5rem 0 0.35rem;
+  font-family: Edmondsans, edmondsans, sans-serif;
+  font-size: 20px;
+  font-weight: 420;
+  line-height: 1.3;
+  color: #000;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose > :first-child,
+body.page:not(.woocommerce-page) .gutenburg > :first-child {
+  margin-top: 0;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose p,
+body.page:not(.woocommerce-page) .rd-page-prose li,
+body.page:not(.woocommerce-page) .gutenburg p,
+body.page:not(.woocommerce-page) .gutenburg li {
+  margin: 0;
+  padding: 0.5rem 0;
+  font-family: Laca, Montserrat, sans-serif;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: #000;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose p span,
+body.page:not(.woocommerce-page) .gutenburg p span {
+  font-family: inherit;
+  color: inherit;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose ul,
+body.page:not(.woocommerce-page) .rd-page-prose ol,
+body.page:not(.woocommerce-page) .gutenburg ul,
+body.page:not(.woocommerce-page) .gutenburg ol {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose ul,
+body.page:not(.woocommerce-page) .gutenburg ul {
+  list-style: disc;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose ol,
+body.page:not(.woocommerce-page) .gutenburg ol {
+  list-style: decimal;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose a,
+body.page:not(.woocommerce-page) .gutenburg a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  transition: color 150ms ease-out;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose a:hover,
+body.page:not(.woocommerce-page) .gutenburg a:hover {
+  color: #000;
+}
+
+body.page:not(.woocommerce-page) .rd-page-prose strong,
+body.page:not(.woocommerce-page) .rd-page-prose b,
+body.page:not(.woocommerce-page) .gutenburg strong,
+body.page:not(.woocommerce-page) .gutenburg b {
+  font-weight: 700;
+  color: #000;
+}
+
+/* CookieScript report widget — inherit brand type, restyle controls. */
+body.page [class*="_CookieScript"] {
+  font-family: Laca, Montserrat, sans-serif;
+  color: #000;
+}
+
+body.page ._CookieScriptReportPageCheckboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+body.page ._CookieScriptReportPageCheckboxLabel,
+body.page ._CookieScriptReportPageCheckboxText {
+  font-family: Laca, Montserrat, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: #000;
+}
+
+body.page ._CookieScriptReportPageSaveSettingButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0.65rem 1.75rem;
+  margin: 0.5rem 0 1rem;
+  border: 3px solid #f2e900;
+  border-radius: 72px;
+  background: #000;
+  color: #f2e900;
+  font-family: Edmondsans, edmondsans, sans-serif;
+  font-size: 18px;
+  font-weight: 420;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out;
+}
+
+body.page ._CookieScriptReportPageSaveSettingButton:hover {
+  background: #f2e900;
+  color: #000;
+  border-color: #000;
+}
+
+body.page ._CookieScriptReportPageConsentKey {
+  margin: 0.5rem 0 1.25rem;
+  font-family: Laca, Montserrat, sans-serif;
+  font-size: 14px;
+  color: #000;
+}
+
+body.page ._CookieScriptReportPageTable {
+  width: 100%;
+  margin: 0 0 1.5rem;
+  border-collapse: collapse;
+  overflow: hidden;
+  font-family: Laca, Montserrat, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #000;
+}
+
+body.page ._CookieScriptReportPageTableTh,
+body.page ._CookieScriptReportPageTableTd {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #e1e7ec;
+  text-align: left;
+  vertical-align: top;
+}
+
+body.page ._CookieScriptReportPageTableTh {
+  font-family: Edmondsans, edmondsans, sans-serif;
+  font-weight: 420;
+  background: #f7f7f4;
+  color: #000;
+}
+
+body.page ._CookieScriptReportVendorName,
+body.page ._CookieScriptReportVendorName a {
+  font-family: Laca, Montserrat, sans-serif;
+  color: #000;
+}
+
+body.page .rd-page-prose ._CookieScriptReportPageTable,
+body.page .gutenburg ._CookieScriptReportPageTable {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 767px) {
+  body.page:not(.woocommerce-page) .rd-page-prose h1,
+  body.page:not(.woocommerce-page) .rd-page-prose h2,
+  body.page:not(.woocommerce-page) .rd-page-prose h3,
+  body.page:not(.woocommerce-page) .gutenburg h1,
+  body.page:not(.woocommerce-page) .gutenburg h2,
+  body.page:not(.woocommerce-page) .gutenburg h3 {
+    font-size: 28px;
+  }
+
+  body.page:not(.woocommerce-page) .rd-page-prose h4,
+  body.page:not(.woocommerce-page) .gutenburg h4 {
+    font-size: 22px;
+  }
+}

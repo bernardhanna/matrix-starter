@@ -235,7 +235,7 @@ module.exports = {
       tab: '993px',
       'tablet-sm': '993px',
       lg: '1084px',
-      nav: '1150px',
+      nav: '1211px',
       laptop: '1250px',
       xl: '1280px',
       xxl: '1440px',

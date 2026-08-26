@@ -21,7 +21,7 @@ if (! is_array($crumbs) || $crumbs === []) {
     $is_last   = $key === array_key_last($crumbs);
     $item_class = mb_strlen($label) > 8 ? 'breadcrumb-ellipsis' : '';
     ?>
-  <span class="breadcrumb-item <?php echo $is_last ? 'text-yellow-primary font-bolder' : 'text-white'; ?> <?php echo esc_attr($item_class); ?>">
+  <span class="breadcrumb-item font-laca text-sm-font <?php echo $is_last ? 'text-yellow-primary font-bolder' : 'text-white'; ?> <?php echo esc_attr($item_class); ?>">
     <?php if ($url !== '' && ! $is_last) : ?>
       <a class="text-white font-laca text-sm-font hover:underline" href="<?php echo esc_url($url); ?>"><?php echo esc_html($label); ?></a>
     <?php else : ?>

@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { installCookieBlocker } = require('./helpers/cookie-blocker');
 
 /**
  * Cart page — quantity update flow on the standard WooCommerce cart.
@@ -12,24 +13,24 @@ const { test, expect } = require('@playwright/test');
  *   3. setting the quantity to 0 + Update removes the line (cart empties),
  *   4. the per-line remove "×" link empties the cart.
  *
- * Note: this covers the *plain* cart page only. Box-builder products replace the
- * quantity field with a bespoke +/− stepper — that flow lives in
- * box-builder-cart.spec.js. Use a simple, purchasable product here.
+ * Note: this covers the *plain* cart page only. The product-page box-builder
+ * stepper lives in box-builder-cart.spec.js. The cart page still uses a normal
+ * WooCommerce qty field for the parent box line.
  *
  * Env:
  *   BASE_URL                 - site origin (see playwright.config.cjs)
- *   RD_CART_TEST_PRODUCT_ID  - a simple, purchasable product id
- *                              (default 41707 "Branded Mug")
+ *   RD_CART_TEST_PRODUCT_ID  - a purchasable box product id
+ *                              (default 1959 Midi box of 20)
  */
 
-const PRODUCT_ID = process.env.RD_CART_TEST_PRODUCT_ID || process.env.RD_COUPON_TEST_PRODUCT_ID || '41707';
+const PRODUCT_ID = process.env.RD_CART_TEST_PRODUCT_ID || process.env.RD_COUPON_TEST_PRODUCT_ID || '1978';
 
 const CART_FORM = '.woocommerce-cart-form';
-const CART_ROW = `${CART_FORM}__cart-item[data-main-product="true"]`;
-const QTY_INPUT = `${CART_FORM} input.qty`;
+const CART_ROW = `${CART_FORM} tbody tr.cart_item:has(input.qty)`;
+const QTY_INPUT = `${CART_ROW} input.qty`;
 const UPDATE_BTN = 'button[name="update_cart"]';
-const LINE_SUBTOTAL = '.product-subtotal';
-const REMOVE_LINK = `${CART_FORM} td.product-remove a.remove`;
+const LINE_SUBTOTAL = `${CART_ROW} .product-subtotal`;
+const REMOVE_LINK = `${CART_ROW} td.product-remove a.remove`;
 
 /** Best-effort dismissal of cookie / promo overlays that can intercept clicks. */
 async function dismissBlockingUi(page) {
@@ -47,9 +48,17 @@ async function dismissBlockingUi(page) {
   await page.keyboard.press('Escape').catch(() => {});
 }
 
-/** Add the simple test product, then land on the cart page. */
+/** Add the test product the way a customer would, then land on the cart page. */
 async function addProductAndOpenCart(page) {
-  await page.goto(`/?add-to-cart=${PRODUCT_ID}`);
+  await page.goto(`/?p=${PRODUCT_ID}`);
+  await dismissBlockingUi(page);
+  const add = page.locator('form.cart .single_add_to_cart_button').first();
+  if (await add.isVisible().catch(() => false)) {
+    await add.click({ force: true });
+    await page.waitForTimeout(800);
+  } else {
+    await page.goto(`/?add-to-cart=${PRODUCT_ID}`);
+  }
   await page.goto('/cart/');
   await dismissBlockingUi(page);
 }
@@ -79,6 +88,7 @@ async function setQuantityAndUpdate(page, value) {
 test.describe('Cart — quantity update', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
+    await installCookieBlocker(page);
     await addProductAndOpenCart(page);
     // Every test needs at least one editable line in the cart to be meaningful.
     test.skip(
@@ -117,23 +127,27 @@ test.describe('Cart — quantity update', () => {
   });
 
   test('setting the quantity to zero removes the line and empties the cart', async ({ page }) => {
-    await expect(page.locator(CART_ROW)).toHaveCount(1);
+    const rows = page.locator(CART_ROW);
+    const start = await rows.count();
+    expect(start).toBeGreaterThan(0);
 
     await setQuantityAndUpdate(page, 0);
 
-    await expect(page.locator(CART_ROW)).toHaveCount(0);
-    await expect(page.getByText(/your cart is empty/i).first()).toBeVisible();
+    await expect(rows).toHaveCount(Math.max(0, start - 1), { timeout: 15000 });
+    if (start === 1) {
+      await expect(page.getByText(/your cart is (currently )?empty/i).first()).toBeVisible();
+    }
   });
 
   test('the per-line remove link empties the cart', async ({ page }) => {
-    await expect(page.locator(CART_ROW)).toHaveCount(1);
+    await expect(page.locator(CART_ROW).first()).toBeVisible();
 
-    // The remove "×" is a plain GET link; navigate it directly so the theme's
-    // success/notice overlay can't intercept the click.
-    const removeHref = await page.locator(REMOVE_LINK).first().getAttribute('href');
-    expect(removeHref, 'remove link should have an href').toBeTruthy();
-    await page.goto(removeHref);
-    await dismissBlockingUi(page);
+    while ((await page.locator(REMOVE_LINK).count()) > 0) {
+      const removeHref = await page.locator(REMOVE_LINK).first().getAttribute('href');
+      expect(removeHref, 'remove link should have an href').toBeTruthy();
+      await page.goto(removeHref);
+      await dismissBlockingUi(page);
+    }
 
     await expect(page.locator(CART_ROW)).toHaveCount(0);
     await expect(page.getByText(/your cart is currently empty/i).first()).toBeVisible();

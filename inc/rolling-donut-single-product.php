@@ -346,9 +346,12 @@ function matrix_rd_set_box_notice_before_bundle(): void
         return;
     }
 
-    echo '<p class="rd-set-box-notice">';
+    echo '<div class="rd-set-box-notice" role="note">';
+    echo '<p class="rd-set-box-notice__title">' . esc_html__('Please note:', 'matrix-starter') . '</p>';
+    echo '<p class="rd-set-box-notice__body">';
     esc_html_e('This is a set box and so flavours cannot be altered. Box contains the following flavours:', 'matrix-starter');
     echo '</p>';
+    echo '</div>';
 }
 add_action('woosb_before_table', 'matrix_rd_set_box_notice_before_bundle', 10);
 
@@ -470,7 +473,7 @@ function matrix_rd_single_add_to_cart_button_text(string $text): string
         return $text;
     }
 
-    return __('Add to Basket', 'rolling-donut');
+    return __('Add to Cart', 'rolling-donut');
 }
 add_filter('woocommerce_product_single_add_to_cart_text', 'matrix_rd_single_add_to_cart_button_text');
 

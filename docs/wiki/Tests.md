@@ -185,3 +185,16 @@ npm run e2e:codegen
 ```
 
 Requires `BASE_URL` in `.env`.
+
+---
+
+## Rolling Donut shop QA (manual + hourly)
+
+Developer click-through checklist: [`tests/MANUAL-QA.md`](../../tests/MANUAL-QA.md).
+
+Hourly email to `bernard@matrixinternet.ie` after the MSM synthetic run:
+
+```bash
+wp msm shop-report --coverage
+wp msm shop-report --email --coverage
+```

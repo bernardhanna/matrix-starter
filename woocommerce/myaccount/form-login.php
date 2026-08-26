@@ -12,6 +12,11 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+$rd_login_redirect = '';
+if (! empty($_GET['redirect'])) {
+    $rd_login_redirect = wp_validate_redirect(esc_url_raw(wp_unslash((string) $_GET['redirect'])), '');
+}
+
 do_action('woocommerce_before_customer_login_form');
 
 $rd_label     = 'ml-2 block text-mob-xs-font font-reg420';
@@ -158,6 +163,10 @@ $rd_icon_user = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" 
                     </div>
 
                     <?php wp_nonce_field('woocommerce-login', 'woocommerce-login-nonce'); ?>
+                    <?php if ($rd_login_redirect !== '') : ?>
+                        <input type="hidden" name="redirect" value="<?php echo esc_url($rd_login_redirect); ?>" />
+                    <?php endif; ?>
+                    <?php echo function_exists('matrix_rd_account_captcha_markup') ? matrix_rd_account_captcha_markup() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
                     <div class="flex flex-col gap-4 w-full mt-8">
                         <button x-ref="submitBtn" data-testid="rd-submit-sign-in" class="<?php echo esc_attr($rd_btn); ?> woocommerce-button button woocommerce-form-login__submit" type="submit" name="login" value="<?php esc_attr_e('Sign in', 'woocommerce'); ?>"><?php esc_html_e('Sign in', 'woocommerce'); ?></button>
@@ -188,6 +197,7 @@ $rd_icon_user = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" 
                     </div>
 
                     <?php do_action('woocommerce_lostpassword_form'); ?>
+                    <?php echo function_exists('matrix_rd_account_captcha_markup') ? matrix_rd_account_captcha_markup() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
                     <div class="flex flex-col gap-4 w-full mt-8">
                         <input type="hidden" name="wc_reset_password" value="true" />
@@ -245,6 +255,7 @@ $rd_icon_user = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" 
                     </div>
 
                     <?php wp_nonce_field('woocommerce-register', 'woocommerce-register-nonce'); ?>
+                    <?php echo function_exists('matrix_rd_account_captcha_markup') ? matrix_rd_account_captcha_markup() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
                     <div class="flex flex-col gap-4 w-full mt-8">
                         <button type="submit" data-testid="rd-submit-register" class="<?php echo esc_attr($rd_btn); ?> woocommerce-button button woocommerce-form-register__submit disabled:bg-yellow-disabled disabled:cursor-not-allowed disabled:border-grey-disabled" name="register" value="<?php esc_attr_e('Register', 'woocommerce'); ?>">

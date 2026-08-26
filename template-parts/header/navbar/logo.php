@@ -5,18 +5,19 @@
 $logos = $args['logos'] ?? matrix_rd_nav_logos();
 ?>
 <a
-  class="nav-center hide-md relative z-[100] flex w-1/3 cursor-pointer items-center justify-center lg:relative laptop:bottom-4 laptop:w-1/6"
+  class="nav-center hide-md relative z-[110] flex w-1/3 cursor-pointer items-center justify-center lg:relative lg:w-1/6"
   href="<?php echo esc_url(home_url('/')); ?>"
   aria-label="<?php echo esc_attr(get_bloginfo('name') . ' — ' . __('Home', 'matrix-starter')); ?>"
 >
   <?php if ($logos['main']) : ?>
     <img
-      class="logo desktop-logo relative xxl:-left-4 -t-0-3"
+      class="logo desktop-logo relative"
       src="<?php echo esc_url($logos['main']); ?>"
       alt="<?php echo esc_attr($logos['main_alt']); ?>"
       width="152"
       height="152"
       decoding="async"
+      fetchpriority="high"
     />
   <?php endif; ?>
   <?php if ($logos['mobile']) : ?>
@@ -27,6 +28,7 @@ $logos = $args['logos'] ?? matrix_rd_nav_logos();
       width="86"
       height="80"
       decoding="async"
+      loading="lazy"
     />
     <img
       class="logo mobile-logo mobile-logo--open z-[100]"
@@ -35,6 +37,7 @@ $logos = $args['logos'] ?? matrix_rd_nav_logos();
       width="86"
       height="80"
       decoding="async"
+      loading="lazy"
     />
   <?php endif; ?>
 </a>

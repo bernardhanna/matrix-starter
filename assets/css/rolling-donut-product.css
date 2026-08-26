@@ -540,7 +540,7 @@ body.single-product form.cart .rd-bb-cta-row .rd-buy-now-button.disabled {
   }
 
   .rd-mobile-actionbar-buy {
-    border: 3px solid #000;
+    border: 3px solid #ffed56;
     background: #000;
     color: #fff;
     font-weight: 500;
@@ -556,6 +556,7 @@ body.single-product form.cart .rd-bb-cta-row .rd-buy-now-button.disabled {
   .rd-mobile-actionbar-buy:active {
     background: #ffed56;
     color: #000;
+    border-color: #000;
   }
 
   /* Stop the fixed bar from covering the last of the page content. */
@@ -809,12 +810,30 @@ form.cart .quantity_input .qty {
 
 /* WOOSB bundle list */
 .rd-set-box-notice {
-  margin: 1rem 0 0;
+  margin: 1rem 0 1.25rem;
+  padding: 0.6rem 0.85rem 0.85rem;
+  border: 2px solid #000;
+  border-left-width: 6px;
+  border-radius: 8px;
+  background: #fff8d4;
+  color: #000;
+}
+
+.rd-set-box-notice__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.rd-set-box-notice__body {
+  margin: 0;
   font-family: "Laca Pro", Laca, sans-serif;
   font-size: 1rem;
-  font-weight: 400;
+  font-weight: 700;
   line-height: 1.5;
-  color: #000;
 }
 
 .woosb-products {
@@ -1062,6 +1081,131 @@ form.cart .quantity_input .qty {
 
 .rd-note-body {
   margin-top: 0.5rem;
+}
+
+/* Additional boxes picker (Custom Order and other box-builder add-ons). */
+.rd-additional-products-field {
+  width: 100%;
+}
+
+.rd-additional-products__hint {
+  margin: 0 0 0.85rem;
+  color: #5c564e;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.rd-additional-products__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rd-additional-products__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e7e5dd;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.rd-additional-products__thumb {
+  flex: 0 0 auto;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 999px;
+  object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.rd-additional-products__meta {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rd-additional-products__name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #000;
+}
+
+.rd-additional-products__size {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: #5c564e;
+}
+
+.rd-additional-products__price {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.rd-additional-products__price del {
+  opacity: 0.55;
+  margin-right: 0.35rem;
+}
+
+#custom-product-addons .rd-additional-products__qty.quantity {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+  height: auto;
+  margin: 0;
+  padding: 3px;
+  gap: 2px;
+  background: #fbfaf6;
+  border: 1px solid #e1dfd6;
+  border-radius: 999px;
+}
+
+#custom-product-addons .rd-additional-products__qty .additional-product-quantity {
+  width: 48px;
+  min-width: 48px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 30px;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+#custom-product-addons .rd-additional-products__qty .additional-product-quantity::-webkit-outer-spin-button,
+#custom-product-addons .rd-additional-products__qty .additional-product-quantity::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+#custom-product-addons .rd-additional-products__step {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #e1dfd6;
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+#custom-product-addons .rd-additional-products__step:hover {
+  background: #ffed56;
+  border-color: #000;
 }
 
 /* Tailwind preflight can override the UA rule that hides closed <details>

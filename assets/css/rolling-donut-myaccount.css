@@ -31,11 +31,89 @@ body.tw-myaccount.logged-in .woocommerce-MyAccount-content address {
   color: #000;
 }
 
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content h2,
 body.tw-myaccount.logged-in .woocommerce-MyAccount-content h3,
 body.tw-myaccount.logged-in .woocommerce-MyAccount-content h4 {
   font-family: Edmondsans, edmondsans, sans-serif;
   font-weight: 420;
   color: #000;
+}
+
+/* View order: strip Woo's default shop_table chrome in favour of the legacy flex rows. */
+body.tw-myaccount.logged-in .rd-view-order {
+  width: 100%;
+  overflow: hidden;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+}
+
+/* WooSB hides .woosb-item-child; our flex row still showed a blank €0.00 line. */
+body.tw-myaccount.logged-in .rd-view-order__row:has(.woosb-item-child),
+body.tw-myaccount.logged-in .rd-view-order__row:has(.woosb-cart-child) {
+  display: none;
+}
+
+body.tw-myaccount.logged-in .rd-view-order__head {
+  font-family: Laca, Montserrat, sans-serif;
+}
+
+body.tw-myaccount.logged-in .rd-view-order__product a {
+  text-decoration: none;
+}
+
+body.tw-myaccount.logged-in .rd-view-order__product a:hover {
+  text-decoration: underline;
+}
+
+body.tw-myaccount.logged-in .rd-view-order .product-name p,
+body.tw-myaccount.logged-in .rd-view-order .product-name ul {
+  margin: 0.35rem 0 0;
+  font-size: 0.95em;
+}
+
+body.tw-myaccount.logged-in .woocommerce-customer-details address {
+  font-style: normal;
+  line-height: 1.5;
+}
+
+body.tw-myaccount.logged-in .woocommerce-column__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+}
+
+body.tw-myaccount.logged-in a.wc-backward.button {
+  display: inline-flex;
+  align-items: center;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  color: #ffed56 !important;
+  text-transform: none;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+body.tw-myaccount.logged-in a.wc-backward.button:hover {
+  background: transparent !important;
+  text-decoration: underline;
+  color: #ffed56 !important;
+}
+
+body.tw-myaccount.logged-in .wc-reorder-button-container .wc-reorder-button.button,
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content .wc-reorder-button.button {
+  background: #ffed56 !important;
+  border: 3px solid #ffed56 !important;
+  color: #000 !important;
+  box-shadow: none !important;
+  text-transform: none;
+  text-decoration: none;
+}
+
+body.tw-myaccount.logged-in .wc-reorder-button-container .wc-reorder-button.button:hover,
+body.tw-myaccount.logged-in .woocommerce-MyAccount-content .wc-reorder-button.button:hover {
+  background: #fff !important;
+  color: #000 !important;
 }
 
 body.tw-myaccount.logged-in .woocommerce-MyAccount-content a {
@@ -82,6 +160,15 @@ body.tw-myaccount.tw-auth .woocommerce-MyAccount-content {
   background: transparent;
   box-shadow: none;
   border: none;
+}
+
+/* Dedicated lost/reset password templates sit on the dark my-account
+   background (no white auth card), so copy must stay light. Do not
+   target the inline forgot-password form inside the sign-in card. */
+body.tw-myaccount.tw-lost-password .woocommerce-ResetPassword,
+body.tw-myaccount.tw-lost-password .woocommerce-ResetPassword p,
+body.tw-myaccount.tw-lost-password .woocommerce-ResetPassword label {
+  color: #fff;
 }
 
 body.tw-myaccount.tw-auth .woocommerce-notices-wrapper {

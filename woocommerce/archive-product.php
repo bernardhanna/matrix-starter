@@ -13,7 +13,7 @@ do_action('woocommerce_before_main_content');
 <div class="mt-0 space-top-sub"></div>
 <?php wc_get_template('custom/woocommerce-header.php'); ?>
 
-<div class="py-12 bg-white xl:py-24">
+<div class="py-12 bg-white">
   <div class="mx-auto lg:max-w-max-1549">
     <?php if (woocommerce_product_loop()) : ?>
       <?php
@@ -55,10 +55,10 @@ do_action('woocommerce_before_main_content');
     ]);
     ?>
     <?php if ($vegan_products->have_posts()) : ?>
-      <h4 class="w-full pb-12 max-md:pl-8 max-sm:py-12 product-category-title font-edmondsans text-xl-font font-reg420">
+      <h4 class="pb-12 w-full max-md:pl-8 max-sm:py-12 product-category-title font-edmondsans text-xl-font font-reg420">
         <?php esc_html_e('Vegan', 'matrix-starter'); ?>
       </h4>
-      <ul class="flex flex-row flex-wrap justify-start gap-4 px-2 products vegan max-mobile:mt-0 lg:gap-6 desktop:px-0 lg:px-4">
+      <ul class="flex flex-row flex-wrap gap-4 justify-start px-2 products vegan max-mobile:mt-0 lg:gap-6 desktop:px-0 lg:px-4">
         <?php while ($vegan_products->have_posts()) : ?>
           <?php
           $vegan_products->the_post();

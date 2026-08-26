@@ -125,6 +125,26 @@ if (is_user_logged_in() || 'no' === get_option('woocommerce_enable_checkout_logi
         width: 100%;
     }
 
+    .woocommerce-form.woocommerce-form-login.login input::placeholder {
+        color: #8a8a8a;
+        opacity: 1;
+    }
+
+    /* Turnstile (live) sits in its own row so it cannot overlap Remember me. */
+    #checkout-login-container .rd-account-captcha-wrap {
+        clear: both;
+        display: block;
+        width: 100%;
+        margin: 0.75rem 0 0;
+    }
+
+    /* All-in-One Security reCAPTCHA is stripped in PHP; hide leftovers. */
+    #checkout-login-container .g-recaptcha,
+    #checkout-login-container .aios-wc-captcha,
+    #checkout-login-container iframe[src*="recaptcha"] {
+        display: none !important;
+    }
+
     /* Legacy look: on large screens keep the username + password inputs on a
        single row, with everything else (intro text, submit, lost password)
        spanning full width below. Floats are used (rather than flex on the form)

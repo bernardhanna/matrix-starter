@@ -1,6 +1,6 @@
 const { defineConfig } = require('@playwright/test');
 
-const baseURL = process.env.BASE_URL || process.env.WP_HOME || process.env.NETWORK_BASE_URL || 'http://localhost:10014';
+const baseURL = process.env.BASE_URL || process.env.WP_HOME || process.env.NETWORK_BASE_URL || 'http://localhost:10029';
 
 module.exports = defineConfig({
   testDir: './tests',
