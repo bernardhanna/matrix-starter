@@ -785,6 +785,24 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
 #rd-checkout-step-method .pickup-location-field .select2-results__option {
   padding: 0.65rem 1rem;
   line-height: 1.35;
+  color: #000 !important;
+}
+
+#rd-checkout-step-method .pickup-location-field .select2-results__option .wc-location-pickup-plus-pickup-location-option-name,
+#rd-checkout-step-method .pickup-location-field .select2-results__option .wc-location-pickup-plus-pickup-location-option-address,
+#rd-checkout-step-method .pickup-location-field .select2-results__option small {
+  color: #000 !important;
+}
+
+#rd-checkout-step-method .pickup-location-field .select2-results__option--highlighted,
+#rd-checkout-step-method .pickup-location-field .select2-results__option--highlighted .wc-location-pickup-plus-pickup-location-option-name,
+#rd-checkout-step-method .pickup-location-field .select2-results__option--highlighted .wc-location-pickup-plus-pickup-location-option-address,
+#rd-checkout-step-method .pickup-location-field .select2-results__option--highlighted small {
+  color: #000 !important;
+}
+
+#rd-checkout-step-method .pickup-location-field .select2-container--default .select2-selection--single .select2-selection__rendered {
+  color: #000;
 }
 
 #rd-checkout-step-method .select2-container--default .select2-selection--single {
