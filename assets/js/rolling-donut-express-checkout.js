@@ -2491,36 +2491,7 @@
     }
 
     function updateMobilePayBarVisibility() {
-        var $bar = $('#rd-mobile-pay-bar');
-        var isMobile = window.matchMedia('(max-width: 1023px)').matches;
-        var showFromDetails = currentWizardStep >= 2;
-
-        if (!$bar.length) {
-            return;
-        }
-
-        $bar.prop('hidden', !(isMobile && showFromDetails));
-        $('body').toggleClass('rd-has-mobile-pay-bar', isMobile && showFromDetails);
-    }
-
-    function handleMobilePayBarClick() {
-        if (placeOrderSubmitting) {
-            return;
-        }
-
-        if (!goToPayment()) {
-            return;
-        }
-
-        if (!validatePaymentStep()) {
-            return;
-        }
-
-        var $placeOrder = $('#place_order');
-
-        if ($placeOrder.length && !$placeOrder.prop('disabled')) {
-            $placeOrder.trigger('click');
-        }
+        $('body').removeClass('rd-has-mobile-pay-bar');
     }
 
     function updateScheduleDateLabel() {
@@ -3013,7 +2984,7 @@
     function bindCheckoutWizardEvents() {
         $(document).on(
             'click',
-            '.rd-checkout-step__continue, .rd-checkout-progress__trigger[data-rd-progress="pay"], .rd-mobile-pay-bar__button, #place_order',
+            '.rd-checkout-step__continue, .rd-checkout-progress__trigger[data-rd-progress="pay"], #place_order',
             function () {
                 armCheckoutValidation();
             }
@@ -3101,11 +3072,6 @@
         $(document).on('click', '.rd-schedule-unavailable__change-method', function (event) {
             event.preventDefault();
             goToWizardStep(0, { force: true });
-        });
-
-        $(document).on('click', '.rd-mobile-pay-bar__button', function (event) {
-            event.preventDefault();
-            handleMobilePayBarClick();
         });
 
         $(document).on('click', '#place_order', function (event) {

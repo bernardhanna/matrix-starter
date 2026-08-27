@@ -662,17 +662,6 @@ if (! $checkout->is_registration_enabled() && $checkout->is_registration_require
         <?php endif; ?>
     </form>
 
-    <div class="rd-mobile-pay-bar" id="rd-mobile-pay-bar" hidden>
-        <div class="rd-mobile-pay-bar__inner">
-            <div class="rd-mobile-pay-bar__total">
-                <span class="rd-mobile-pay-bar__label"><?php esc_html_e('Total', 'matrix-starter'); ?></span>
-                <strong class="rd-mobile-pay-bar__amount" aria-live="polite"></strong>
-            </div>
-            <button type="button" class="rd-mobile-pay-bar__button button alt">
-                <?php esc_html_e('Place Order', 'matrix-starter'); ?>
-            </button>
-        </div>
-    </div>
 </div>
 <?php do_action('woocommerce_after_checkout_form', $checkout); ?>
 <script>
@@ -691,12 +680,7 @@ if (! $checkout->is_registration_enabled() && $checkout->is_registration_require
     jQuery(document).ready(function($) {
         // Close the notice on button click
         $('body').on('click', '.close-notice-button', function() {
-            $(this).closest('#custom-woocommerce-notice').fadeOut('fast');
+            $(this).closest('#custom-woocommerce-notice, .rd-wc-notice-overlay').remove();
         });
-
-        // Auto-fade after 5 seconds
-        setTimeout(function() {
-            $('#custom-woocommerce-notice').fadeOut('slow');
-        }, 5000);
     });
 </script>
