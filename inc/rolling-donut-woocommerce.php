@@ -9,6 +9,9 @@ require_once __DIR__ . '/rolling-donut-cart.php';
 require_once __DIR__ . '/rolling-donut-side-cart.php';
 require_once __DIR__ . '/rolling-donut-checkout.php';
 require_once __DIR__ . '/rolling-donut-custom-order-access.php';
+require_once __DIR__ . '/helpers/admin-order-shipping-zone.php';
+require_once __DIR__ . '/helpers/admin-collection-address.php';
+require_once __DIR__ . '/helpers/admin-order-list.php';
 
 function matrix_rd_register_product_taxonomy(): void {
     if (taxonomy_exists('rd_product_type')) {
@@ -1283,4 +1286,75 @@ function matrix_rd_render_view_order_item_row($item_id, $item, $order): void {
     </div>
     <?php
 }
+
+/**
+ * Whether the current request is the Iconic Delivery Slots deliveries screen.
+ */
+function matrix_rd_is_wds_deliveries_admin_page(): bool {
+    if (! is_admin()) {
+        return false;
+    }
+
+    $page = isset($_GET['page']) ? sanitize_key(wp_unslash((string) $_GET['page'])) : '';
+
+    return $page === 'jckwds-deliveries';
+}
+
+/**
+ * Drop the redundant "Delivery Details" / "Collection Details" heading from
+ * the Ship to column on WooCommerce → Deliveries.
+ */
+function matrix_rd_blank_wds_details_label_on_deliveries_admin($labels, $order = null) {
+    if (! matrix_rd_is_wds_deliveries_admin_page() || ! is_array($labels)) {
+        return $labels;
+    }
+
+    $labels['details'] = '';
+
+    return $labels;
+}
+add_filter('iconic_wds_labels', 'matrix_rd_blank_wds_details_label_on_deliveries_admin', 20, 2);
+add_filter('woocommerce_order_get_formatted_shipping_address', 'matrix_rd_admin_collection_formatted_shipping_address', 20, 2);
+add_filter('woocommerce_shipping_address_map_url', 'matrix_rd_admin_collection_shipping_map_url', 20, 2);
+add_filter('woocommerce_admin_shipping_fields', 'matrix_rd_hide_admin_shipping_fields_for_collection', 30, 2);
+add_action('woocommerce_admin_order_data_after_shipping_address', 'matrix_rd_render_admin_order_collection_box', 1);
+
+/**
+ * Hide the empty method-label wrapper left after blanking the heading.
+ */
+function matrix_rd_hide_wds_deliveries_method_label_css(): void {
+    if (! matrix_rd_is_wds_deliveries_admin_page()) {
+        return;
+    }
+    ?>
+    <style>
+        .iconic-wds-delivery td > div:first-child:has(> strong:only-child) {
+            display: none;
+        }
+        .iconic-wds-delivery td[data-colname="Ship to"] a:not([href*="http"]) {
+            pointer-events: none;
+            text-decoration: none;
+            color: inherit;
+            cursor: default;
+        }
+    </style>
+    <?php
+}
+add_action('admin_head', 'matrix_rd_hide_wds_deliveries_method_label_css');
+
+add_filter('manage_edit-shop_order_columns', 'matrix_rd_add_order_shipping_zone_column', 20);
+add_action('manage_shop_order_posts_custom_column', 'matrix_rd_render_order_shipping_zone_column', 10, 2);
+add_filter('woocommerce_shop_order_list_table_columns', 'matrix_rd_add_order_shipping_zone_column', 20);
+add_action('woocommerce_shop_order_list_table_custom_column', 'matrix_rd_render_order_shipping_zone_column', 10, 2);
+
+add_filter('manage_edit-shop_order_columns', 'matrix_rd_reorder_shop_order_list_columns', 999);
+add_filter('woocommerce_shop_order_list_table_columns', 'matrix_rd_reorder_shop_order_list_columns', 999);
+add_filter('hidden_columns', 'matrix_rd_shop_order_list_hidden_columns', 20, 2);
+add_filter('default_hidden_columns', 'matrix_rd_shop_order_list_hidden_columns', 20, 2);
+
+add_action('load-edit.php', 'matrix_rd_shop_order_list_redirect_to_delivery_sort');
+add_action('load-woocommerce_page_wc-orders', 'matrix_rd_shop_order_list_redirect_to_delivery_sort');
+add_action('pre_get_posts', 'matrix_rd_shop_order_list_clear_iconic_meta_sort', 20);
+add_filter('posts_clauses', 'matrix_rd_shop_order_list_posts_clauses', 20, 2);
+add_filter('iconic_wds_reservations_pre_query', 'matrix_rd_wds_reservations_pre_query', 10, 2);
 
