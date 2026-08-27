@@ -23,6 +23,7 @@
     var pickupFieldSnapshotHtml = '';
     var pickupLocationsReady = false;
     var pickupWarmupTimer = null;
+    var pickupReanchorInProgress = false;
     // Phase 1 auto-advance: the Method and Date steps are single-choice, so once
     // a valid choice is made we move the customer to the next step automatically.
     // The Continue buttons stay as a manual fallback. Can be disabled by the
@@ -107,25 +108,36 @@
         var $orderReview = $('#order_review');
         var $wdsFields = $('#jckwds-fields, .iconic-wds-fields');
 
+        // WooCommerce refuses a second place-order while form.checkout has
+        // .processing. Do not strip that lock (or re-enable Pay) once the
+        // customer has submitted — that is how a double-click creates two
+        // orders and two Stripe charges.
+        if (placeOrderSubmitting) {
+            return;
+        }
+
         if ($form.length) {
             $form.unblock();
             $form.removeClass('processing');
-            $form.find('> .blockUI.blockOverlay').remove();
+            $form.find('.blockUI').remove();
         }
 
         if ($payment.length) {
             $payment.unblock();
-            $payment.find('.blockUI.blockOverlay').remove();
+            $payment.removeClass('processing');
+            $payment.find('.blockUI').remove();
         }
 
         if ($reviewTable.length) {
             $reviewTable.unblock();
-            $reviewTable.find('.blockUI.blockOverlay').remove();
+            $reviewTable.removeClass('processing');
+            $reviewTable.find('.blockUI').remove();
         }
 
         if ($orderReview.length) {
             $orderReview.unblock();
-            $orderReview.find('.blockUI.blockOverlay').remove();
+            $orderReview.removeClass('processing');
+            $orderReview.find('.blockUI').remove();
         }
 
         // Iconic WDS calls block_checkout() (which also disables #place_order) on
@@ -268,6 +280,17 @@
         }
 
         $select.nextAll('.select2-container').remove();
+        $('body > .select2-container.select2-container--open').each(function () {
+            var $shell = $(this);
+
+            if ($shell.closest('.pickup-location-field').length) {
+                return;
+            }
+
+            if (!$shell.prev('select, input').length) {
+                $shell.remove();
+            }
+        });
     }
 
     function pickupSelectHasLocations($select) {
@@ -534,6 +557,7 @@
             stopPickupLoadingPoll();
             $wrap.removeClass('rd-pickup-loading');
             $wrap.find('.rd-pickup-location-loading').remove();
+            clearCheckoutBlockUi();
             return;
         }
 
@@ -588,7 +612,7 @@
             $wrap = getPickupWrapContext($context);
             $select = $wrap.find('select.pickup-location-lookup').first();
 
-            if (isPickupLocationSelectReady($select) || isPickupFieldPopulated($select) || attempts > 100) {
+            if (isPickupLocationSelectReady($select) || isPickupFieldPopulated($select) || attempts > 20) {
                 if (isPickupFieldPopulated($select)) {
                     markPickupLocationsReady($context);
                 }
@@ -1033,7 +1057,10 @@
             syncPickupSelectDisplay($select);
         }
 
-        $select.trigger('change');
+        // Do not trigger a native `change`. Local Pickup Plus binds
+        // change.local-pickup-plus, blocks #order_review, and runs
+        // update_checkout — which on mobile stalls the picker and leaves
+        // an overlay that swallows every tap.
     }
 
     // Anchor the dropdown and clear any LPP/Select2 default before the customer opens it.
@@ -1195,6 +1222,7 @@
         var $accountFields = $billingBlock.find('.woocommerce-account-fields');
         var $toggle = $('#rd-bill-different-address');
         var $billingHeading = $billingBlock.find('.woocommerce-billing-fields > h3');
+        var ADDRESS_HEADING_CLASSES = 'rd-delivery-address-heading text-black-full text-md-font font-reg420';
 
         if (!isDelivery) {
             $('#rd-delivery-address-heading, #rd-delivery-contact').remove();
@@ -1224,13 +1252,13 @@
                 $shippingBlock.after($billingBlock);
             }
 
-            $billingHeading.text('Billing details');
+            $billingHeading.addClass(ADDRESS_HEADING_CLASSES).text('Billing details');
             return;
         }
 
         if (!$('#rd-delivery-address-heading').length) {
             $shippingFields.prepend(
-                '<h3 id="rd-delivery-address-heading" class="rd-delivery-address-heading text-black-full text-md-font font-reg420">Delivery address</h3>'
+                '<h3 id="rd-delivery-address-heading" class="' + ADDRESS_HEADING_CLASSES + '">Delivery address</h3>'
             );
         }
 
@@ -1275,7 +1303,7 @@
             $shippingBlock.after($billingBlock);
         }
 
-        $billingHeading.text('Billing address');
+        $billingHeading.addClass(ADDRESS_HEADING_CLASSES).text('Billing address');
         $('#ship-to-different-address').hide();
         $('#shipping_phone_field, #shipping_email_field').closest('.single-field-wrapper').remove();
         $('#shipping_phone_field, #shipping_email_field').remove();
@@ -2246,9 +2274,9 @@
             original = $btn.attr('data-rd-original-label');
 
             if (isProcessing) {
-                $btn.text(processingLabel).val(processingLabel).attr('aria-busy', 'true');
+                $btn.text(processingLabel).val(processingLabel).attr('aria-busy', 'true').addClass('rd-place-order--busy');
             } else {
-                $btn.text(original).val(original).removeAttr('aria-busy');
+                $btn.text(original).val(original).removeAttr('aria-busy').removeClass('rd-place-order--busy');
             }
         }
 
@@ -2263,9 +2291,9 @@
             original = $mobile.attr('data-rd-original-label');
 
             if (isProcessing) {
-                $mobile.text(processingLabel).attr('aria-busy', 'true');
+                $mobile.text(processingLabel).attr('aria-busy', 'true').addClass('rd-place-order--busy');
             } else {
-                $mobile.text(original).removeAttr('aria-busy');
+                $mobile.text(original).removeAttr('aria-busy').removeClass('rd-place-order--busy');
             }
         }
     }
@@ -2280,7 +2308,10 @@
         }
 
         if (placeOrderSubmitting) {
+            // Leave Pay disabled/busy. Re-enabling here is what lets a second
+            // click through after Iconic/Woo disable the button mid-payment.
             setPlaceOrderProcessing(true);
+            return;
         }
 
         allow = shouldAllowPlaceOrder();
@@ -2397,6 +2428,10 @@
     }
 
     function handleMobilePayBarClick() {
+        if (placeOrderSubmitting) {
+            return;
+        }
+
         if (!goToPayment()) {
             return;
         }
@@ -2998,6 +3033,11 @@
         });
 
         $(document).on('click', '#place_order', function (event) {
+            if (placeOrderSubmitting) {
+                event.preventDefault();
+                return false;
+            }
+
             ensurePaymentMethodSelected();
 
             if (!goToPayment({ scroll: false })) {
@@ -3407,7 +3447,13 @@
 
         var original = event.params && event.params.originalEvent;
 
-        if (!original || original.type === 'mouseup' || original.type === 'click') {
+        if (
+            !original ||
+            original.type === 'mouseup' ||
+            original.type === 'click' ||
+            original.type === 'touchend' ||
+            original.type === 'pointerup'
+        ) {
             return;
         }
 
@@ -3434,14 +3480,16 @@
             }, 150);
         }
 
-        if (!$wrap.length || pickupDropdownAnchored($select, $wrap)) {
+        if (pickupReanchorInProgress || !$wrap.length || pickupDropdownAnchored($select, $wrap)) {
             return;
         }
 
         event.preventDefault();
+        pickupReanchorInProgress = true;
 
         window.setTimeout(function () {
             anchorPickupSelect($select);
+            pickupReanchorInProgress = false;
             $select.select2('open');
         }, 0);
     });

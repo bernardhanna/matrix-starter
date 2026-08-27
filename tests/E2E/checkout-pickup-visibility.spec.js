@@ -197,6 +197,42 @@ test.describe('Express checkout — pickup location visibility', () => {
     await openCheckout(page);
   });
 
+  test('mobile collection picker stays tappable after it appears', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openCheckout(page);
+
+    const pickup = page.locator(PICKUP_RADIO).first();
+    test.skip((await pickup.count()) === 0, 'No collection method available.');
+
+    await selectMethodAndSettle(page, pickup);
+
+    const loading = page.locator(`${METHOD_STEP} .rd-pickup-location-loading`);
+    await expect(loading, 'collection picker stuck on loading spinner').toBeHidden({
+      timeout: 4000,
+    });
+
+    const picked = await choosePickupLocation(page);
+    test.skip(!picked, 'No selectable pickup location.');
+
+    const overlayBlocking = await page.evaluate(() => {
+      const overlay = document.querySelector('.blockUI, .select2-container--open');
+      if (!overlay) {
+        return false;
+      }
+      const btn = document.querySelector(`${'#rd-checkout-step-method'} .rd-checkout-step__continue`);
+      if (!btn) {
+        return false;
+      }
+      const box = btn.getBoundingClientRect();
+      const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      return !!(top && (top.classList.contains('blockUI') || top.closest('.select2-container--open')));
+    });
+    expect(overlayBlocking, 'an overlay is still swallowing taps after choosing a location').toBeFalsy();
+
+    const cont = page.locator(`${METHOD_STEP} .rd-checkout-step__continue`).first();
+    await expect(cont).toBeEnabled();
+  });
+
   test('pickup picker is visible whenever a collection method is selected', async ({ page }) => {
     const methodCount = await page.locator(`${METHOD_STEP} input.shipping_method`).count();
     test.skip(methodCount === 0, 'No shipping methods on checkout (cart empty? set CHECKOUT_ADD_TO_CART).');

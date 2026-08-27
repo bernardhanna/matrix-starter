@@ -34,8 +34,7 @@ body.woocommerce-checkout {
   gap: 2rem;
   min-width: 0;
   max-width: 100%;
-  overflow-x: clip;
-  overflow-y: visible;
+  overflow: visible;
 }
 
 .rd-express-checkout__summary {
@@ -209,6 +208,15 @@ body.woocommerce-checkout {
 #rd-checkout-step-method .rd-shipping-option-pickup,
 #rd-checkout-step-method .pickup-location-field {
   overflow: visible;
+}
+
+#rd-checkout-step-method.rd-checkout-step--active {
+  position: relative;
+  z-index: 4;
+}
+
+#rd-checkout-step-method:has(.select2-container--open) {
+  z-index: 12;
 }
 
 #rd-checkout-step-method ul.woocommerce-shipping-methods > li:has(.select2-container--open) {
@@ -726,24 +734,24 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   right: auto !important;
 }
 
-/* The pickup dropdown is anchored to its field wrapper (dropdownParent), but
-   Select2 positions the open container with a document-absolute `top`. Inside the
-   position:relative wrapper that double-counts the field's page offset, so the
-   options list drops hundreds of px down the page (landing over the payment
-   section) instead of beneath the input. Pin the container flush below the field
-   so the location list always opens immediately under "Select a Pickup location". */
-#rd-checkout-step-method .pickup-location-field > .select2-container--open {
-  position: absolute !important;
-  top: 100% !important;
-  left: 0 !important;
+/* Keep the closed/open selection control in document flow. Pinning
+   `.select2-container--open` to `top: 100%` moved the control itself over the
+   options list (and on mobile over the rest of checkout), so taps never hit a
+   location. Only the dropdown menu is absolutely positioned under the field. */
+#rd-checkout-step-method .pickup-location-field > .select2-container {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
   right: auto !important;
   bottom: auto !important;
-  margin-top: 0.25rem !important;
-  z-index: 6;
 }
 
 #rd-checkout-step-method .pickup-location-field .select2-dropdown {
-  z-index: 7;
+  position: absolute !important;
+  top: calc(100% + 0.25rem) !important;
+  left: 0 !important;
+  right: auto !important;
+  z-index: 8;
   width: 100% !important;
   border: 1px solid #d8d7ce;
   border-radius: 0.75rem;
@@ -967,8 +975,15 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
   display: block !important;
 }
 
-.rd-express-checkout-form .rd-delivery-address-heading {
+.rd-express-checkout-form .rd-delivery-address-heading,
+.woocommerce-checkout h3.rd-delivery-address-heading {
   margin-bottom: 1rem;
+  color: #000;
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 420;
+  font-family: Edmondsans, edmondsans, sans-serif;
+  text-transform: none;
 }
 
 .rd-express-checkout-form .rd-delivery-contact {
@@ -1500,6 +1515,14 @@ form.checkout > .woocommerce-NoticeGroup-checkout {
 .rd-mobile-pay-bar__button:focus-visible {
   background: #fff6a7 !important;
   color: #000 !important;
+}
+
+/* Ignore extra clicks without disabling the submit button (disabled submit
+   buttons never fire the form's default submit). */
+#place_order.rd-place-order--busy,
+.rd-mobile-pay-bar__button.rd-place-order--busy {
+  pointer-events: none;
+  cursor: wait;
 }
 
 @media (min-width: 1024px) {

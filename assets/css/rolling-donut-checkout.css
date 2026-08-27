@@ -43,7 +43,8 @@ label[for="payment_method_stripe"]::after {
    pickup AJAX runs; the form-level blockUI overlay then sits above Stripe and
    swallows card-field clicks even when #payment overlays are cleared. */
 .rd-express-checkout-form.checkout.processing .blockUI.blockOverlay,
-.rd-express-checkout-form.checkout.processing > .blockUI.blockOverlay {
+.rd-express-checkout-form.checkout.processing > .blockUI.blockOverlay,
+.rd-express-checkout-form .blockUI {
   pointer-events: none !important;
 }
 
