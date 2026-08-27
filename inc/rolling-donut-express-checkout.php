@@ -46,6 +46,64 @@ add_filter('wc_stripe_hide_payment_request_on_product_page', '__return_true');
 add_filter('wc_stripe_show_payment_request_on_cart', '__return_false');
 
 /**
+ * Apple Pay / Google Pay are not in scope yet. Stripe still tries to register
+ * the current domain for Apple Pay on every admin load, then prints a persistent
+ * "Apple Pay domain registration failed" error. Skip that registration until
+ * wallets are enabled, and hide any leftover notice.
+ */
+function matrix_rd_disable_stripe_apple_pay_domain_registration(): void {
+    if (! class_exists('WC_Stripe')) {
+        return;
+    }
+
+    $stripe = WC_Stripe::get_instance();
+    if ($stripe) {
+        remove_action('init', [$stripe, 'initialize_apple_pay_registration']);
+    }
+
+    matrix_rd_unhook_stripe_apple_pay_registration_callbacks();
+}
+add_action('init', 'matrix_rd_disable_stripe_apple_pay_domain_registration', 1);
+
+/**
+ * Unhook Stripe Apple Pay registration if the class already booted.
+ */
+function matrix_rd_unhook_stripe_apple_pay_registration_callbacks(): void {
+    if (! class_exists('WC_Stripe_Apple_Pay_Registration')) {
+        return;
+    }
+
+    global $wp_filter;
+
+    foreach (['admin_notices', 'admin_init', 'update_option_woocommerce_stripe_settings'] as $hook) {
+        if (empty($wp_filter[$hook]) || empty($wp_filter[$hook]->callbacks)) {
+            continue;
+        }
+
+        foreach ($wp_filter[$hook]->callbacks as $priority => $callbacks) {
+            foreach ($callbacks as $callback) {
+                $fn = $callback['function'] ?? null;
+                if (! is_array($fn) || ! is_object($fn[0] ?? null)) {
+                    continue;
+                }
+
+                if ($fn[0] instanceof WC_Stripe_Apple_Pay_Registration) {
+                    remove_action($hook, $fn, (int) $priority);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Hide Stripe's Apple Pay domain-registration admin banner.
+ */
+function matrix_rd_hide_stripe_apple_pay_domain_notice(): void {
+    echo '<style id="rd-hide-stripe-apple-pay-notice">.stripe-apple-pay-message{display:none!important}</style>';
+}
+add_action('admin_head', 'matrix_rd_hide_stripe_apple_pay_domain_notice');
+
+/**
  * Bootstrap express checkout hooks.
  */
 function matrix_rd_express_checkout_bootstrap(): void {
@@ -329,6 +387,7 @@ function matrix_rd_express_checkout_enqueue_assets(): void {
             'mobilePayLabel'   => __('Place Order', 'matrix-starter'),
             'processingLabel'  => __('Processing...', 'matrix-starter'),
             'pickupAddresses'  => matrix_rd_express_checkout_pickup_addresses(),
+            'pickupLocations'  => matrix_rd_express_checkout_pickup_location_options(),
         ]);
     }
 }
@@ -343,7 +402,7 @@ add_action('wp_enqueue_scripts', 'matrix_rd_express_checkout_enqueue_assets', 35
  *
  * @return array<int,string>
  */
-function matrix_rd_express_checkout_pickup_addresses(): array {
+function matrix_rd_express_checkout_pickup_location_records(): array {
     if (! function_exists('wc_local_pickup_plus')) {
         return [];
     }
@@ -354,30 +413,60 @@ function matrix_rd_express_checkout_pickup_addresses(): array {
     }
 
     $locations = $plugin->get_pickup_locations_instance()->get_sorted_pickup_locations();
-    $map       = [];
+    $records   = [];
 
     foreach ($locations as $location) {
-        if (! is_object($location) || ! method_exists($location, 'get_address')) {
+        if (! is_object($location) || ! method_exists($location, 'get_id')) {
             continue;
         }
 
-        $address = $location->get_address();
-        if (! $address instanceof \WC_Local_Pickup_Plus_Address) {
+        $id   = (string) $location->get_id();
+        $name = method_exists($location, 'get_name') ? trim((string) $location->get_name()) : '';
+        $line = '';
+
+        if (method_exists($location, 'get_address')) {
+            $address = $location->get_address();
+            if ($address instanceof \WC_Local_Pickup_Plus_Address) {
+                $parts = array_filter([
+                    trim((string) $address->get_street_address('string', ' ')),
+                    trim((string) $address->get_city()),
+                    trim((string) $address->get_postcode()),
+                ], static fn($part) => '' !== $part);
+                $line = implode(', ', $parts);
+            }
+        }
+
+        if ($id === '' || $id === '0') {
             continue;
         }
 
-        $parts = array_filter([
-            trim((string) $address->get_street_address('string', ' ')),
-            trim((string) $address->get_city()),
-            trim((string) $address->get_postcode()),
-        ], static fn($part) => '' !== $part);
+        $records[] = [
+            'id'      => $id,
+            'name'    => $name !== '' ? $name : $line,
+            'address' => $line,
+        ];
+    }
 
-        if (! empty($parts)) {
-            $map[(int) $location->get_id()] = implode(', ', $parts);
+    return $records;
+}
+
+function matrix_rd_express_checkout_pickup_addresses(): array {
+    $map = [];
+
+    foreach (matrix_rd_express_checkout_pickup_location_records() as $record) {
+        if ($record['address'] !== '') {
+            $map[(int) $record['id']] = $record['address'];
         }
     }
 
     return $map;
+}
+
+/**
+ * @return array<int, array{id: string, name: string, address: string}>
+ */
+function matrix_rd_express_checkout_pickup_location_options(): array {
+    return matrix_rd_express_checkout_pickup_location_records();
 }
 
 /**
