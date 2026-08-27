@@ -60,14 +60,14 @@ test('delivery orders keep their shipping address on admin screens', function ()
     expect(matrix_rd_get_order_pickup_location_label($order))->toBe('');
 });
 
-test('deliveries tab replaces collection shipping with the pickup shop', function () {
+test('deliveries tab replaces collection shipping with N/A: Collection', function () {
     $GLOBALS['matrix_rd_collection_address_screen_override'] = true;
 
     $order = matrix_rd_test_fake_collection_order('local_pickup_plus', 'PAV');
     $home = 'Mary Flanagan, 19 Orchard Drive, Stamullen';
 
-    expect(matrix_rd_is_admin_collection_address_screen())->toBeTrue();
-    expect(matrix_rd_admin_collection_formatted_shipping_address($home, $order))->toBe('PAV');
+    expect(matrix_rd_should_replace_admin_collection_shipping($order))->toBeTrue();
+    expect(matrix_rd_admin_collection_formatted_shipping_address($home, $order))->toBe('N/A: Collection');
     expect(matrix_rd_admin_collection_shipping_map_url('https://maps.google.com/?q=Stamullen', $order))->toBe('');
 
     unset($GLOBALS['matrix_rd_collection_address_screen_override']);
@@ -80,6 +80,7 @@ test('storefront and packing slip keep the stored shipping address', function ()
     $home = 'Mary Flanagan, 19 Orchard Drive, Stamullen';
 
     expect(matrix_rd_is_admin_collection_address_screen())->toBeFalse();
+    expect(matrix_rd_should_replace_admin_collection_shipping($order))->toBeFalse();
     expect(matrix_rd_admin_collection_formatted_shipping_address($home, $order))->toBe($home);
 
     unset($GLOBALS['matrix_rd_collection_address_screen_override']);
@@ -113,6 +114,6 @@ test('theme registers collection address filters for admin screens', function ()
 
     expect($contents)->toContain('helpers/admin-collection-address.php');
     expect($contents)->toContain("add_filter('woocommerce_order_get_formatted_shipping_address'");
-    expect($contents)->toContain("add_action('woocommerce_admin_order_data_after_shipping_address', 'matrix_rd_render_admin_order_collection_box'");
+    expect($contents)->toContain("add_action('admin_head', 'matrix_rd_admin_collection_order_edit_assets'");
     expect(file_get_contents($checkout))->toContain('matrix_rd_order_is_collection');
 });

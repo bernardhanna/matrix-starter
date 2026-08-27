@@ -1317,7 +1317,8 @@ add_filter('iconic_wds_labels', 'matrix_rd_blank_wds_details_label_on_deliveries
 add_filter('woocommerce_order_get_formatted_shipping_address', 'matrix_rd_admin_collection_formatted_shipping_address', 20, 2);
 add_filter('woocommerce_shipping_address_map_url', 'matrix_rd_admin_collection_shipping_map_url', 20, 2);
 add_filter('woocommerce_admin_shipping_fields', 'matrix_rd_hide_admin_shipping_fields_for_collection', 30, 2);
-add_action('woocommerce_admin_order_data_after_shipping_address', 'matrix_rd_render_admin_order_collection_box', 1);
+add_filter('admin_body_class', 'matrix_rd_admin_collection_body_class');
+add_action('admin_head', 'matrix_rd_admin_collection_order_edit_assets');
 
 /**
  * Hide the empty method-label wrapper left after blanking the heading.

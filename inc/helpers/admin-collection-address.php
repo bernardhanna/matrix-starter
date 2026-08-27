@@ -105,6 +105,23 @@ function matrix_rd_admin_request_key(string $key): string
     return function_exists('wp_unslash') ? (string) wp_unslash($value) : $value;
 }
 
+function matrix_rd_is_pdf_document_request(): bool
+{
+    if (function_exists('did_action') && did_action('wpo_wcpdf_before_document')) {
+        return true;
+    }
+
+    if (function_exists('doing_action') && doing_action('wpo_wcpdf_before_document')) {
+        return true;
+    }
+
+    $page = function_exists('sanitize_key')
+        ? sanitize_key(matrix_rd_admin_request_key('page'))
+        : strtolower(matrix_rd_admin_request_key('page'));
+
+    return $page === 'wpo_wcpdf' || str_contains($page, 'wcpdf');
+}
+
 function matrix_rd_is_admin_shop_order_edit_request(): bool
 {
     $action = matrix_rd_admin_request_key('action');
@@ -112,22 +129,18 @@ function matrix_rd_is_admin_shop_order_edit_request(): bool
         ? sanitize_key(matrix_rd_admin_request_key('page'))
         : strtolower(matrix_rd_admin_request_key('page'));
 
-    if ($page === 'wc-orders' && $action === 'edit') {
-        return true;
-    }
-
-    if ($action !== 'edit') {
-        return false;
+    if ($page === 'wc-orders') {
+        return $action === 'edit' || $action === '';
     }
 
     $pagenow = isset($GLOBALS['pagenow']) ? (string) $GLOBALS['pagenow'] : '';
-    if ($pagenow === 'post.php') {
+    if ($pagenow === 'post.php' || $pagenow === 'post-new.php') {
         return true;
     }
 
     $script = isset($_SERVER['PHP_SELF']) ? (string) $_SERVER['PHP_SELF'] : '';
 
-    return $script !== '' && substr($script, -8) === 'post.php';
+    return $script !== '' && (substr($script, -8) === 'post.php' || str_ends_with($script, 'post-new.php'));
 }
 
 function matrix_rd_is_admin_collection_address_screen(): bool
@@ -172,6 +185,42 @@ function matrix_rd_is_admin_collection_address_screen(): bool
     return false;
 }
 
+function matrix_rd_collection_admin_address_label($order): string
+{
+    if (function_exists('matrix_rd_get_order_shipping_zone_label')) {
+        $label = trim((string) matrix_rd_get_order_shipping_zone_label($order));
+        if ($label !== '') {
+            return $label;
+        }
+    }
+
+    return function_exists('__')
+        ? __('N/A: Collection', 'matrix-starter')
+        : 'N/A: Collection';
+}
+
+function matrix_rd_should_replace_admin_collection_shipping($order): bool
+{
+    if (array_key_exists('matrix_rd_collection_address_screen_override', $GLOBALS)) {
+        return (bool) $GLOBALS['matrix_rd_collection_address_screen_override']
+            && matrix_rd_order_is_collection($order);
+    }
+
+    if (function_exists('wp_doing_ajax') && wp_doing_ajax()) {
+        return false;
+    }
+
+    if (matrix_rd_is_pdf_document_request()) {
+        return false;
+    }
+
+    if (!function_exists('is_admin') || !is_admin()) {
+        return false;
+    }
+
+    return matrix_rd_order_is_collection($order);
+}
+
 /**
  * @param mixed $address Formatted HTML address.
  * @param mixed $order
@@ -179,13 +228,11 @@ function matrix_rd_is_admin_collection_address_screen(): bool
  */
 function matrix_rd_admin_collection_formatted_shipping_address($address, $order)
 {
-    if (!matrix_rd_is_admin_collection_address_screen() || !matrix_rd_order_is_collection($order)) {
+    if (!matrix_rd_should_replace_admin_collection_shipping($order)) {
         return $address;
     }
 
-    $label = matrix_rd_get_order_pickup_location_label($order);
-
-    return $label !== '' ? esc_html($label) : '';
+    return esc_html(matrix_rd_collection_admin_address_label($order));
 }
 
 /**
@@ -195,7 +242,7 @@ function matrix_rd_admin_collection_formatted_shipping_address($address, $order)
  */
 function matrix_rd_admin_collection_shipping_map_url($url, $order)
 {
-    if (!matrix_rd_is_admin_collection_address_screen() || !matrix_rd_order_is_collection($order)) {
+    if (!matrix_rd_should_replace_admin_collection_shipping($order)) {
         return $url;
     }
 
@@ -227,58 +274,62 @@ function matrix_rd_hide_admin_shipping_fields_for_collection($fields, $order = n
 }
 
 /**
- * Order edit: rename the Shipping box and show the pickup shop.
- *
  * @param mixed $order
  */
-function matrix_rd_render_admin_order_collection_box($order): void
+function matrix_rd_admin_current_shop_order()
 {
-    if (!matrix_rd_order_is_collection($order)) {
+    $id = (int) matrix_rd_admin_request_key('post');
+    if ($id <= 0) {
+        $id = (int) matrix_rd_admin_request_key('id');
+    }
+
+    if ($id <= 0 || !function_exists('wc_get_order')) {
+        return null;
+    }
+
+    $order = wc_get_order($id);
+
+    return is_object($order) ? $order : null;
+}
+
+/**
+ * @param mixed $classes
+ * @return mixed
+ */
+function matrix_rd_admin_collection_body_class($classes)
+{
+    $order = matrix_rd_admin_current_shop_order();
+    if (!$order || !matrix_rd_order_is_collection($order)) {
+        return $classes;
+    }
+
+    return trim((string) $classes . ' rd-order-is-collection');
+}
+
+function matrix_rd_admin_collection_order_edit_assets(): void
+{
+    $order = matrix_rd_admin_current_shop_order();
+    if (!$order || !matrix_rd_order_is_collection($order)) {
         return;
     }
-
-    $label = matrix_rd_get_order_pickup_location_label($order);
-    if ($label === '') {
-        $label = function_exists('__')
-            ? __('Free Collection', 'matrix-starter')
-            : 'Free Collection';
-    }
-
-    $heading = function_exists('__')
-        ? __('Collection from', 'matrix-starter')
-        : 'Collection from';
     ?>
-    <p class="rd-admin-collection-location">
-        <strong><?php echo esc_html($heading); ?>:</strong>
-        <?php echo esc_html($label); ?>
-    </p>
     <style>
-        .order_data_column_shipping .address > p:not(.order_note):not(.none_set) {
-            display: none;
+        body.rd-order-is-collection .order_data_column_shipping .rd-admin-eircode {
+            display: none !important;
         }
-        .order_data_column_shipping .rd-admin-eircode {
-            display: none;
+        body.rd-order-is-collection .order_data_column_shipping h3 {
+            font-size: 0;
         }
-        .order_data_column_shipping .rd-admin-collection-location {
-            margin: 0.5em 0 0;
+        body.rd-order-is-collection .order_data_column_shipping h3::before {
+            content: "Collection";
+            font-size: 14px;
+            font-weight: 600;
+        }
+        body.rd-order-is-collection .order_data_column_shipping h3 a {
+            font-size: 13px;
+            font-weight: 400;
+            margin-left: 6px;
         }
     </style>
-    <script>
-        (function () {
-            var col = document.querySelector('.order_data_column_shipping');
-            if (!col) {
-                return;
-            }
-            var heading = col.querySelector('h3');
-            if (!heading) {
-                return;
-            }
-            heading.childNodes.forEach(function (node) {
-                if (node.nodeType === 3 && node.textContent.indexOf('Shipping') !== -1) {
-                    node.textContent = node.textContent.replace('Shipping', 'Collection');
-                }
-            });
-        })();
-    </script>
     <?php
 }
