@@ -1319,6 +1319,8 @@ add_filter('woocommerce_shipping_address_map_url', 'matrix_rd_admin_collection_s
 add_filter('woocommerce_admin_shipping_fields', 'matrix_rd_hide_admin_shipping_fields_for_collection', 30, 2);
 add_filter('admin_body_class', 'matrix_rd_admin_collection_body_class');
 add_action('admin_head', 'matrix_rd_admin_collection_order_edit_assets');
+add_action('woocommerce_admin_order_data_after_shipping_address', 'matrix_rd_render_admin_order_collection_editor', 1);
+add_action('woocommerce_process_shop_order_meta', 'matrix_rd_admin_save_collection_pickup_location', 70);
 
 /**
  * Hide the empty method-label wrapper left after blanking the heading.
@@ -1339,20 +1341,6 @@ function matrix_rd_hide_wds_deliveries_method_label_css(): void {
             cursor: default;
         }
     </style>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('tr.iconic-wds-delivery td[data-colname="Ship to"]').forEach(function (cell) {
-                var via = cell.querySelector('.description');
-                if (!via || (via.textContent || '').toLowerCase().indexOf('collection') === -1) {
-                    return;
-                }
-                var link = cell.querySelector('a');
-                if (link) {
-                    link.style.display = 'none';
-                }
-            });
-        });
-    </script>
     <?php
 }
 add_action('admin_head', 'matrix_rd_hide_wds_deliveries_method_label_css');

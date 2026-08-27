@@ -187,16 +187,81 @@ function matrix_rd_is_admin_collection_address_screen(): bool
 
 function matrix_rd_collection_admin_address_label($order): string
 {
-    if (function_exists('matrix_rd_get_order_shipping_zone_label')) {
-        $label = trim((string) matrix_rd_get_order_shipping_zone_label($order));
-        if ($label !== '') {
-            return $label;
-        }
+    $name = matrix_rd_get_order_pickup_location_label($order);
+    if ($name !== '') {
+        return $name;
     }
 
     return function_exists('__')
         ? __('N/A: Collection', 'matrix-starter')
         : 'N/A: Collection';
+}
+
+/**
+ * @param mixed $order
+ * @return array{0: int, 1: mixed}
+ */
+function matrix_rd_order_collection_shipping_item($order): array
+{
+    if (!is_object($order) || !method_exists($order, 'get_shipping_methods')) {
+        return [0, null];
+    }
+
+    foreach ($order->get_shipping_methods() as $item_id => $item) {
+        $method_id = is_object($item) && method_exists($item, 'get_method_id')
+            ? (string) $item->get_method_id()
+            : (string) ($item['method_id'] ?? '');
+
+        $is_collection = function_exists('matrix_rd_shipping_method_is_collection')
+            ? matrix_rd_shipping_method_is_collection($method_id)
+            : ($method_id !== '' && str_contains($method_id, 'local_pickup'));
+
+        if ($is_collection) {
+            return [(int) $item_id, $item];
+        }
+    }
+
+    return [0, null];
+}
+
+/**
+ * @return list<array{id: string, name: string, address: string}>
+ */
+function matrix_rd_admin_pickup_location_choices(): array
+{
+    if (function_exists('matrix_rd_express_checkout_pickup_location_records')) {
+        $records = matrix_rd_express_checkout_pickup_location_records();
+        if ($records !== []) {
+            return $records;
+        }
+    }
+
+    if (!function_exists('get_posts')) {
+        return [];
+    }
+
+    $posts = get_posts([
+        'post_type'      => 'wc_pickup_location',
+        'post_status'    => 'publish',
+        'numberposts'    => 80,
+        'orderby'        => 'title',
+        'order'          => 'ASC',
+        'suppress_filters' => true,
+    ]);
+
+    $out = [];
+    foreach ($posts as $post) {
+        if (!is_object($post) || !isset($post->ID, $post->post_title)) {
+            continue;
+        }
+        $out[] = [
+            'id'      => (string) $post->ID,
+            'name'    => (string) $post->post_title,
+            'address' => '',
+        ];
+    }
+
+    return $out;
 }
 
 function matrix_rd_should_replace_admin_collection_shipping($order): bool
@@ -321,8 +386,17 @@ function matrix_rd_admin_collection_order_edit_assets(): void
     $label = matrix_rd_collection_admin_address_label($order);
     ?>
     <style>
-        .order_data_column_shipping .rd-admin-eircode {
+        .order_data_column_shipping .rd-admin-eircode,
+        .order_data_column_shipping .edit_address,
+        .order_data_column_shipping a.edit_address {
             display: none !important;
+        }
+        .rd-admin-collection-editor {
+            margin-top: 8px;
+        }
+        .rd-admin-collection-editor select {
+            width: 100%;
+            max-width: 100%;
         }
     </style>
     <script>
@@ -345,10 +419,100 @@ function matrix_rd_admin_collection_order_edit_assets(): void
                     p.remove();
                 });
                 var line = document.createElement('p');
+                line.className = 'rd-admin-collection-shop';
                 line.textContent = <?php echo function_exists('wp_json_encode') ? wp_json_encode($label) : json_encode($label); ?>;
                 address.insertBefore(line, address.firstChild);
             }
         });
     </script>
     <?php
+}
+
+/**
+ * @param mixed $order
+ */
+function matrix_rd_render_admin_order_collection_editor($order): void
+{
+    if (!matrix_rd_order_is_collection($order)) {
+        return;
+    }
+
+    [$item_id, $item] = matrix_rd_order_collection_shipping_item($order);
+    $current = 0;
+    if (is_object($item) && method_exists($item, 'get_meta')) {
+        $current = (int) $item->get_meta('_pickup_location_id');
+    }
+
+    $choices = matrix_rd_admin_pickup_location_choices();
+    $heading = function_exists('__')
+        ? __('Collection location', 'matrix-starter')
+        : 'Collection location';
+    $help = function_exists('__')
+        ? __('Change the shop and click Update to save.', 'matrix-starter')
+        : 'Change the shop and click Update to save.';
+    ?>
+    <div class="rd-admin-collection-editor">
+        <p class="form-field form-field-wide">
+            <label for="rd_collection_pickup_location_id"><strong><?php echo esc_html($heading); ?></strong></label>
+            <input type="hidden" name="rd_collection_shipping_item_id" value="<?php echo (int) $item_id; ?>" />
+            <select name="rd_collection_pickup_location_id" id="rd_collection_pickup_location_id">
+                <?php foreach ($choices as $choice) : ?>
+                    <option value="<?php echo esc_attr((string) $choice['id']); ?>" <?php echo ((int) $choice['id'] === $current) ? 'selected="selected"' : ''; ?>>
+                        <?php echo esc_html((string) $choice['name']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </p>
+        <p class="description"><?php echo esc_html($help); ?></p>
+    </div>
+    <?php
+}
+
+/**
+ * @param mixed $order_id
+ */
+function matrix_rd_admin_save_collection_pickup_location($order_id): void
+{
+    if (!isset($_POST['rd_collection_pickup_location_id'], $_POST['rd_collection_shipping_item_id'])) {
+        return;
+    }
+
+    $location_id = (int) (function_exists('wp_unslash') ? wp_unslash($_POST['rd_collection_pickup_location_id']) : $_POST['rd_collection_pickup_location_id']);
+    $item_id = (int) (function_exists('wp_unslash') ? wp_unslash($_POST['rd_collection_shipping_item_id']) : $_POST['rd_collection_shipping_item_id']);
+
+    if ($location_id <= 0 || $item_id <= 0) {
+        return;
+    }
+
+    if (!function_exists('wc_local_pickup_plus') || !function_exists('wc_local_pickup_plus_get_pickup_location')) {
+        return;
+    }
+
+    $location = wc_local_pickup_plus_get_pickup_location($location_id);
+    $plugin = wc_local_pickup_plus();
+    if (!$location || !$plugin || !method_exists($plugin, 'get_orders_instance')) {
+        return;
+    }
+
+    $orders = $plugin->get_orders_instance();
+    if (!$orders || !method_exists($orders, 'get_order_items_instance')) {
+        return;
+    }
+
+    $items = $orders->get_order_items_instance();
+    if (!$items || !method_exists($items, 'set_order_item_pickup_location')) {
+        return;
+    }
+
+    $items->set_order_item_pickup_location($item_id, $location);
+
+    if (function_exists('wc_get_order')) {
+        $order = wc_get_order((int) $order_id);
+        if ($order && method_exists($order, 'get_item')) {
+            $item = $order->get_item($item_id);
+            if (is_object($item) && method_exists($item, 'save')) {
+                $item->save();
+            }
+        }
+    }
 }

@@ -51,6 +51,7 @@ test('local pickup orders are collection and expose the shop name', function () 
 
     expect(matrix_rd_order_is_collection($order))->toBeTrue();
     expect(matrix_rd_get_order_pickup_location_label($order))->toBe('PAV');
+    expect(matrix_rd_collection_admin_address_label($order))->toBe('PAV');
 });
 
 test('delivery orders keep their shipping address on admin screens', function () {
@@ -67,7 +68,7 @@ test('woocommerce three-arg formatted address filter still receives the order', 
     $home = 'Elaine Dunne, 17 Greenwood Way';
 
     expect(matrix_rd_admin_collection_formatted_shipping_address($home, ['address_1' => '17 Greenwood Way'], $order))
-        ->toBe('N/A: Collection');
+        ->toBe('PAV');
 
     unset($GLOBALS['matrix_rd_collection_address_screen_override']);
 });
@@ -79,7 +80,7 @@ test('deliveries tab replaces collection shipping with N/A: Collection', functio
     $home = 'Mary Flanagan, 19 Orchard Drive, Stamullen';
 
     expect(matrix_rd_should_replace_admin_collection_shipping($order))->toBeTrue();
-    expect(matrix_rd_admin_collection_formatted_shipping_address($home, $order))->toBe('N/A: Collection');
+    expect(matrix_rd_admin_collection_formatted_shipping_address($home, $order))->toBe('PAV');
     expect(matrix_rd_admin_collection_shipping_map_url('https://maps.google.com/?q=Stamullen', $order))->toBe('');
 
     unset($GLOBALS['matrix_rd_collection_address_screen_override']);
@@ -126,6 +127,7 @@ test('theme registers collection address filters for admin screens', function ()
 
     expect($contents)->toContain('helpers/admin-collection-address.php');
     expect($contents)->toContain("add_filter('woocommerce_order_get_formatted_shipping_address', 'matrix_rd_admin_collection_formatted_shipping_address', 20, 3)");
-    expect($contents)->toContain("add_action('admin_head', 'matrix_rd_admin_collection_order_edit_assets'");
+    expect($contents)->toContain("add_action('woocommerce_admin_order_data_after_shipping_address', 'matrix_rd_render_admin_order_collection_editor'");
+    expect($contents)->toContain("add_action('woocommerce_process_shop_order_meta', 'matrix_rd_admin_save_collection_pickup_location'");
     expect(file_get_contents($checkout))->toContain('matrix_rd_order_is_collection');
 });
