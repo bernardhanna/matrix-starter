@@ -1314,7 +1314,7 @@ function matrix_rd_blank_wds_details_label_on_deliveries_admin($labels, $order =
     return $labels;
 }
 add_filter('iconic_wds_labels', 'matrix_rd_blank_wds_details_label_on_deliveries_admin', 20, 2);
-add_filter('woocommerce_order_get_formatted_shipping_address', 'matrix_rd_admin_collection_formatted_shipping_address', 20, 2);
+add_filter('woocommerce_order_get_formatted_shipping_address', 'matrix_rd_admin_collection_formatted_shipping_address', 20, 3);
 add_filter('woocommerce_shipping_address_map_url', 'matrix_rd_admin_collection_shipping_map_url', 20, 2);
 add_filter('woocommerce_admin_shipping_fields', 'matrix_rd_hide_admin_shipping_fields_for_collection', 30, 2);
 add_filter('admin_body_class', 'matrix_rd_admin_collection_body_class');
@@ -1339,6 +1339,20 @@ function matrix_rd_hide_wds_deliveries_method_label_css(): void {
             cursor: default;
         }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('tr.iconic-wds-delivery td[data-colname="Ship to"]').forEach(function (cell) {
+                var via = cell.querySelector('.description');
+                if (!via || (via.textContent || '').toLowerCase().indexOf('collection') === -1) {
+                    return;
+                }
+                var link = cell.querySelector('a');
+                if (link) {
+                    link.style.display = 'none';
+                }
+            });
+        });
+    </script>
     <?php
 }
 add_action('admin_head', 'matrix_rd_hide_wds_deliveries_method_label_css');

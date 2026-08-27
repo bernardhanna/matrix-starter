@@ -60,6 +60,18 @@ test('delivery orders keep their shipping address on admin screens', function ()
     expect(matrix_rd_get_order_pickup_location_label($order))->toBe('');
 });
 
+test('woocommerce three-arg formatted address filter still receives the order', function () {
+    $GLOBALS['matrix_rd_collection_address_screen_override'] = true;
+
+    $order = matrix_rd_test_fake_collection_order('local_pickup_plus', 'PAV');
+    $home = 'Elaine Dunne, 17 Greenwood Way';
+
+    expect(matrix_rd_admin_collection_formatted_shipping_address($home, ['address_1' => '17 Greenwood Way'], $order))
+        ->toBe('N/A: Collection');
+
+    unset($GLOBALS['matrix_rd_collection_address_screen_override']);
+});
+
 test('deliveries tab replaces collection shipping with N/A: Collection', function () {
     $GLOBALS['matrix_rd_collection_address_screen_override'] = true;
 
@@ -113,7 +125,7 @@ test('theme registers collection address filters for admin screens', function ()
     $contents = file_get_contents($woo);
 
     expect($contents)->toContain('helpers/admin-collection-address.php');
-    expect($contents)->toContain("add_filter('woocommerce_order_get_formatted_shipping_address'");
+    expect($contents)->toContain("add_filter('woocommerce_order_get_formatted_shipping_address', 'matrix_rd_admin_collection_formatted_shipping_address', 20, 3)");
     expect($contents)->toContain("add_action('admin_head', 'matrix_rd_admin_collection_order_edit_assets'");
     expect(file_get_contents($checkout))->toContain('matrix_rd_order_is_collection');
 });

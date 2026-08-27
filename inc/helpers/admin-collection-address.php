@@ -222,12 +222,17 @@ function matrix_rd_should_replace_admin_collection_shipping($order): bool
 }
 
 /**
- * @param mixed $address Formatted HTML address.
- * @param mixed $order
+ * @param mixed $address      Formatted HTML address.
+ * @param mixed $raw_address  Raw address array from WooCommerce, or an order in tests.
+ * @param mixed $order        WC_Order when WooCommerce calls this filter.
  * @return mixed
  */
-function matrix_rd_admin_collection_formatted_shipping_address($address, $order)
+function matrix_rd_admin_collection_formatted_shipping_address($address, $raw_address = [], $order = null)
 {
+    if (!is_object($order) && is_object($raw_address)) {
+        $order = $raw_address;
+    }
+
     if (!matrix_rd_should_replace_admin_collection_shipping($order)) {
         return $address;
     }
@@ -312,24 +317,38 @@ function matrix_rd_admin_collection_order_edit_assets(): void
     if (!$order || !matrix_rd_order_is_collection($order)) {
         return;
     }
+
+    $label = matrix_rd_collection_admin_address_label($order);
     ?>
     <style>
-        body.rd-order-is-collection .order_data_column_shipping .rd-admin-eircode {
+        .order_data_column_shipping .rd-admin-eircode {
             display: none !important;
         }
-        body.rd-order-is-collection .order_data_column_shipping h3 {
-            font-size: 0;
-        }
-        body.rd-order-is-collection .order_data_column_shipping h3::before {
-            content: "Collection";
-            font-size: 14px;
-            font-weight: 600;
-        }
-        body.rd-order-is-collection .order_data_column_shipping h3 a {
-            font-size: 13px;
-            font-weight: 400;
-            margin-left: 6px;
-        }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var col = document.querySelector('.order_data_column_shipping');
+            if (!col) {
+                return;
+            }
+            var heading = col.querySelector('h3');
+            if (heading) {
+                heading.childNodes.forEach(function (node) {
+                    if (node.nodeType === 3 && node.textContent.indexOf('Shipping') !== -1) {
+                        node.textContent = node.textContent.replace('Shipping', 'Collection');
+                    }
+                });
+            }
+            var address = col.querySelector('.address');
+            if (address) {
+                address.querySelectorAll('p:not(.order_note)').forEach(function (p) {
+                    p.remove();
+                });
+                var line = document.createElement('p');
+                line.textContent = <?php echo function_exists('wp_json_encode') ? wp_json_encode($label) : json_encode($label); ?>;
+                address.insertBefore(line, address.firstChild);
+            }
+        });
+    </script>
     <?php
 }
