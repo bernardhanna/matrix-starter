@@ -34,6 +34,8 @@ test('open pickup Select2 control stays in flow instead of covering the menu', f
     expect($express_css)->toContain('#rd-checkout-step-method.rd-checkout-step--active:has(.select2-container--open)');
     expect($express_css)->toContain('#rd-checkout-step-method .pickup-location-field .select2-results__option');
     expect($express_css)->toMatch('/\.select2-results__option \{[^}]*color:\s*#000/s');
+    expect($express_css)->toContain('content: none');
+    expect($express_css)->toContain('#rd-checkout-step-method .pickup-location-field .select2-selection__placeholder');
 });
 
 test('collection shops are seeded immediately and loading does not re-enter prepare', function () use ($express_js) {
