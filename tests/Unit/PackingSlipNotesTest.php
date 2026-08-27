@@ -47,3 +47,11 @@ test('status-change and Stripe charge notes stay off the packing slip', function
         'customer_note' => 0,
     ]))->toBeFalse();
 });
+
+test('packing slip blanks shipping phone on collection orders', function () {
+    $file = dirname(__DIR__, 2) . '/woocommerce/pdf/Advanced/packing-slip.php';
+    $contents = file_get_contents($file);
+
+    expect($contents)->toContain('matrix_rd_order_is_collection');
+    expect($contents)->toContain("\$shipping_phone = '';");
+});

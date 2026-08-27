@@ -223,18 +223,27 @@
 <?php do_action('wpo_wcpdf_after_document_label', $this->type, $this->order); ?>
 
 <?php
-// Legacy template read $is_local_pickup before defining it. That falsy value
-// made collection orders print the full address (see packing-slip-29798.pdf).
-if (! isset($is_local_pickup)) {
-    $is_local_pickup = false;
-}
-
 // Helper to normalize address strings for comparison
 if (!function_exists('rd_normalize_addr')) {
     function rd_normalize_addr($addr){
         $plain = trim(wp_strip_all_tags((string)$addr));
         $plain = preg_replace('/\s+/', ' ', $plain);
         return strtolower($plain);
+    }
+}
+
+$is_local_pickup = function_exists('matrix_rd_order_is_collection')
+    && matrix_rd_order_is_collection($this->order);
+
+if (! $is_local_pickup) {
+    foreach ($this->order->get_items('shipping') as $shipping_item) {
+        $method_id = is_object($shipping_item) && method_exists($shipping_item, 'get_method_id')
+            ? (string) $shipping_item->get_method_id()
+            : '';
+        if ($method_id !== '' && str_contains($method_id, 'local_pickup')) {
+            $is_local_pickup = true;
+            break;
+        }
     }
 }
 
@@ -255,6 +264,10 @@ $billing_phone   = $this->order->get_billing_phone();
 $shipping_phone   = $this->order->get_shipping_phone();
 $billing_email   = $this->order->get_billing_email();
 $order_number    = $this->order->get_order_number();
+
+if ($is_local_pickup) {
+    $shipping_phone = '';
+}
 
 // Eircode/Postcode (prefer your custom shipping eircode when showing shipping)
 $ship_eircode    = get_post_meta($this->order->get_id(), '_custom_shipping_eircode', true);
