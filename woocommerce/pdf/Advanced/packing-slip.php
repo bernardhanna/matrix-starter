@@ -281,25 +281,7 @@ $bill_postcode   = $this->order->get_billing_postcode();
     <!-- PRIMARY ADDRESS COLUMN (shows Shipping if different, else Billing; pickup logic preserved) -->
 <td class="address billing-address">
   <?php
-  if ($is_local_pickup) {
-      // Local pickup: show customer name + contact only
-      echo esc_html($this->order->get_formatted_billing_full_name());
-
-      if ($billing_phone) {
-          echo '<br /><strong>Billing phone:</strong> '.esc_html($billing_phone);
-      }
-
-      if ($shipping_phone) {
-          echo '<br /><strong>Shipping phone:</strong> '.esc_html($shipping_phone);
-      }
-
-
-      if ($billing_email) {
-          echo '<br>' . esc_html($billing_email) . '</br>';
-      }
-      
-
-  } elseif ($use_shipping_in_primary) {
+  if ($use_shipping_in_primary) {
       // Show SHIPPING (no labels)
       do_action('wpo_wcpdf_before_shipping_address', $this->type, $this->order);
       $this->shipping_address();
